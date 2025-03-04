@@ -19,8 +19,8 @@ import {
 //  enableIndexedDbPersistence,
 //  CACHE_SIZE_UNLIMITED
 } from "firebase/firestore";
-import { db } from "@/lib/firebase";
-import { useDebugValue } from "react";
+// import { db } from "@/lib/firebase";
+// import { useDebugValue } from "react";
 
 //if (!(db instanceof Firestore)) {
 //  throw new Error("Firestore database is not initialized.");

@@ -51,8 +51,9 @@ export async function seedDatabase() {
       }
     } else {
         app = getApps()[0];  
-        if (!db)
+        if (!db || db === undefined) {
           db = getFirestore(app);
+        }
     }
 
     // Seed subscriptions
