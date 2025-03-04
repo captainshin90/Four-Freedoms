@@ -23,31 +23,31 @@ export async function seedDatabase() {
     await seedSubscriptions();
     
     // Seed personas
-    await seedPersonas();
+//    await seedPersonas();
     
     // Seed topics
-    await seedTopics();
+//    await seedTopics();
     
     // Seed prompts
-    await seedPrompts();
+//    await seedPrompts();
     
     // Seed documents
-    await seedDocuments();
+//    await seedDocuments();
     
     // Seed transcripts
-    await seedTranscripts();
+//    await seedTranscripts();
     
     // Seed podcasts and episodes
-    await seedPodcasts();
+//    await seedPodcasts();
     
     // Seed questions
-    await seedQuestions();
+//    await seedQuestions();
     
     // Seed sample users
-    await seedUsers();
+//    await seedUsers();
     
     // Seed sample chats
-    await seedChats();
+//    await seedChats();
     
     console.log('Database seeding completed successfully!');
   } catch (error) {

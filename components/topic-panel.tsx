@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { PlusCircle, ChevronRight, ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -106,11 +107,12 @@ export function TopicPanel({ onSelectTopic }: TopicPanelProps) {
                 <Card className="cursor-pointer hover:bg-accent transition-colors">
                   <CardContent className="p-3">
                     <div className="space-y-3">
-                      <div className="aspect-video relative overflow-hidden rounded-md">
-                        <img 
+                        <Image 
                           src={topic.topic_image || "https://images.unsplash.com/photo-1519501025264-65ba15a82390?w=300&h=200&fit=crop"} 
                           alt={topic.topic_name}
-                          className="object-cover w-full h-full"
+                          layout="fill"
+                          objectFit="cover"
+                        />
                         />
                       </div>
                       <div>

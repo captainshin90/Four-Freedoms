@@ -4,8 +4,9 @@ export interface Topic {
   topic_id: string;
   topic_name: string;
   topic_image?: string;
-  topic_type: TopicType;
-  related_topic_tags?: string[];
+//  topic_type: TopicType;
+  topic_type: string;
+related_topic_tags?: string[];
   datetime: Date;
   followed_by_users?: string[];
   is_private: boolean;

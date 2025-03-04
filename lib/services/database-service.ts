@@ -60,8 +60,9 @@ class DatabaseService {
   // Create a new document with auto-generated ID
   async create(collectionName: string, data: any): Promise<string> {
     try {
-      console.log(`Creating document in ${collectionName}`);
       const collectionRef = collection(db, collectionName);
+      console.log(`Creating document in ${collectionName}`);
+      
       const docRef = await addDoc(collectionRef, {
         ...data,
         created_at: Timestamp.now(),
