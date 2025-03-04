@@ -217,11 +217,12 @@ class AuthService {
 
   // Subscribe to auth state changes
   onAuthStateChanged(callback: (user: User | null) => void): () => void {
-    if (!auth || auth === undefined) {
+    
+    if (!auth) {
       console.log("Firebase Auth is not initialized.");
 //      throw new Error("Firebase Auth is not initialized.");
 }
-    return onAuthStateChanged(auth, callback);
+    return onAuthStateChanged(auth as Auth, callback);
   }
 }
 
