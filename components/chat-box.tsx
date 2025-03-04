@@ -11,10 +11,12 @@ import { useAuth } from "@/hooks/use-auth";
 import { chatService } from "@/lib/services/api-service";
 import { chatsService } from "@/lib/services/database-service";
 import { questionsService } from "@/lib/services/database-service";
-import { Timestamp } from "firebase/firestore";
+import { Timestamp, Firestore } from "firebase/firestore";
 import { PodcastPlayer } from "@/components/podcast-player";
 import { Separator } from "@/components/ui/separator";
 import { FallbackMessage } from "@/components/ui/fallback-message";
+import {db} from "@/lib/firebase";
+
 
 type Message = {
   id: string;
@@ -62,7 +64,8 @@ export function ChatBox({ height = 40, onHeightChange, activePodcast }: ChatBoxP
       if (user) {
         try {
           setError(null);
-          const chatHistory = await chatsService.getActiveChatHistory(user.uid);
+
+          const chatHistory = await chatsService.getActiveChatHistory(db as Firestore, user.uid);
           
           if (chatHistory && chatHistory.length > 0) {
             const formattedMessages = chatHistory.map(chat => ({
@@ -149,7 +152,7 @@ export function ChatBox({ height = 40, onHeightChange, activePodcast }: ChatBoxP
   const loadSuggestedQuestions = async (podcastId: string) => {
     try {
       setError(null);
-      const questions = await questionsService.getPopularQuestions(podcastId, 3);
+      const questions = await questionsService.getPopularQuestions(db as Firestore, podcastId, 3);
       
       if (questions && questions.length > 0) {
         setSuggestedQuestions(
@@ -197,7 +200,7 @@ export function ChatBox({ height = 40, onHeightChange, activePodcast }: ChatBoxP
       // Save user message to Firestore if logged in
       if (user) {
         try {
-          await chatsService.createChatMessage({
+          await chatsService.createChatMessage(db as Firestore, {
             user_id: user.uid,
             chat_text: userMessage.content,
             create_datetime: Timestamp.fromDate(userMessage.timestamp),
@@ -224,7 +227,7 @@ export function ChatBox({ height = 40, onHeightChange, activePodcast }: ChatBoxP
       // Save assistant message to Firestore if logged in
       if (user) {
         try {
-          await chatsService.createChatMessage({
+          await chatsService.createChatMessage(db as Firestore, {
             user_id: user.uid,
             chat_text: assistantMessage.content,
             create_datetime: Timestamp.fromDate(assistantMessage.timestamp),
@@ -268,7 +271,7 @@ export function ChatBox({ height = 40, onHeightChange, activePodcast }: ChatBoxP
     if (user) {
       try {
         setError(null);
-        const chatHistory = await chatsService.getActiveChatHistory(user.uid);
+        const chatHistory = await chatsService.getActiveChatHistory(db as Firestore, user.uid);
         
         if (chatHistory && chatHistory.length > 0) {
           const formattedMessages = chatHistory.map(chat => ({

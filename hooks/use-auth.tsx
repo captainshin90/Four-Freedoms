@@ -6,6 +6,8 @@ import { authService } from '@/lib/services/auth-service';
 import { usersService } from '@/lib/services/database-service';
 import { User as UserType } from '@/lib/schemas/users';
 import { useToast } from '@/hooks/use-toast';
+import {db} from "@/lib/firebase";
+import { Firestore } from "firebase/firestore";
 
 interface AuthContextType {
   user: User | null;
@@ -30,7 +32,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Fetch user profile from Firestore
   const fetchUserProfile = async (userId: string) => {
     try {
-      const profile = await usersService.getUserById(userId);
+      const profile = await usersService.getUserById(db as Firestore, userId);
       if (profile) {
         setUserProfile(profile as UserType);
       } else {
@@ -177,7 +179,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const updateUserProfile = async (data: Partial<UserType>) => {
     try {
       if (user && userProfile) {
-        await usersService.updateUser(user.uid, data);
+        await usersService.updateUser(db as Firestore, user.uid, data);
         console.log("User profile updated successfully");
         // Refresh the profile
         await fetchUserProfile(user.uid);

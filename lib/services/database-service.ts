@@ -20,6 +20,7 @@ import {
 //  CACHE_SIZE_UNLIMITED
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { useDebugValue } from "react";
 
 //if (!(db instanceof Firestore)) {
 //  throw new Error("Firestore database is not initialized.");
@@ -48,7 +49,7 @@ import { db } from "@/lib/firebase";
 // Generic database service for CRUD operations
 class DatabaseService {
   // Create a new document with a specific ID
-  async createWithId(collection: string, id: string, data: any): Promise<void> {
+  async createWithId(db: Firestore, collection: string, id: string, data: any): Promise<void> {
     try {
       if (db instanceof Firestore && collection && id) {
         const docRef = doc(db, collection, id);
@@ -66,12 +67,13 @@ class DatabaseService {
   }
 
   // Create a new document with auto-generated ID
-  async create(collectionName: string, data: any): Promise<string | null> {
+  async create(db: Firestore, collectionName: string, data: any): Promise<string | null> {
     if (db instanceof Firestore && collectionName) {
       try {
         const collectionRef = collection(db, collectionName);
-        console.log(`Creating document in ${collectionName}`);
+        console.log(`123: Creating document in ${collectionName}`);
         const docRef = await addDoc(collectionRef, {
+
           ...data,
           created_at: Timestamp.now(),
           updated_at: Timestamp.now()
@@ -86,7 +88,7 @@ class DatabaseService {
   }
 
   // Get a document by ID
-  async getById(collectionName: string, id: string): Promise<DocumentData | null> {
+  async getById(db: Firestore, collectionName: string, id: string): Promise<DocumentData | null> {
     if (db instanceof Firestore && collectionName && id) {
       try {
           const docRef = doc(db, collectionName, id);
@@ -105,7 +107,7 @@ class DatabaseService {
   }
 
   // Update a document
-  async update(collectionName: string, id: string, data: any): Promise<void> {
+  async update(db: Firestore, collectionName: string, id: string, data: any): Promise<void> {
     if (db instanceof Firestore && collectionName && id) {
       try {
         const docRef = doc(db, collectionName, id);
@@ -122,7 +124,7 @@ class DatabaseService {
   }
 
   // Delete a document
-  async delete(collectionName: string, id: string): Promise<void> {
+  async delete(db: Firestore, collectionName: string, id: string): Promise<void> {
     if (db instanceof Firestore && collectionName && id) {
       try {
         const docRef = doc(db, collectionName, id);
@@ -136,7 +138,7 @@ class DatabaseService {
   }
 
   // Get all documents from a collection
-  async getAll(collectionName: string): Promise<DocumentData[] | null> {
+  async getAll(db: Firestore, collectionName: string): Promise<DocumentData[] | null> {
       if (db instanceof Firestore && collectionName) {
         try {
         const collectionRef = collection(db, collectionName);
@@ -155,7 +157,7 @@ class DatabaseService {
   }
 
   // Query documents with filters
-  async query(
+  async query(db: Firestore, 
     collectionName: string, 
     conditions: { field: string; operator: string; value: any }[],
     orderByField?: string,
@@ -220,20 +222,20 @@ export const databaseService = new DatabaseService();
 
 // Specific services for each collection
 export const usersService = {
-  async createUser(userId: string, userData: any): Promise<void> {
-    return databaseService.createWithId('users', userId, userData);
+  async createUser(db: Firestore, userId: string, userData: any): Promise<void> {
+    return databaseService.createWithId(db, 'users', userId, userData);
   },
   
-  async getUserById(userId: string): Promise<DocumentData | null> {
-    return databaseService.getById('users', userId);
+  async getUserById(db: Firestore, userId: string): Promise<DocumentData | null> {
+    return databaseService.getById(db, 'users', userId);
   },
   
-  async updateUser(userId: string, userData: any): Promise<void> {
-    return databaseService.update('users', userId, userData);
+  async updateUser(db: Firestore, userId: string, userData: any): Promise<void> {
+    return databaseService.update(db, 'users', userId, userData);
   },
   
-  async getUserByEmail(email: string): Promise<DocumentData | null> {
-    const users = await databaseService.query('users', [
+  async getUserByEmail(db: Firestore, email: string): Promise<DocumentData | null> {
+    const users = await databaseService.query(db, 'users', [
       { field: 'email1', operator: '==', value: email }
     ]);
     if (users)
@@ -241,214 +243,214 @@ export const usersService = {
     else return null;
   },
 
-  async getAllUsers(): Promise<DocumentData[] | null> {
-    return databaseService.getAll('users');
+  async getAllUsers(db: Firestore): Promise<DocumentData[] | null> {
+    return databaseService.getAll(db, 'users');
   }
 };
 
 export const subscriptionsService = {
-  async getAllSubscriptions(): Promise<DocumentData[] | null> {
-    return databaseService.getAll('subscriptions');
+  async getAllSubscriptions(db: Firestore): Promise<DocumentData[] | null> {
+    return databaseService.getAll(db, 'subscriptions');
   },
   
-  async getSubscriptionById(subscriptionId: string): Promise<DocumentData | null> {
-    return databaseService.getById('subscriptions', subscriptionId);
+  async getSubscriptionById(db: Firestore, subscriptionId: string): Promise<DocumentData | null> {
+    return databaseService.getById(db, 'subscriptions', subscriptionId);
   },
   
-  async createSubscription(subscriptionData: any): Promise<string | null> {
-    return databaseService.create('subscriptions', subscriptionData);
+  async createSubscription(db: Firestore, subscriptionData: any): Promise<string | null> {
+    return databaseService.create(db, 'subscriptions', subscriptionData);
   },
   
-  async updateSubscription(subscriptionId: string, subscriptionData: any): Promise<void> {
-    return databaseService.update('subscriptions', subscriptionId, subscriptionData);
+  async updateSubscription(db: Firestore, subscriptionId: string, subscriptionData: any): Promise<void> {
+    return databaseService.update(db, 'subscriptions', subscriptionId, subscriptionData);
   },
   
-  async getActiveSubscriptions(): Promise<DocumentData[] | null> {
-    return databaseService.query('subscriptions', [
+  async getActiveSubscriptions(db: Firestore, ): Promise<DocumentData[] | null> {
+    return databaseService.query(db, 'subscriptions', [
       { field: 'is_active', operator: '==', value: true }
     ]);
   }
 };
 
 export const personasService = {
-  async getAllPersonas(): Promise<DocumentData[] | null> {
-    return databaseService.getAll('personas');
+  async getAllPersonas(db: Firestore, ): Promise<DocumentData[] | null> {
+    return databaseService.getAll(db, 'personas');
   },
   
-  async getPersonaById(personaId: string): Promise<DocumentData | null> {
-    return databaseService.getById('personas', personaId);
+  async getPersonaById(db: Firestore, personaId: string): Promise<DocumentData | null> {
+    return databaseService.getById(db, 'personas', personaId);
   },
   
-  async createPersona(personaData: any): Promise<string | null> {
-    return databaseService.create('personas', personaData);
+  async createPersona(db: Firestore, personaData: any): Promise<string | null> {
+    return databaseService.create(db, 'personas', personaData);
   },
   
-  async getPersonasByType(type: string): Promise<DocumentData[] | null> {
-    return databaseService.query('personas', [
+  async getPersonasByType(db: Firestore, type: string): Promise<DocumentData[] | null> {
+    return databaseService.query(db, 'personas', [
       { field: 'persona_type', operator: '==', value: type }
     ]);
   }
 };
 
 export const documentsService = {
-  async getAllDocuments(): Promise<DocumentData[] | null> {
-    return databaseService.getAll('documents');
+  async getAllDocuments(db: Firestore, ): Promise<DocumentData[] | null> {
+    return databaseService.getAll(db, 'documents');
   },
   
-  async getDocumentById(docId: string): Promise<DocumentData | null> {
-    return databaseService.getById('documents', docId);
+  async getDocumentById(db: Firestore, docId: string): Promise<DocumentData | null> {
+    return databaseService.getById(db, 'documents', docId);
   },
   
-  async createDocument(documentData: any): Promise<string | null> {
-    return databaseService.create('documents', documentData);
+  async createDocument(db: Firestore, documentData: any): Promise<string | null> {
+    return databaseService.create(db, 'documents', documentData);
   },
   
-  async updateDocument(docId: string, documentData: any): Promise<void> {
-    return databaseService.update('documents', docId, documentData);
+  async updateDocument(db: Firestore, docId: string, documentData: any): Promise<void> {
+    return databaseService.update(db, 'documents', docId, documentData);
   },
   
-  async getDocumentsByTopic(topicTag: string): Promise<DocumentData[] | null> {
-    return databaseService.query('documents', [
+  async getDocumentsByTopic(db: Firestore, topicTag: string): Promise<DocumentData[] | null> {
+    return databaseService.query(db, 'documents', [
       { field: 'topic_tags', operator: 'array-contains', value: topicTag }
     ]);
   }
 };
 
 export const topicsService = {
-  async getAllTopics(): Promise<DocumentData[] | null> {
-    return databaseService.getAll('topics');
+  async getAllTopics(db: Firestore, ): Promise<DocumentData[] | null> {
+    return databaseService.getAll(db, 'topics');
   },
   
-  async getTopicById(topicId: string): Promise<DocumentData | null> {
-    return databaseService.getById('topics', topicId);
+  async getTopicById(db: Firestore, topicId: string): Promise<DocumentData | null> {
+    return databaseService.getById(db, 'topics', topicId);
   },
   
-  async createTopic(topicData: any): Promise<string | null> {
-    return databaseService.create('topics', topicData);
+  async createTopic(db: Firestore, topicData: any): Promise<string | null> {
+    return databaseService.create(db, 'topics', topicData);
   },
   
-  async updateTopic(topicId: string, topicData: any): Promise<void> {
-    return databaseService.update('topics', topicId, topicData);
+  async updateTopic(db: Firestore, topicId: string, topicData: any): Promise<void> {
+    return databaseService.update(db, 'topics', topicId, topicData);
   },
   
-  async getTopicsByType(type: string): Promise<DocumentData[] | null> {
-    return databaseService.query('topics', [
+  async getTopicsByType(db: Firestore, type: string): Promise<DocumentData[] | null> {
+    return databaseService.query(db, 'topics', [
       { field: 'topic_type', operator: '==', value: type }
     ]);
   },
   
-  async getPublicTopics(): Promise<DocumentData[] | null> {
-    return databaseService.query('topics', [
+  async getPublicTopics(db: Firestore, ): Promise<DocumentData[] | null> {
+    return databaseService.query(db, 'topics', [
       { field: 'is_private', operator: '==', value: false }
     ]);
   }
 };
 
 export const transcriptsService = {
-  async getAllTranscripts(): Promise<DocumentData[] | null> {
-    return databaseService.getAll('transcripts');
+  async getAllTranscripts(db: Firestore): Promise<DocumentData[] | null> {
+    return databaseService.getAll(db, 'transcripts');
   },
   
-  async getTranscriptById(transcriptId: string): Promise<DocumentData | null> {
-    return databaseService.getById('transcripts', transcriptId);
+  async getTranscriptById(db: Firestore, transcriptId: string): Promise<DocumentData | null> {
+    return databaseService.getById(db, 'transcripts', transcriptId);
   },
   
-  async createTranscript(transcriptData: any): Promise<string | null> {
-    return databaseService.create('transcripts', transcriptData);
+  async createTranscript(db: Firestore, transcriptData: any): Promise<string | null> {
+    return databaseService.create(db, 'transcripts', transcriptData);
   },
   
-  async updateTranscript(transcriptId: string, transcriptData: any): Promise<void> {
-    return databaseService.update('transcripts', transcriptId, transcriptData);
+  async updateTranscript(db: Firestore, transcriptId: string, transcriptData: any): Promise<void> {
+    return databaseService.update(db, 'transcripts', transcriptId, transcriptData);
   },
   
-  async getTranscriptsByType(type: string): Promise<DocumentData[] | null> {
-    return databaseService.query('transcripts', [
+  async getTranscriptsByType(db: Firestore, type: string): Promise<DocumentData[] | null> {
+    return databaseService.query(db, 'transcripts', [
       { field: 'transcript_type', operator: '==', value: type }
     ]);
   },
   
-  async getTranscriptsByTopic(topicTag: string): Promise<DocumentData[] | null> {
-    return databaseService.query('transcripts', [
+  async getTranscriptsByTopic(db: Firestore, topicTag: string): Promise<DocumentData[] | null> {
+    return databaseService.query(db, 'transcripts', [
       { field: 'topic_tags', operator: 'array-contains', value: topicTag }
     ]);
   }
 };
 
 export const promptsService = {
-  async getAllPrompts(): Promise<DocumentData[] | null> {
-    return databaseService.getAll('prompts');
+  async getAllPrompts(db: Firestore): Promise<DocumentData[] | null> {
+    return databaseService.getAll(db, 'prompts');
   },
   
-  async getPromptById(promptId: string): Promise<DocumentData | null> {
-    return databaseService.getById('prompts', promptId);
+  async getPromptById(db: Firestore, promptId: string): Promise<DocumentData | null> {
+    return databaseService.getById(db, 'prompts', promptId);
   },
   
-  async createPrompt(promptData: any): Promise<string | null> {
-    return databaseService.create('prompts', promptData);
+  async createPrompt(db: Firestore, promptData: any): Promise<string | null> {
+    return databaseService.create(db, 'prompts', promptData);
   },
   
-  async updatePrompt(promptId: string, promptData: any): Promise<void> {
-    return databaseService.update('prompts', promptId, promptData);
+  async updatePrompt(db: Firestore, promptId: string, promptData: any): Promise<void> {
+    return databaseService.update(db, 'prompts', promptId, promptData);
   },
   
-  async getActivePrompts(): Promise<DocumentData[] | null> {
-    return databaseService.query('prompts', [
+  async getActivePrompts(db: Firestore): Promise<DocumentData[] | null> {
+    return databaseService.query(db, 'prompts', [
       { field: 'is_active', operator: '==', value: true }
     ]);
   },
   
-  async getPromptsByPersona(personaId: string): Promise<DocumentData[] | null> {
-    return databaseService.query('prompts', [
+  async getPromptsByPersona(db: Firestore, personaId: string): Promise<DocumentData[] | null> {
+    return databaseService.query(db, 'prompts', [
       { field: 'target_persona', operator: '==', value: personaId }
     ]);
   }
 };
 
 export const podcastsService = {
-  async getAllPodcasts(): Promise<DocumentData[] | null> {
-    return databaseService.getAll('podcasts');
+  async getAllPodcasts(db: Firestore): Promise<DocumentData[] | null> {
+    return databaseService.getAll(db, 'podcasts');
   },
   
-  async getPodcastById(podcastId: string): Promise<DocumentData | null> {
-    return databaseService.getById('podcasts', podcastId);
+  async getPodcastById(db: Firestore, podcastId: string): Promise<DocumentData | null> {
+    return databaseService.getById(db, 'podcasts', podcastId);
   },
   
-  async createPodcast(podcastData: any): Promise<string | null> {
-    return databaseService.create('podcasts', podcastData);
+  async createPodcast(db: Firestore, podcastData: any): Promise<string | null> {
+    return databaseService.create(db, 'podcasts', podcastData);
   },
   
-  async updatePodcast(podcastId: string, podcastData: any): Promise<void> {
-    return databaseService.update('podcasts', podcastId, podcastData);
+  async updatePodcast(db: Firestore, podcastId: string, podcastData: any): Promise<void> {
+    return databaseService.update(db, 'podcasts', podcastId, podcastData);
   },
   
-  async getPodcastsByType(type: string): Promise<DocumentData[] | null> {
-    return databaseService.query('podcasts', [
+  async getPodcastsByType(db: Firestore, type: string): Promise<DocumentData[] | null> {
+    return databaseService.query(db, 'podcasts', [
       { field: 'podcast_type', operator: '==', value: type }
     ]);
   },
   
-  async getPodcastsByTopic(topicTag: string): Promise<DocumentData[] | null> {
-    return databaseService.query('podcasts', [
+  async getPodcastsByTopic(db: Firestore, topicTag: string): Promise<DocumentData[] | null> {
+    return databaseService.query(db, 'podcasts', [
       { field: 'topic_tags', operator: 'array-contains', value: topicTag }
     ]);
   },
   
-  async getPodcastsBySubscriptionType(subscriptionType: string): Promise<DocumentData[] | null> {
-    return databaseService.query('podcasts', [
+  async getPodcastsBySubscriptionType(db: Firestore, subscriptionType: string): Promise<DocumentData[] | null> {
+    return databaseService.query(db, 'podcasts', [
       { field: 'subscription_type', operator: '==', value: subscriptionType }
     ]);
   }
 };
 
 export const episodesService = {
-  async getAllEpisodes(podcastId: string): Promise<DocumentData[] | null> {
-    return databaseService.query('episodes', [
+  async getAllEpisodes(db: Firestore, podcastId: string): Promise<DocumentData[] | null> {
+    return databaseService.query(db, 'episodes', [
       { field: 'podcast_id', operator: '==', value: podcastId }
     ]);
   },
   
-  async getEpisodeById(podcastId: string, episodeId: string): Promise<DocumentData | null> {
-    const episodes = await databaseService.query('episodes', [
+  async getEpisodeById(db: Firestore, podcastId: string, episodeId: string): Promise<DocumentData | null> {
+    const episodes = await databaseService.query(db, 'episodes', [
       { field: 'podcast_id', operator: '==', value: podcastId },
       { field: 'episode_id', operator: '==', value: episodeId }
     ]);
@@ -457,22 +459,22 @@ export const episodesService = {
     else return null;
   },
   
-  async createEpisode(episodeData: any): Promise<string | null> {
-    return databaseService.create('episodes', episodeData);
+  async createEpisode(db: Firestore, episodeData: any): Promise<string | null> {
+    return databaseService.create(db, 'episodes', episodeData);
   },
   
-  async updateEpisode(episodeId: string, episodeData: any): Promise<void> {
-    return databaseService.update('episodes', episodeId, episodeData);
+  async updateEpisode(db: Firestore, episodeId: string, episodeData: any): Promise<void> {
+    return databaseService.update(db, 'episodes', episodeId, episodeData);
   },
   
-  async getEpisodesByTopic(topicTag: string): Promise<DocumentData[] | null> {
-    return databaseService.query('episodes', [
+  async getEpisodesByTopic(db: Firestore, topicTag: string): Promise<DocumentData[] | null> {
+    return databaseService.query(db, 'episodes', [
       { field: 'topic_tags', operator: 'array-contains', value: topicTag }
     ]);
   },
   
-  async getRecentEpisodes(limit: number = 10): Promise<DocumentData[] | null> {
-    return databaseService.query(
+  async getRecentEpisodes(db: Firestore, limit: number = 10): Promise<DocumentData[] | null> {
+    return databaseService.query(db, 
       'episodes', 
       [], 
       'publish_datetime', 
@@ -481,8 +483,8 @@ export const episodesService = {
     );
   },
   
-  async getPopularEpisodes(limit: number = 10): Promise<DocumentData[] | null> {
-    return databaseService.query(
+  async getPopularEpisodes(db: Firestore, limit: number = 10): Promise<DocumentData[] | null> {
+    return databaseService.query(db, 
       'episodes', 
       [], 
       'views', 
@@ -493,21 +495,21 @@ export const episodesService = {
 };
 
 export const questionsService = {
-  async getAllQuestions(podcastId?: string): Promise<DocumentData[] | null> {
+  async getAllQuestions(db: Firestore, podcastId?: string): Promise<DocumentData[] | null> {
     if (podcastId) {
-      return databaseService.query('questions', [
+      return databaseService.query(db, 'questions', [
         { field: 'podcast_id', operator: '==', value: podcastId }
       ]);
     }
-    return databaseService.getAll('questions');
+    return databaseService.getAll(db, 'questions');
   },
   
-  async createQuestion(questionData: any): Promise<string | null> {
-    return databaseService.create('questions', questionData);
+  async createQuestion(db: Firestore, questionData: any): Promise<string | null> {
+    return databaseService.create(db, 'questions', questionData);
   },
   
-  async getPopularQuestions(podcastId: string, limit: number = 10): Promise<DocumentData[] | null> {
-    return databaseService.query(
+  async getPopularQuestions(db: Firestore, podcastId: string, limit: number = 10): Promise<DocumentData[] | null> {
+    return databaseService.query(db, 
       'questions',
       [{ field: 'podcast_id', operator: '==', value: podcastId }],
       'clicks',
@@ -516,16 +518,16 @@ export const questionsService = {
     );
   },
   
-  async getUserQuestions(userId: string): Promise<DocumentData[] | null> {
-    return databaseService.query('questions', [
+  async getUserQuestions(db: Firestore, userId: string): Promise<DocumentData[] | null> {
+    return databaseService.query(db, 'questions', [
       { field: 'user_id', operator: '==', value: userId }
     ]);
   }
 };
 
 export const chatsService = {
-  async getChatHistory(userId: string): Promise<DocumentData[] | null> {
-    return databaseService.query(
+  async getChatHistory(db: Firestore, userId: string): Promise<DocumentData[] | null> {
+    return databaseService.query(db, 
       'chats',
       [{ field: 'user_id', operator: '==', value: userId }],
       'create_datetime',
@@ -533,18 +535,18 @@ export const chatsService = {
     );
   },
   
-  async createChatMessage(chatData: any): Promise<string | null> {
-    return databaseService.create('chats', chatData);
+  async createChatMessage(db: Firestore, chatData: any): Promise<string | null> {
+    return databaseService.create(db, 'chats', chatData);
   },
   
-  async deleteChatMessage(chatId: string): Promise<void> {
-    return databaseService.update('chats', chatId, {
+  async deleteChatMessage(db: Firestore, chatId: string): Promise<void> {
+    return databaseService.update(db, 'chats', chatId, {
       delete_datetime: Timestamp.now()
     });
   },
   
-  async getActiveChatHistory(userId: string): Promise<DocumentData[] | null> {
-    return databaseService.query(
+  async getActiveChatHistory(db: Firestore, userId: string): Promise<DocumentData[] | null> {
+    return databaseService.query(db, 
       'chats',
       [
         { field: 'user_id', operator: '==', value: userId },

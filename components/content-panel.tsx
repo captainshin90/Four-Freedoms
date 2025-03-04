@@ -29,9 +29,9 @@ export function ContentPanel({
     if (selectedTopicId) {
       // In a real app, you would fetch the banner image for the selected topic
       // For now, we'll use a placeholder
-      setBannerImage(`https://images.unsplash.com/photo-1572719314664-fb1a81c61e43?w=1200&h=400&fit=crop`);
+      setBannerImage(`https://images.unsplash.com/photo-1541726260-e6b6a6a08b27?w=1200&h=400&fit=crop`);
     } else {
-      setBannerImage(`https://images.unsplash.com/photo-1519501025264-65ba15a82390?w=1200&h=400&fit=crop`);
+      setBannerImage(`https://images.unsplash.com/photo-1541726260-e6b6a6a08b27?w=1200&h=400&fit=crop`);
     }
   }, [selectedTopicId]);
 

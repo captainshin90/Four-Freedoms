@@ -45,4 +45,4 @@ const microsoftProvider = new OAuthProvider('microsoft.com');
 
 console.log('Firebase Emulator=' + process.env.USE_FIREBASE_EMULATOR);
 
-export { auth, db, googleProvider, facebookProvider, microsoftProvider };
+export { auth, db, firebaseConfig, googleProvider, facebookProvider, microsoftProvider };

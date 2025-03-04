@@ -9,6 +9,8 @@ import { podcastsService } from "@/lib/services/database-service";
 import { Podcast } from "@/lib/schemas/podcasts";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
+import {Firestore} from "firebase/firestore";
+import {db} from "@/lib/firebase";
 
 interface PodcastListProps {
   topicId?: string;
@@ -30,9 +32,9 @@ export function PodcastList({ topicId, onSelectPodcast }: PodcastListProps) {
         let podcastData;
         
         if (topicId) {
-          podcastData = await podcastsService.getPodcastsByTopic(topicId);
+          podcastData = await podcastsService.getPodcastsByTopic(db as Firestore, topicId);
         } else {
-          podcastData = await podcastsService.getAllPodcasts();
+          podcastData = await podcastsService.getAllPodcasts(db as Firestore);
         }
         
         setPodcasts(podcastData as Podcast[]);
@@ -176,8 +178,8 @@ export function PodcastList({ topicId, onSelectPodcast }: PodcastListProps) {
   }
 
   // If no podcasts from database, use mock data
-  const displayPodcasts = podcasts.length > 0 ? podcasts : mockPodcasts;
-
+  const displayPodcasts = podcasts && podcasts.length > 0 ? podcasts : mockPodcasts;
+  
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
       {displayPodcasts.map((podcast) => (

@@ -1,3 +1,4 @@
+import dotenv from 'dotenv';
 import { 
   usersService, 
   subscriptionsService, 
@@ -12,15 +13,55 @@ import {
   chatsService,
   databaseService
 } from './services/database-service';
-import { Timestamp } from 'firebase/firestore';
+import { initializeApp, getApps, FirebaseApp } from "firebase/app";
+import { getFirestore, Firestore, Timestamp } from "firebase/firestore";
+
+// Your web app's Firebase configuration
+const firebaseConfig = {
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
+};
+
+let app: FirebaseApp | null;
+let db: Firestore | null;
 
 // Function to seed initial data into Firestore
 export async function seedDatabase() {
   try {
     console.log('Starting database seeding...');
+
+    dotenv.config();
+    //console.log("Firebase apiKey=" + process.env.NEXT_PUBLIC_FIREBASE_API_KEY);
+    console.log("Firebase appId=" + process.env.NEXT_PUBLIC_FIREBASE_APP_ID);
     
+    if (!getApps().length) {
+      try {
+        // Load environment variables
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        console.log("Firebase initialized successfully");
+      } catch (error) {
+        console.error("Firebase initialization error:", error);
+      }
+    } else {
+        app = getApps()[0];  
+        if (!db)
+          db = getFirestore(app);
+    }
+
     // Seed subscriptions
-    await seedSubscriptions();
+    if (!db) {
+      console.error("Firestore is not initialized.");
+      return;
+    }
+
+    await seedSubscriptions(db);
     
     // Seed personas
 //    await seedPersonas();
@@ -56,7 +97,7 @@ export async function seedDatabase() {
   }
 }
 
-async function seedSubscriptions() {
+async function seedSubscriptions(db: Firestore) {
   console.log('Seeding subscriptions...');
   
   const subscriptions = [
@@ -90,11 +131,11 @@ async function seedSubscriptions() {
   ];
   
   for (const subscription of subscriptions) {
-    await databaseService.create('subscriptions', subscription);
+    await databaseService.create(db, 'subscriptions', subscription);
   }
 }
 
-async function seedPersonas() {
+async function seedPersonas(db: Firestore) {
   console.log('Seeding personas...');
   
   const personas = [
@@ -131,11 +172,11 @@ async function seedPersonas() {
   ];
   
   for (const persona of personas) {
-    await databaseService.create('personas', persona);
+    await databaseService.create(db, 'personas', persona);
   }
 }
 
-async function seedTopics() {
+async function seedTopics(db: Firestore) {
   console.log('Seeding topics...');
   
   const topics = [
@@ -222,15 +263,15 @@ async function seedTopics() {
   ];
   
   for (const topic of topics) {
-    await databaseService.create('topics', topic);
+    await databaseService.create(db, 'topics', topic);
   }
 }
 
-async function seedPrompts() {
+async function seedPrompts(db: Firestore) {
   console.log('Seeding prompts...');
   
   // Get persona IDs
-  const personas = await personasService.getAllPersonas();
+  const personas = await personasService.getAllPersonas(db);
   
   if (!personas || personas.length === 0) {
     console.error('No personas found for prompts');

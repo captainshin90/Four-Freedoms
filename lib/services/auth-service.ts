@@ -12,6 +12,7 @@ import {
   onAuthStateChanged
 } from "firebase/auth";
 import { 
+  db,
   auth,
   googleProvider, 
   facebookProvider, 
@@ -33,7 +34,7 @@ class AuthService {
   async signUpWithEmail(email: string, password: string, userData: any): Promise<UserCredential> {
     try {
 
-      if (!auth) { 
+      if (!db || !auth) { 
         return Promise.reject(new Error("Firebase Auth is not initialized."));
       }
     
@@ -44,7 +45,7 @@ class AuthService {
       console.log("User created successfully:", userCredential.user.uid);
       
       // Create the user profile in Firestore
-      await usersService.createUser(userCredential.user.uid, {
+      await usersService.createUser(db, userCredential.user.uid, {
         login_id: email,
         email1: email,
         first_name: userData.first_name || '',
@@ -99,7 +100,7 @@ class AuthService {
     try {
       console.log(`Attempting to sign in with ${providerName} using ${method} method`);
       
-      if (!auth) { 
+      if (!db || !auth) { 
         return Promise.reject(new Error("Firebase Auth is not initialized."));
       }
 
@@ -117,13 +118,13 @@ class AuthService {
       }
       
       // Check if the user exists in Firestore
-      const userDoc = await usersService.getUserById(userCredential.user.uid);
+      const userDoc = await usersService.getUserById(db, userCredential.user.uid);
       
       // If the user doesn't exist, create a profile
       if (!userDoc) {
         console.log("User doesn't exist in Firestore, creating profile...");
         const user = userCredential.user;
-        await usersService.createUser(user.uid, {
+        await usersService.createUser(db, user.uid, {
           login_id: user.email,
           email1: user.email,
           first_name: user.displayName?.split(' ')[0] || '',
@@ -146,7 +147,7 @@ class AuthService {
     try {
       console.log("Getting redirect result...");
 
-      if (!auth) { 
+      if (!db || !auth) { 
         return Promise.reject(new Error("Firebase Auth is not initialized."));
       }
 
@@ -156,13 +157,13 @@ class AuthService {
         console.log("Redirect sign in successful:", result.user.uid);
         
         // Check if the user exists in Firestore
-        const userDoc = await usersService.getUserById(result.user.uid);
+        const userDoc = await usersService.getUserById(db, result.user.uid);
         
         // If the user doesn't exist, create a profile
         if (!userDoc) {
           console.log("User doesn't exist in Firestore, creating profile...");
           const user = result.user;
-          await usersService.createUser(user.uid, {
+          await usersService.createUser(db, user.uid, {
             login_id: user.email,
             email1: user.email,
             first_name: user.displayName?.split(' ')[0] || '',
@@ -218,10 +219,10 @@ class AuthService {
   // Subscribe to auth state changes
   onAuthStateChanged(callback: (user: User | null) => void): () => void {
     
-    if (!auth) {
+    if (!auth || auth === undefined) {
       console.log("Firebase Auth is not initialized.");
-//      throw new Error("Firebase Auth is not initialized.");
-}
+      return () => {}; // Return a no-op function
+    }
     return onAuthStateChanged(auth as Auth, callback);
   }
 }

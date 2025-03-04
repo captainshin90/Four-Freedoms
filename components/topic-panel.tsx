@@ -9,6 +9,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/hooks/use-auth";
 import { topicsService } from "@/lib/services/database-service";
 import { Topic } from "@/lib/schemas/topics";
+import {db} from "@/lib/firebase";
+import { Firestore } from "firebase/firestore";
 
 interface TopicPanelProps {
   onSelectTopic?: (topicId: string) => void;
@@ -30,13 +32,13 @@ export function TopicPanel({ onSelectTopic }: TopicPanelProps) {
           // If user is logged in, fetch their followed topics
           const userTopics = await Promise.all(
             userProfile.following_topics.map(async (topicId) => {
-              return await topicsService.getTopicById(topicId);
+              return await topicsService.getTopicById(db as Firestore, topicId);
             })
           );
           fetchedTopics = userTopics.filter(Boolean);
         } else {
           // Otherwise, fetch public topics
-          fetchedTopics = await topicsService.getPublicTopics();
+          fetchedTopics = await topicsService.getPublicTopics(db as Firestore);
           
           // Filter to include location-based topics first
           if (userLocation && fetchedTopics) {
@@ -101,14 +103,14 @@ export function TopicPanel({ onSelectTopic }: TopicPanelProps) {
       
       <ScrollArea className="flex-1">
         <div className="p-2 space-y-2">
-          {topics.map((topic) => (
+          {mockTopics.map((topic) => (
             <div key={topic.topic_id} onClick={() => handleTopicClick(topic)}>
               {isExpanded && selectedTopic?.topic_id === topic.topic_id ? (
                 <Card className="cursor-pointer hover:bg-accent transition-colors">
                   <CardContent className="p-3">
                     <div className="space-y-3">
                         <Image 
-                          src={topic.topic_image || "https://images.unsplash.com/photo-1519501025264-65ba15a82390?w=300&h=200&fit=crop"} 
+                          src={topic.topic_image} width="300" height="200" 
                           alt={topic.topic_name}
                           layout="fill"
                           objectFit="cover"
@@ -130,7 +132,7 @@ export function TopicPanel({ onSelectTopic }: TopicPanelProps) {
                 >
                   <div className="h-8 w-8 rounded-md overflow-hidden mr-2">
                     <Image 
-                      src={topic.topic_image || "https://images.unsplash.com/photo-1519501025264-65ba15a82390?w=300&h=200&fit=crop"} 
+                      src={topic.topic_image} width="300" height="200" 
                       alt={topic.topic_name}
                       className="object-cover w-full h-full"
                     />
@@ -145,6 +147,14 @@ export function TopicPanel({ onSelectTopic }: TopicPanelProps) {
     </div>
   );
 }
+
+// {topics.map((topic) => (
+
+//<Image 
+//src={topic.topic_image || "https://images.unsplash.com/photo-1519501025264-65ba15a82390?w=300&h=200&fit=crop"} 
+//alt={topic.topic_name}
+//layout="fill"
+//objectFit="cover"
 
 // Mock data for fallback
 const mockTopics = [
