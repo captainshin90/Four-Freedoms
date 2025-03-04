@@ -21,9 +21,9 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
-if (!(db instanceof Firestore)) {
-  throw new Error("Firestore database is not initialized.");
-}
+//if (!(db instanceof Firestore)) {
+//  throw new Error("Firestore database is not initialized.");
+//}
 
 
 // Enable offline persistence with a larger cache size
