@@ -64,7 +64,7 @@ export function ChatBox({ height = 40, onHeightChange, activePodcast }: ChatBoxP
           setError(null);
           const chatHistory = await chatsService.getActiveChatHistory(user.uid);
           
-          if (chatHistory.length > 0) {
+          if (chatHistory && chatHistory.length > 0) {
             const formattedMessages = chatHistory.map(chat => ({
               id: chat.id,
               content: chat.chat_text,
@@ -151,7 +151,7 @@ export function ChatBox({ height = 40, onHeightChange, activePodcast }: ChatBoxP
       setError(null);
       const questions = await questionsService.getPopularQuestions(podcastId, 3);
       
-      if (questions.length > 0) {
+      if (questions && questions.length > 0) {
         setSuggestedQuestions(
           questions.map(q => ({
             id: q.id,
@@ -270,7 +270,7 @@ export function ChatBox({ height = 40, onHeightChange, activePodcast }: ChatBoxP
         setError(null);
         const chatHistory = await chatsService.getActiveChatHistory(user.uid);
         
-        if (chatHistory.length > 0) {
+        if (chatHistory && chatHistory.length > 0) {
           const formattedMessages = chatHistory.map(chat => ({
             id: chat.id,
             content: chat.chat_text,

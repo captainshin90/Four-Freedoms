@@ -1,4 +1,5 @@
 import { 
+  Auth, 
   createUserWithEmailAndPassword, 
   signInWithEmailAndPassword, 
   signInWithPopup,
@@ -11,7 +12,7 @@ import {
   onAuthStateChanged
 } from "firebase/auth";
 import { 
-  auth, 
+  auth,
   googleProvider, 
   facebookProvider, 
   microsoftProvider 
@@ -23,13 +24,19 @@ export type AuthMethod = 'popup' | 'redirect';
 
 class AuthService {
   // Get the current user
+
   getCurrentUser(): User | null {
-    return auth.currentUser;
+    return auth ? auth.currentUser : null;
   }
 
   // Sign up with email and password
   async signUpWithEmail(email: string, password: string, userData: any): Promise<UserCredential> {
     try {
+
+      if (!auth) { 
+        return Promise.reject(new Error("Firebase Auth is not initialized."));
+      }
+    
       console.log("Attempting to create user with email:", email);
       
       // Create the user in Firebase Auth
@@ -57,6 +64,10 @@ class AuthService {
   // Sign in with email and password
   async signInWithEmail(email: string, password: string): Promise<UserCredential> {
     try {
+      if (!auth) { 
+        return Promise.reject(new Error("Firebase Auth is not initialized."));
+      }
+
       console.log("Attempting to sign in with email:", email);
       const result = await signInWithEmailAndPassword(auth, email, password);
       console.log("Email sign in successful:", result.user.uid);
@@ -88,6 +99,10 @@ class AuthService {
     try {
       console.log(`Attempting to sign in with ${providerName} using ${method} method`);
       
+      if (!auth) { 
+        return Promise.reject(new Error("Firebase Auth is not initialized."));
+      }
+
       // Sign in with the provider using the specified method
       let userCredential;
       
@@ -130,6 +145,11 @@ class AuthService {
   async getRedirectResult(): Promise<UserCredential | null> {
     try {
       console.log("Getting redirect result...");
+
+      if (!auth) { 
+        return Promise.reject(new Error("Firebase Auth is not initialized."));
+      }
+
       const result = await getRedirectResult(auth);
       
       if (result) {
@@ -166,6 +186,10 @@ class AuthService {
   // Sign out
   async signOut(): Promise<void> {
     try {
+      if (!auth) { 
+        return Promise.reject(new Error("Firebase Auth is not initialized."));
+      }
+
       console.log("Attempting to sign out user");
       await signOut(auth);
       console.log("User signed out successfully");
@@ -178,6 +202,10 @@ class AuthService {
   // Reset password
   async resetPassword(email: string): Promise<void> {
     try {
+      if (!auth) { 
+        return Promise.reject(new Error("Firebase Auth is not initialized."));
+      }
+
       console.log("Sending password reset email to:", email);
       await sendPasswordResetEmail(auth, email);
       console.log("Password reset email sent successfully");
@@ -189,6 +217,9 @@ class AuthService {
 
   // Subscribe to auth state changes
   onAuthStateChanged(callback: (user: User | null) => void): () => void {
+    if (!auth) {
+      throw new Error("Firebase Auth is not initialized.");
+    }
     return onAuthStateChanged(auth, callback);
   }
 }

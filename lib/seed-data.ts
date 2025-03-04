@@ -232,7 +232,7 @@ async function seedPrompts() {
   // Get persona IDs
   const personas = await personasService.getAllPersonas();
   
-  if (personas.length === 0) {
+  if (!personas || personas.length === 0) {
     console.error('No personas found for prompts');
     return;
   }

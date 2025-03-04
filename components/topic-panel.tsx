@@ -39,7 +39,7 @@ export function TopicPanel({ onSelectTopic }: TopicPanelProps) {
           fetchedTopics = await topicsService.getPublicTopics();
           
           // Filter to include location-based topics first
-          if (userLocation) {
+          if (userLocation && fetchedTopics) {
             fetchedTopics = [
               ...fetchedTopics.filter(t => t.topic_name === userLocation),
               ...fetchedTopics.filter(t => t.topic_name !== userLocation)

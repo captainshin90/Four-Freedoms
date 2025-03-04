@@ -1,7 +1,7 @@
 // Import the functions you need from the SDKs you need
-import { initializeApp, getApps } from "firebase/app";
-import { getAuth, GoogleAuthProvider, FacebookAuthProvider, OAuthProvider } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import { initializeApp, getApps, FirebaseApp } from "firebase/app";
+import { Auth, getAuth, GoogleAuthProvider, FacebookAuthProvider, OAuthProvider } from "firebase/auth";
+import { getFirestore, Firestore } from "firebase/firestore";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -15,10 +15,15 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-let app;
+let app: FirebaseApp | undefined;
+let db: Firestore | undefined;
+let auth: Auth | undefined;
+
 if (!getApps().length) {
   try {
     app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
     console.log("Firebase initialized successfully");
   } catch (error) {
     console.error("Firebase initialization error:", error);
@@ -26,10 +31,6 @@ if (!getApps().length) {
 } else {
   app = getApps()[0];
 }
-
-// Initialize Firebase services
-const auth = getAuth(app);
-const db = getFirestore(app);
 
 // Initialize providers
 const googleProvider = new GoogleAuthProvider();
