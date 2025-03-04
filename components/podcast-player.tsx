@@ -14,6 +14,7 @@ import {
   ThumbsDown
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import Image from "next/image";
 import { Slider } from "@/components/ui/slider";
 import { formatTime } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
@@ -180,7 +181,7 @@ export function PodcastPlayer({ podcast, isMinimized = false, onToggleMinimize }
       <div className="border-t bg-card p-4 flex items-center justify-between">
         <div className="flex items-center space-x-4 w-1/4">
           <div className="h-12 w-12 rounded-md bg-muted overflow-hidden">
-            <img src={podcast.image} alt={podcast.title} className="w-full h-full object-cover" />
+            <Image src={podcast.image} alt={podcast.title} className="w-full h-full object-cover" />
           </div>
           <div className="truncate">
             <h3 className="font-medium truncate">{podcast.title}</h3>
@@ -257,9 +258,7 @@ export function PodcastPlayer({ podcast, isMinimized = false, onToggleMinimize }
       <div className="p-4 space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="h-12 w-12 rounded-md bg-muted overflow-hidden">
-              <img src={podcast.image} alt={podcast.title} className="w-full h-full object-cover" />
-            </div>
+              <Image src={podcast.image} alt={podcast.title} layout="fill" objectFit="cover" />
             <div>
               <h3 className="font-medium">{podcast.title}</h3>
             </div>
@@ -289,51 +288,53 @@ export function PodcastPlayer({ podcast, isMinimized = false, onToggleMinimize }
           </div>
         </div>
         
-        <div className="space-y-2">
-          <div className="flex justify-between text-xs text-muted-foreground">
-            <span>{formatTime(currentTime)}</span>
-            <span>{formatTime(duration)}</span>
-          </div>
-          <Slider
-            value={[currentTime]}
-            max={duration || 100}
-            step={1}
-            onValueChange={handleSeek}
-          />
-        </div>
-        
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <Button variant="ghost" size="icon" onClick={toggleMute}>
-              {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
-            </Button>
+        <div>
+          <div className="space-y-2">
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>{formatTime(currentTime)}</span>
+              <span>{formatTime(duration)}</span>
+            </div>
             <Slider
-              value={[isMuted ? 0 : volume]}
-              max={100}
+              value={[currentTime]}
+              max={duration || 100}
               step={1}
-              onValueChange={handleVolumeChange}
-              className="w-24"
+              onValueChange={handleSeek}
             />
           </div>
           
-          <div className="flex items-center space-x-4">
-            <Button variant="ghost" size="icon" onClick={handleSkipBack}>
-              <SkipBack className="h-5 w-5" />
-            </Button>
-            <Button 
-              onClick={togglePlay} 
-              variant="outline" 
-              size="icon" 
-              className="h-12 w-12 rounded-full"
-            >
-              {isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6" />}
-            </Button>
-            <Button variant="ghost" size="icon" onClick={handleSkipForward}>
-              <SkipForward className="h-5 w-5" />
-            </Button>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <Button variant="ghost" size="icon" onClick={toggleMute}>
+                {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
+              </Button>
+              <Slider
+                value={[isMuted ? 0 : volume]}
+                max={100}
+                step={1}
+                onValueChange={handleVolumeChange}
+                className="w-24"
+              />
+            </div>
+            
+            <div className="flex items-center space-x-4">
+              <Button variant="ghost" size="icon" onClick={handleSkipBack}>
+                <SkipBack className="h-5 w-5" />
+              </Button>
+              <Button 
+                onClick={togglePlay} 
+                variant="outline" 
+                size="icon" 
+                className="h-12 w-12 rounded-full"
+              >
+                {isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6" />}
+              </Button>
+              <Button variant="ghost" size="icon" onClick={handleSkipForward}>
+                <SkipForward className="h-5 w-5" />
+              </Button>
+            </div>
+            
+            <div className="w-[88px]"></div> {/* Spacer to balance the layout */}
           </div>
-          
-          <div className="w-[88px]"></div> {/* Spacer to balance the layout */}
         </div>
       </div>
       

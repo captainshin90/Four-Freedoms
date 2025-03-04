@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { PodcastList } from "@/components/podcast-list";
 import { ChatBox } from "@/components/chat-box";
@@ -43,10 +44,12 @@ export function ContentPanel({
       <ScrollArea className="flex-1" style={{ height: `${100 - chatHeight}%` }}>
         <div className="p-6 space-y-6">
           <div className="relative w-full h-48 rounded-lg overflow-hidden">
-            <img 
+            <Image 
               src={bannerImage} 
               alt="Banner" 
-              className="w-full h-full object-cover"
+              layout="fill"
+              objectFit="cover"
+              className="w-full h-full"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end">
               <div className="p-4 text-white">

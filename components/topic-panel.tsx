@@ -113,7 +113,6 @@ export function TopicPanel({ onSelectTopic }: TopicPanelProps) {
                           layout="fill"
                           objectFit="cover"
                         />
-                        />
                       </div>
                       <div>
                         <h3 className="font-medium">{topic.topic_name}</h3>
@@ -121,7 +120,6 @@ export function TopicPanel({ onSelectTopic }: TopicPanelProps) {
                           {topic.topic_type.charAt(0).toUpperCase() + topic.topic_type.slice(1)}
                         </p>
                       </div>
-                    </div>
                   </CardContent>
                 </Card>
               ) : (
@@ -131,7 +129,7 @@ export function TopicPanel({ onSelectTopic }: TopicPanelProps) {
                   }`}
                 >
                   <div className="h-8 w-8 rounded-md overflow-hidden mr-2">
-                    <img 
+                    <Image 
                       src={topic.topic_image || "https://images.unsplash.com/photo-1519501025264-65ba15a82390?w=300&h=200&fit=crop"} 
                       alt={topic.topic_name}
                       className="object-cover w-full h-full"

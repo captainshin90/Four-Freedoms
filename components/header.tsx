@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { User, Search, Home } from "lucide-react";
+import Image from "next/image";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
@@ -46,8 +47,8 @@ export function Header() {
                 <span className="text-xs text-muted-foreground">{userProfile?.subscription_type || 'Free'}</span>
               </div>
               <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center overflow-hidden">
-                {userProfile?.avatar ? (
-                  <img src={userProfile.avatar} alt={userProfile.first_name} className="h-full w-full object-cover" />
+                {userProfile ? (
+                  <Image src={userProfile.avatar || "/default-avatar.png"} alt={userProfile.first_name || "User"} className="h-full w-full object-cover" width={32} height={32} />
                 ) : (
                   <User className="h-4 w-4" />
                 )}
