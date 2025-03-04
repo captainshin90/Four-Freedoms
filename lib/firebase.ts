@@ -21,8 +21,8 @@ let auth: Auth | undefined;
 
 if (!getApps().length) {
   try {
-    console.log("Firebase apiKey=" + process.env.NEXT_PUBLIC_FIREBASE_API_KEY);
-    console.log("Firebase appId=" + process.env.NEXT_PUBLIC_FIREBASE_APP_ID);
+    //console.log("Firebase apiKey=" + process.env.NEXT_PUBLIC_FIREBASE_API_KEY);
+    // console.log("Firebase appId=" + process.env.NEXT_PUBLIC_FIREBASE_APP_ID);
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const auth = getAuth(app);
