@@ -60,27 +60,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return unsubscribe;
   }, []);
 
-  const signIn = async (email: string, password: string) => {
-    try {
-      const result = await authService.signInWithEmail(email, password);
-      console.log("Sign in successful:", result.user.uid);
-      return result;
-    } catch (error: any) {
-      console.error('Error signing in:', error);
-      
-      // Provide more user-friendly error messages
-      let errorMessage = "Failed to sign in. Please check your credentials and try again.";
-      if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
-        errorMessage = "Invalid email or password. Please try again.";
-      } else if (error.code === 'auth/too-many-requests') {
-        errorMessage = "Too many failed login attempts. Please try again later or reset your password.";
-      } else if (error.code === 'auth/network-request-failed') {
-        errorMessage = "Network error. Please check your internet connection and try again.";
+  const signIn = async (email: string, password: string): Promise<void> => {
+      try {
+        const result = await authService.signInWithEmail(email, password);
+        console.log("Sign in successful:", result.user.uid);
+      } catch (error: any) {
+        console.error('Error signing in:', error);
+        
+        // Provide more user-friendly error messages
+        let errorMessage = "Failed to sign in. Please check your credentials and try again.";
+        if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+          errorMessage = "Invalid email or password. Please try again.";
+        } else if (error.code === 'auth/too-many-requests') {
+          errorMessage = "Too many failed login attempts. Please try again later or reset your password.";
+        } else if (error.code === 'auth/network-request-failed') {
+          errorMessage = "Network error. Please check your internet connection and try again.";
+        }
+        
+        throw new Error(errorMessage);
       }
-      
-      throw new Error(errorMessage);
-    }
-  };
+    };
 
   const signUp = async (email: string, password: string, userData: any) => {
     try {
