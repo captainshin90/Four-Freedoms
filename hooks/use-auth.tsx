@@ -85,7 +85,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const result = await authService.signUpWithEmail(email, password, userData);
       console.log("Sign up successful:", result.user.uid);
-      return result;
+      // No need to return result
     } catch (error: any) {
       console.error('Error signing up:', error);
       
@@ -105,14 +105,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const signInWithProvider = async (provider: 'google' | 'facebook' | 'microsoft') => {
+  const signInWithProvider = async (provider: 'google' | 'facebook' | 'microsoft'): Promise<void> => {
     try {
       console.log(`Attempting to sign in with ${provider}`);
       // First try with popup
       try {
         const result = await authService.signInWithProvider(provider, 'popup');
         console.log(`${provider} sign in successful:`, result?.user?.uid);
-        return result;
+        return;
       } catch (error: any) {
         console.warn(`Popup sign in failed:`, error);
         // If popup is blocked, try with redirect
