@@ -15,9 +15,13 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-let app: FirebaseApp | undefined;
-let db: Firestore | undefined;
-let auth: Auth | undefined;
+// let app: FirebaseApp | undefined;
+// let db: Firestore | undefined;
+// let auth: Auth | undefined;
+let app: FirebaseApp | null;
+let db: Firestore | null;
+let auth: Auth | null;
+
 
 if (!getApps().length) {
   try {
