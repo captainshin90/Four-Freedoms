@@ -1,4 +1,5 @@
 export interface Question {
+  question_id: string;
   podcast_id: string;
   question_text: string;
   question_audio?: string;
@@ -12,6 +13,7 @@ export interface Question {
 // Helper function to convert Firestore data to Question type
 export function convertToQuestion(data: any): Question {
   return {
+    question_id: data.id || data.question_id,
     podcast_id: data.podcast_id,
     question_text: data.question_text,
     question_audio: data.question_audio,

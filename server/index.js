@@ -27,6 +27,9 @@ app.use((err, req, res, next) => {
   });
 });
 
+// initialize Firebase
+initFirebase("fourfreedoms-db1");
+
 // Start server
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

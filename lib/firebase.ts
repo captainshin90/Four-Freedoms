@@ -21,28 +21,91 @@ const firebaseConfig = {
 let app: FirebaseApp | null;
 let db: Firestore | null;
 let auth: Auth | null;
+let googleProvider: GoogleAuthProvider;
+let facebookProvider: FacebookAuthProvider;
+let microsoftProvider: OAuthProvider;
 
+export async function initFirebase(databaseId: string | null) : Promise<Firestore | null> {
 
-if (!getApps().length) {
-  try {
-    //console.log("Firebase apiKey=" + process.env.NEXT_PUBLIC_FIREBASE_API_KEY);
-    // console.log("Firebase appId=" + process.env.NEXT_PUBLIC_FIREBASE_APP_ID);
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const auth = getAuth(app);
-    console.log("Firebase initialized successfully");
-  } catch (error) {
-    console.error("Firebase initialization error:", error);
+  if (!getApps().length) {
+    try {
+      //console.log("Firebase apiKey=" + process.env.NEXT_PUBLIC_FIREBASE_API_KEY);
+      // console.log("Firebase appId=" + process.env.NEXT_PUBLIC_FIREBASE_APP_ID);
+      console.log('Firebase Emulator=' + process.env.USE_FIREBASE_EMULATOR);
+
+      app = initializeApp(firebaseConfig);      
+      console.log("Firebase app initialized successfully");
+    } catch (error) {
+      console.error("Firebase app initialization error:", error);
+      return null;
+    }
+  } else {
+      app = getApps()[0];
+      console.log("Firebase app already initialized");
   }
-} else {
-  app = getApps()[0];
+
+  if (databaseId) {
+    db = getFirestore(app, databaseId);
+  }
+  else {
+    db = getFirestore(app);  // default database
+  }
+  auth = getAuth(app);
+
+  // Initialize providers
+  const googleProvider = new GoogleAuthProvider();
+  const facebookProvider = new FacebookAuthProvider();
+  const microsoftProvider = new OAuthProvider('microsoft.com');
+
+  return db;
+  
 }
 
-// Initialize providers
-const googleProvider = new GoogleAuthProvider();
-const facebookProvider = new FacebookAuthProvider();
-const microsoftProvider = new OAuthProvider('microsoft.com');
+export { app, auth, db, googleProvider, facebookProvider, microsoftProvider };
 
-console.log('Firebase Emulator=' + process.env.USE_FIREBASE_EMULATOR);
 
-export { auth, db, firebaseConfig, googleProvider, facebookProvider, microsoftProvider };
+// To add App Check to your app, import the following functions
+/***** Firebase App Check *****
+import { initializeApp } from "firebase/app";
+import { getAppCheck, getToken } from "firebase/app-check";
+import { getAuth } from "firebase/auth";
+
+// Your Firebase configuration
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_AUTH_DOMAIN",
+  projectId: "four-freedoms-451318", //Your Project ID
+  storageBucket: "YOUR_STORAGE_BUCKET",
+  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+  appId: "YOUR_APP_ID",
+  measurementId: "YOUR_MEASUREMENT_ID"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+
+// Initialize App Check.  Replace "recaptcha" with your chosen provider if needed.
+const appCheck = getAppCheck(app);
+
+// Example of getting an App Check token (replace 'YOUR_BACKEND_ENDPOINT' with the actual URL.)
+async function getAndUseToken(){
+    try {
+        const token = await getToken(appCheck);
+        //Send this token to your backend along with other request parameters
+        const response = await fetch('YOUR_BACKEND_ENDPOINT', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Firebase-AppCheck': token //Add the token to the request header
+            },
+            body: JSON.stringify({data: 'your data here'})
+        });
+        const data = await response.json();
+        console.log(data);
+    } catch (error){
+        console.error("Error getting token or sending request:", error);
+    }
+}
+
+getAndUseToken();
+******/

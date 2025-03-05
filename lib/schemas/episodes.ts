@@ -1,6 +1,6 @@
 export interface Episode {
-  podcast_id: string;
   episode_id: string;
+  podcast_id: string;
   episode_title: string;
   episode_desc: string;
   topic_tags: string[];
@@ -20,8 +20,8 @@ export interface Episode {
 // Helper function to convert Firestore data to Episode type
 export function convertToEpisode(data: any): Episode {
   return {
-    podcast_id: data.podcast_id,
     episode_id: data.id || data.episode_id,
+    podcast_id: data.podcast_id,
     episode_title: data.episode_title,
     episode_desc: data.episode_desc,
     topic_tags: data.topic_tags,
