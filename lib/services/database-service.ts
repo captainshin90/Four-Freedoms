@@ -71,7 +71,7 @@ class DatabaseService {
     if (db instanceof Firestore && collectionName) {
       try {
         const collectionRef = collection(db, collectionName);
-        console.log(`123: Creating document in ${collectionName}`);
+        // console.log(`Creating document in ${collectionName}`);
         const docRef = await addDoc(collectionRef, {
 
           ...data,
@@ -265,7 +265,7 @@ export const subscriptionsService = {
     return databaseService.update(db, 'subscriptions', subscriptionId, subscriptionData);
   },
   
-  async getActiveSubscriptions(db: Firestore, ): Promise<DocumentData[] | null> {
+  async getActiveSubscriptions(db: Firestore ): Promise<DocumentData[] | null> {
     return databaseService.query(db, 'subscriptions', [
       { field: 'is_active', operator: '==', value: true }
     ]);
@@ -339,7 +339,7 @@ export const topicsService = {
     ]);
   },
   
-  async getPublicTopics(db: Firestore, ): Promise<DocumentData[] | null> {
+  async getPublicTopics(db: Firestore ): Promise<DocumentData[] | null> {
     return databaseService.query(db, 'topics', [
       { field: 'is_private', operator: '==', value: false }
     ]);

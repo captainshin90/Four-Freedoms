@@ -64,7 +64,7 @@ export async function initFirebase(databaseId: string | null) : Promise<Firestor
 export { app, auth, db, googleProvider, facebookProvider, microsoftProvider };
 
 
-// To add App Check to your app, import the following functions
+// To add App Check (recaptcha) to your app, import the following functions
 /***** Firebase App Check *****
 import { initializeApp } from "firebase/app";
 import { getAppCheck, getToken } from "firebase/app-check";

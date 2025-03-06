@@ -10,7 +10,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Facebook, Mail, Github, User } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast"; 
+
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -22,7 +23,7 @@ export default function LoginPage() {
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
+    setIsLoading(true); 
     
     try {
       await signIn(email, password);

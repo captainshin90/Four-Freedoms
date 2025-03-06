@@ -23,7 +23,7 @@ let db: Firestore | null;
 export async function seedDatabase() {
     console.log('Starting database seeding...');
 
-  // Initialize Firebase    
+  // Initialize Firebase if not done already   
   try {
       if (!getApps().length) {
       // db = await initFirebase();  // default database
@@ -60,7 +60,7 @@ export async function seedDatabase() {
     // Seed sample users
     // await seedUsers();    
     // Seed sample chats
-    await seedChats();
+    // await seedChats();
   } catch (error) {
     console.error('Error seeding database:', error);
     throw error;
@@ -92,6 +92,7 @@ async function setTestDoc(db: Firestore) {
   } 
 *****/
 
+/*****
 async function seedSubscriptions() {
   console.log('Seeding subscriptions...');
   
@@ -882,3 +883,4 @@ async function seedChats() {
     }
   }
 }
+  ****/
