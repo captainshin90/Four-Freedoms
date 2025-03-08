@@ -17,7 +17,7 @@ export default function Home() {
 
   const handleSelectPodcast = (podcast: any) => {
     setActivePodcast(podcast);
-    setShowFullPlayer(true);
+    setShowFullPlayer(false);
   };
 
   const handleTogglePlayer = () => {

@@ -50,6 +50,8 @@ export function TopicPanel({ onSelectTopic }: TopicPanelProps) {
         }
         
         setTopics(fetchedTopics as Topic[]);
+//        setTopics(mockTopics);
+
       } catch (error) {
         console.error("Error fetching topics:", error);
         // Fallback to mock data
@@ -57,6 +59,7 @@ export function TopicPanel({ onSelectTopic }: TopicPanelProps) {
       }
     };
     
+    // why is this called again?
     fetchTopics();
   }, [user, userProfile, userLocation]);
 
@@ -113,7 +116,7 @@ export function TopicPanel({ onSelectTopic }: TopicPanelProps) {
                           width="300"
                           height="200"
                           alt={topic.topic_name}
-                          fill
+                          //fill
                           sizes="100vw"
                           style={{
                             objectFit: "cover"
@@ -156,13 +159,6 @@ export function TopicPanel({ onSelectTopic }: TopicPanelProps) {
   );
 }
 
-// {topics.map((topic) => (
-
-//<Image 
-//src={topic.topic_image || "https://images.unsplash.com/photo-1519501025264-65ba15a82390?w=300&h=200&fit=crop"} 
-//alt={topic.topic_name}
-//layout="fill"
-//objectFit="cover"
 
 // Mock data for fallback
 const mockTopics = [
@@ -180,7 +176,7 @@ const mockTopics = [
   {
     topic_id: "2",
     topic_name: "Massachusetts",
-    topic_image: "https://images.unsplash.com/photo-1572719314664-fb1a81c61e43?w=300&h=200&fit=crop",
+    topic_image: "https://images.unsplash.com/photo-1519501025264-65ba15a82390?w=300&h=200&fit=crop",
     topic_type: "place",
     related_topic_tags: ["New England", "Boston", "education", "politics"],
     datetime: new Date(),

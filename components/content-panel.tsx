@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { PodcastList } from "@/components/podcast-list";
@@ -23,6 +23,7 @@ export function ContentPanel({
 }: ContentPanelProps) {
   const [chatHeight, setChatHeight] = useState(40); // 40% of the panel height
   const [bannerImage, setBannerImage] = useState("/banner.jpg");
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // Set banner image based on selected topic
   useEffect(() => {
@@ -41,6 +42,7 @@ export function ContentPanel({
 
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden">
+      <audio ref={audioRef} style={{ display: 'none' }} controls />
       <ScrollArea className="flex-1" style={{ height: `${100 - chatHeight}%` }}>
         <div className="p-6 space-y-6">
           <div className="relative w-full h-48 rounded-lg overflow-hidden">
@@ -73,7 +75,13 @@ export function ContentPanel({
             </h2>
             <PodcastList 
               topicId={selectedTopicId} 
-              onSelectPodcast={onSelectPodcast} 
+              onSelectPodcast={(podcast) => {
+                if (audioRef.current) {
+                  audioRef.current.src = podcast.audioUrl;
+                  audioRef.current.play();
+                }
+                onSelectPodcast(podcast);
+              }} 
             />
           </div>
         </div>

@@ -9,8 +9,6 @@ import { podcastsService } from "@/lib/services/database-service";
 import { Podcast } from "@/lib/schemas/podcasts";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
-import {Firestore} from "firebase/firestore";
-import {db} from "@/lib/firebase";
 
 interface PodcastListProps {
   topicId?: string;
@@ -66,8 +64,8 @@ export function PodcastList({ topicId, onSelectPodcast }: PodcastListProps) {
       id: `${podcast.podcast_id}-ep1`,
       title: podcast.podcast_title,
       image: podcast.podcast_image,
-      audioUrl: 'https://example.com/audio/episode1.mp3', // This would be a real URL in production
-      duration: 1800 // 30 minutes in seconds
+      audioUrl: '/podcasts/example.mp3', // This would be a real URL in production
+      duration: 180 // 30 minutes in seconds
     };
     
     onSelectPodcast(firstEpisode);
@@ -189,7 +187,9 @@ export function PodcastList({ topicId, onSelectPodcast }: PodcastListProps) {
               <Image
                 src={podcast.podcast_image}
                 alt={podcast.podcast_title}
-                fill
+                width={300}
+                height={200}
+                //fill
                 className="object-cover transition-all"
                 style={{
                   maxWidth: "100%",
@@ -275,7 +275,7 @@ const mockPodcasts = [
     podcast_title: "Massachusetts Education Matters",
     podcast_hosts: ["Dr. Emily Johnson", "Prof. Michael Brown"],
     podcast_image: "https://images.unsplash.com/photo-1526628953301-3e589a6a8b74?w=500&h=500&fit=crop",
-    podcast_desc: "Discussions about education policy and reform in Massachusetts",
+    podcast_desc: "Debug: Discussions about education policy and reform in Massachusetts",
     podcast_type: "audio_podcast" as const,
     podcast_format: "mp3" as const,
     topic_tags: [],
@@ -288,8 +288,8 @@ const mockPodcasts = [
     podcast_id: "3",
     podcast_title: "Policy Insights with Senator Warren",
     podcast_hosts: ["Sarah Williams", "Senator Elizabeth Warren"],
-    podcast_image: "https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=500&h=500&fit=crop",
-    podcast_desc: "Deep dives into policy issues with Senator Elizabeth Warren",
+    podcast_image: "https://images.unsplash.com/photo-1526628953301-3e589a6a8b74?w=500&h=500&fit=crop",
+    podcast_desc: "Debug: Deep dives into policy issues with Senator Elizabeth Warren",
     podcast_type: "audio_podcast" as const,
     podcast_format: "mp3" as const,
     topic_tags: [],

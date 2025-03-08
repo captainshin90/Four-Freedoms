@@ -57,6 +57,7 @@ export function PodcastPlayer({ podcast, isMinimized = false, onToggleMinimize }
     
     return () => {
       if (audioRef.current) {
+        // eslint-disable-next-line react-hooks/exhaustive-deps
         audioRef.current.pause();
       }
     };
@@ -184,6 +185,8 @@ export function PodcastPlayer({ podcast, isMinimized = false, onToggleMinimize }
             <Image
               src={podcast.image}
               alt={podcast.title}
+              width={48}
+              height={48}
               className="w-full h-full object-cover"
               style={{
                 maxWidth: "100%",
@@ -265,7 +268,9 @@ export function PodcastPlayer({ podcast, isMinimized = false, onToggleMinimize }
               <Image
                 src={podcast.image}
                 alt={podcast.title}
-                fill
+                width={100}
+                height={100}
+                //fill
                 sizes="100vw"
                 style={{
                   objectFit: "cover"
