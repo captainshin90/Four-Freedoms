@@ -32,9 +32,9 @@ export function PodcastList({ topicId, onSelectPodcast }: PodcastListProps) {
         let podcastData;
         
         if (topicId) {
-          podcastData = await podcastsService.getPodcastsByTopic(db as Firestore, topicId);
+          podcastData = await podcastsService.getPodcastsByTopic(topicId);
         } else {
-          podcastData = await podcastsService.getAllPodcasts(db as Firestore);
+          podcastData = await podcastsService.getAllPodcasts();
         }
         
         setPodcasts(podcastData as Podcast[]);

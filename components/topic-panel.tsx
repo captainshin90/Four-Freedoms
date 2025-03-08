@@ -28,17 +28,17 @@ export function TopicPanel({ onSelectTopic }: TopicPanelProps) {
       try {
         let fetchedTopics;
         
-        if (user && userProfile?.following_topics && userProfile.following_topics.length > 0) {
+        if (user && userProfile?.following_topics && userProfile?.following_topics.length > 0) {
           // If user is logged in, fetch their followed topics
           const userTopics = await Promise.all(
             userProfile.following_topics.map(async (topicId) => {
-              return await topicsService.getTopicById(db as Firestore, topicId);
+              return await topicsService.getTopicById(topicId);
             })
           );
           fetchedTopics = userTopics.filter(Boolean);
         } else {
           // Otherwise, fetch public topics
-          fetchedTopics = await topicsService.getPublicTopics(db as Firestore);
+          fetchedTopics = await topicsService.getPublicTopics();
           
           // Filter to include location-based topics first
           if (userLocation && fetchedTopics) {

@@ -12,7 +12,7 @@ import { Facebook, Mail, Github, User } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast"; 
 
-
+//
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

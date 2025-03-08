@@ -1,5 +1,6 @@
 import { 
-  Auth, 
+  Auth,  
+  getAuth,
   createUserWithEmailAndPassword, 
   signInWithEmailAndPassword, 
   signInWithPopup,
@@ -11,66 +12,93 @@ import {
   UserCredential,
   onAuthStateChanged
 } from "firebase/auth";
-import { 
-  db,
-  auth,
-  googleProvider, 
-  facebookProvider, 
-  microsoftProvider 
-} from "@/lib/firebase";
+import { Firestore } from "firebase/firestore";
+import { app, initFirestore, initAuth, googleProvider, facebookProvider, microsoftProvider } from "@/lib/firebase";
 import { usersService } from "./database-service";
 
 export type AuthProvider = 'google' | 'facebook' | 'microsoft';
 export type AuthMethod = 'popup' | 'redirect';
 
-class AuthService {
-  // Get the current user
 
+export class AuthService {
+  private static instance: AuthService;
+  public db: Firestore | undefined;
+  public auth: Auth | undefined;
+  public currentUser: User | null = null;
+
+  constructor() {
+    this.init();    
+  } 
+
+  private async init() {
+    try {
+      this.db = await initFirestore();
+      this.auth = await initAuth();
+      this.currentUser = (getAuth(app)).currentUser;          
+    } catch (error) {
+      console.error("Firestore or Auth initialization error:", error);
+      throw error;
+    }
+  }
+
+  // singleton class to hold global state
+  public static getInstance(): AuthService {
+    if (!AuthService.instance) {
+      AuthService.instance = new AuthService();
+    }
+    return AuthService.instance;
+  }
+
+  // Get the current user
   getCurrentUser(): User | null {
-    return auth ? auth.currentUser : null;
+//    if (auth)
+//      currentUser = auth.currentUser;  
+    return this.currentUser? this.currentUser : null;
+    
+   // return auth ? auth.currentUser : null;
   }
 
   // Sign up with email and password
   async signUpWithEmail(email: string, password: string, userData: any): Promise<UserCredential> {
-    try {
 
-      if (!db || !auth) { 
-        return Promise.reject(new Error("Firebase Auth is not initialized."));
+    console.log("Attempting to create user with email:", email);
+        
+    if (this.db && this.auth) {
+      try {     
+        // Create the user in Firebase Auth
+        const userCredential = await createUserWithEmailAndPassword(this.auth, email, password);
+        console.log("User created successfully:", userCredential.user.uid);
+        
+        // Create the user profile in Firestore
+        await usersService.createUser(userCredential.user.uid, {
+          login_id: email,
+          email1: email,
+          first_name: userData.first_name || '',
+          last_name: userData.last_name || '',
+          subscription_type: 'free', // Default subscription
+          ...userData
+        });
+        console.log("User profile created in Firestore");
+        
+        return userCredential;
+      } catch (error) {
+        console.error("Error in signUpWithEmail:", error);
+        throw error;
       }
-    
-      console.log("Attempting to create user with email:", email);
-      
-      // Create the user in Firebase Auth
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      console.log("User created successfully:", userCredential.user.uid);
-      
-      // Create the user profile in Firestore
-      await usersService.createUser(db, userCredential.user.uid, {
-        login_id: email,
-        email1: email,
-        first_name: userData.first_name || '',
-        last_name: userData.last_name || '',
-        subscription_type: 'free', // Default subscription
-        ...userData
-      });
-      console.log("User profile created in Firestore");
-      
-      return userCredential;
-    } catch (error) {
-      console.error("Error in signUpWithEmail:", error);
-      throw error;
+    } else {
+      return Promise.reject(new Error("Firebase Auth is not initialized."));
     }
   }
 
   // Sign in with email and password
   async signInWithEmail(email: string, password: string): Promise<UserCredential> {
     try {
-      if (!auth) { 
+      if (!this.auth) { 
         return Promise.reject(new Error("Firebase Auth is not initialized."));
       }
 
       console.log("Attempting to sign in with email:", email);
-      const result = await signInWithEmailAndPassword(auth, email, password);
+      const result = await signInWithEmailAndPassword(this.auth, email, password);
       console.log("Email sign in successful:", result.user.uid);
       return result;
     } catch (error) {
@@ -82,49 +110,50 @@ class AuthService {
   // Sign in with a social provider
   async signInWithProvider(providerName: AuthProvider, method: AuthMethod = 'popup'): Promise<UserCredential | void> {
     let provider;
-    
-    switch (providerName) {
-      case 'google':
-        provider = googleProvider;
-        break;
-      case 'facebook':
-        provider = facebookProvider;
-        break;
-      case 'microsoft':
-        provider = microsoftProvider;
-        break;
-      default:
-        throw new Error(`Unsupported provider: ${providerName}`);
-    }
-    
-    try {
-      console.log(`Attempting to sign in with ${providerName} using ${method} method`);
-      
-      if (!db || !auth) { 
-        return Promise.reject(new Error("Firebase Auth is not initialized."));
-      }
 
+    if (!this.db || !this.auth) {
+      return Promise.reject(new Error("Firebase Auth is not initialized."));
+//        throw new Error(`Database or Authentication failure...`);
+    }
+
+    try {
+        switch (providerName) {
+        case 'google':
+          provider = googleProvider;
+          break;
+        case 'facebook':
+          provider = facebookProvider;
+          break;
+        case 'microsoft':
+          provider = microsoftProvider;
+          break;
+        default:
+          throw new Error(`Unsupported provider: ${providerName}`);
+      }
+    
+      console.log(`Attempting to sign in with ${providerName} using ${method} method`);
+        
       // Sign in with the provider using the specified method
       let userCredential;
       
       if (method === 'popup') {
-        userCredential = await signInWithPopup(auth, provider);
+        userCredential = await signInWithPopup(this.auth, provider);
         console.log(`${providerName} popup sign in successful:`, userCredential.user.uid);
       } else {
         // For redirect method, we initiate the redirect and don't get a result immediately
         console.log(`Redirecting to ${providerName} sign in page...`);
-        await signInWithRedirect(auth, provider);
+          await signInWithRedirect(this.auth, provider);
         return; // The function will return here, and the page will redirect
       }
       
       // Check if the user exists in Firestore
-      const userDoc = await usersService.getUserById(db, userCredential.user.uid);
-      
+      const userDoc = await usersService.getUserById(userCredential.user.uid);
+
       // If the user doesn't exist, create a profile
       if (!userDoc) {
         console.log("User doesn't exist in Firestore, creating profile...");
         const user = userCredential.user;
-        await usersService.createUser(db, user.uid, {
+        await usersService.createUser(user.uid, {
           login_id: user.email,
           email1: user.email,
           first_name: user.displayName?.split(' ')[0] || '',
@@ -147,37 +176,38 @@ class AuthService {
     try {
       console.log("Getting redirect result...");
 
-      if (!db || !auth) { 
+      if (!this.db || !this.auth) { 
         return Promise.reject(new Error("Firebase Auth is not initialized."));
       }
-
-      const result = await getRedirectResult(auth);
-      
-      if (result) {
-        console.log("Redirect sign in successful:", result.user.uid);
+      else {
+        const result = await getRedirectResult(this.auth);
+        if (result) {
+          console.log("Redirect sign in successful:", result.user.uid);          
         
-        // Check if the user exists in Firestore
-        const userDoc = await usersService.getUserById(db, result.user.uid);
+          // Check if the user exists in Firestore
+          const userDoc = await usersService.getUserById(result.user.uid);
         
-        // If the user doesn't exist, create a profile
-        if (!userDoc) {
-          console.log("User doesn't exist in Firestore, creating profile...");
-          const user = result.user;
-          await usersService.createUser(db, user.uid, {
-            login_id: user.email,
-            email1: user.email,
-            first_name: user.displayName?.split(' ')[0] || '',
-            last_name: user.displayName?.split(' ').slice(1).join(' ') || '',
-            avatar: user.photoURL,
-            subscription_type: 'free' // Default subscription
-          });
-          console.log("User profile created in Firestore");
+          // If the user doesn't exist, create a profile
+          if (!userDoc) {
+            console.log("User doesn't exist in Firestore, creating profile...");
+            const user = result.user;
+            await usersService.createUser(user.uid, {
+              login_id: user.email,
+              email1: user.email,
+              first_name: user.displayName?.split(' ')[0] || '',
+              last_name: user.displayName?.split(' ').slice(1).join(' ') || '',
+              avatar: user.photoURL,
+              subscription_type: 'free' // Default subscription
+            });
+            console.log("User profile created in Firestore");
+          }
+          return result;  
         }
-      } else {
-        console.log("No redirect result");
+        else {
+          console.log("No redirect result");
+          return null;
+        }
       }
-      
-      return result;
     } catch (error) {
       console.error('Error in getRedirectResult:', error);
       throw error;
@@ -187,12 +217,12 @@ class AuthService {
   // Sign out
   async signOut(): Promise<void> {
     try {
-      if (!auth) { 
+      if (!this.auth) { 
         return Promise.reject(new Error("Firebase Auth is not initialized."));
       }
 
       console.log("Attempting to sign out user");
-      await signOut(auth);
+      await signOut(this.auth);
       console.log("User signed out successfully");
     } catch (error) {
       console.error("Error in signOut:", error);
@@ -203,12 +233,12 @@ class AuthService {
   // Reset password
   async resetPassword(email: string): Promise<void> {
     try {
-      if (!auth) { 
+      if (!this.auth) { 
         return Promise.reject(new Error("Firebase Auth is not initialized."));
       }
 
       console.log("Sending password reset email to:", email);
-      await sendPasswordResetEmail(auth, email);
+      await sendPasswordResetEmail(this.auth, email);
       console.log("Password reset email sent successfully");
     } catch (error) {
       console.error("Error in resetPassword:", error);
@@ -219,12 +249,13 @@ class AuthService {
   // Subscribe to auth state changes
   onAuthStateChanged(callback: (user: User | null) => void): () => void {
     
-    if (!auth || auth === undefined) {
+    if (!this.auth || this.auth === undefined) {
       console.log("Firebase Auth is not initialized.");
       return () => {}; // Return a no-op function
     }
-    return onAuthStateChanged(auth as Auth, callback);
+    return onAuthStateChanged(this.auth as Auth, callback);
   }
 }
 
-export const authService = new AuthService();
+// create singleton object
+export let authService = AuthService.getInstance();

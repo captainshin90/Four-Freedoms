@@ -1,3 +1,4 @@
+
 const dotenv = require('dotenv');
 dotenv.config();
 
@@ -29,6 +30,7 @@ const config = {
   },
   
   // Firebase configuration (for server-side operations)
+  // why is this needed? There's firebaseConfig in firebase.ts
   firebase: {
     apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || '',
     authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || '',
@@ -38,6 +40,15 @@ const config = {
     appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || '',
     measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID || '',
   },
-};
+
+// Firestore configuration
+  // why is this needed? There's firestoreConfig in firebase.ts
+  firestore: {
+    databaseId: process.env.NEXT_PUBLIC_FIRESTORE_DATABASE_ID || '',
+  },
+
+}; 
+
+// somehow firestore.databaseId = '' so process.env not loaded yet?
 
 module.exports = config;

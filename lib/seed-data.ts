@@ -1,4 +1,4 @@
-import dotenv from 'dotenv';
+// import dotenv from 'dotenv';
 import { 
   usersService, 
   subscriptionsService, 
@@ -11,13 +11,17 @@ import {
   transcriptsService,
   questionsService,
   chatsService,
-  databaseService
+  DatabaseService
 } from './services/database-service';
 import { getApps } from "firebase/app";
 import { doc, addDoc, collection, getFirestore, Firestore, Timestamp } from "firebase/firestore";
-import { initFirebase } from './firebase';
+import { initFirestore, firebaseConfig } from './firebase';
 
 let db: Firestore | null;
+
+// access singleton object
+let databaseService = DatabaseService.getInstance();
+
 
 // Function to seed initial data into Firestore
 export async function seedDatabase() {
@@ -26,8 +30,8 @@ export async function seedDatabase() {
   // Initialize Firebase if not done already   
   try {
       if (!getApps().length) {
-      // db = await initFirebase();  // default database
-      db = await initFirebase("fourfreedoms-db1");    
+      // db = await initFirestore();  // default database
+      db = await initFirestore();
     }
     else {
       db = getFirestore(getApps()[0]); 
@@ -36,7 +40,7 @@ export async function seedDatabase() {
     console.error("seed-data: Firebase initialization error:", error);
   }
 
-//  await setTestDoc(db as Firestore);
+//  await setTestDoc();
 
 
 
@@ -127,7 +131,7 @@ async function seedSubscriptions() {
   ];
   
   for (const subscription of subscriptions) {
-    await databaseService.create(db as Firestore, 'subscriptions', subscription);
+    await databaseService.create('subscriptions', subscription);
   }
 }
 
@@ -168,7 +172,7 @@ async function seedPersonas() {
   ];
   
   for (const persona of personas) {
-    await databaseService.create(db as Firestore, 'personas', persona);
+    await databaseService.create('personas', persona);
   }
 }
 
@@ -259,7 +263,7 @@ async function seedTopics() {
   ];
   
   for (const topic of topics) {
-    await databaseService.create(db as Firestore, 'topics', topic);
+    await databaseService.create('topics', topic);
   }
 }
 
@@ -268,7 +272,7 @@ async function seedPrompts() {
   console.log('Seeding prompts...');
   
   // Get persona IDs
-  const personas = await personasService.getAllPersonas(db as Firestore);
+  const personas = await personasService.getAllPersonas();
   
   if (!personas || personas?.length === 0) {
     console.error('No personas found for prompts');
@@ -339,7 +343,7 @@ async function seedPrompts() {
   ];
   
   for (const prompt of prompts) {
-    await databaseService.create(db as Firestore, 'prompts', prompt);
+    await databaseService.create('prompts', prompt);
   }
 }
 
@@ -347,7 +351,7 @@ async function seedDocuments() {
   console.log('Seeding documents...');
   
   // Get topic IDs
-  const topics = await topicsService.getAllTopics(db as Firestore);
+  const topics = await topicsService.getAllTopics();
   
   if (!topics || topics?.length === 0) {
     console.error('No topics found for documents');
@@ -413,7 +417,7 @@ async function seedDocuments() {
   ];
   
   for (const document of documents) {
-    await databaseService.create(db as Firestore, 'documents', document);
+    await databaseService.create('documents', document);
   }
 }
 
@@ -421,7 +425,7 @@ async function seedTranscripts() {
   console.log('Seeding transcripts...');
   
   // Get topic IDs
-  const topics = await topicsService.getAllTopics(db as Firestore);
+  const topics = await topicsService.getAllTopics();
   
   if (!topics || topics?.length === 0) {
     console.error('No topics found for transcripts');
@@ -472,7 +476,7 @@ async function seedTranscripts() {
   ];
   
   for (const transcript of transcripts) {
-    await databaseService.create(db as Firestore, 'transcripts', transcript);
+    await databaseService.create('transcripts', transcript);
   }
 }
 
@@ -480,7 +484,7 @@ async function seedPodcasts() {
   console.log('Seeding podcasts and episodes...');
   
   // Get topic IDs
-  const topics = await topicsService.getAllTopics(db as Firestore);
+  const topics = await topicsService.getAllTopics();
   
   if (!topics || topics?.length === 0) {
     console.error('No topics found for podcasts');
@@ -488,7 +492,7 @@ async function seedPodcasts() {
   }
   
   // Get prompt IDs
-  const prompts = await promptsService.getAllPrompts(db as Firestore);
+  const prompts = await promptsService.getAllPrompts();
   
   const newtonTopic = topics?.find(t => t.topic_name === 'Newton, MA');
   const massTopic = topics?.find(t => t.topic_name === 'Massachusetts');
@@ -556,7 +560,7 @@ async function seedPodcasts() {
   
   // Create podcasts and episodes
   for (const podcast of podcasts) {
-    const podcastId = await databaseService.create(db as Firestore, 'podcasts', podcast);
+    const podcastId = await databaseService.create('podcasts', podcast);
 
     // Create episodes for each podcast
     const episodes = [
@@ -605,7 +609,7 @@ async function seedPodcasts() {
     ];
     
     for (const episode of episodes) {
-      await databaseService.create(db as Firestore, 'episodes', episode);
+      await databaseService.create('episodes', episode);
     }
   }
 }
@@ -614,7 +618,7 @@ async function seedQuestions() {
   console.log('Seeding questions...');
   
   // Get podcast IDs
-  const podcasts = await podcastsService.getAllPodcasts(db as Firestore);
+  const podcasts = await podcastsService.getAllPodcasts();
   
   if (!podcasts || podcasts?.length === 0) {
     console.error('No podcasts found for questions');
@@ -651,7 +655,7 @@ async function seedQuestions() {
     ];
     
     for (const question of questions) {
-      await databaseService.create(db as Firestore, 'questions', question);
+      await databaseService.create('questions', question);
     }
   }
 }
@@ -663,17 +667,17 @@ async function seedUsers() {
   const sampleUserIds = ['user1', 'user2', 'user3', 'user4', 'user5'];
   
   // Get subscription types
-  const subscriptions = await subscriptionsService.getAllSubscriptions(db as Firestore);
+  const subscriptions = await subscriptionsService.getAllSubscriptions();
   
   const freeSubscription = subscriptions?.find(s => s.subscription_type === 'free');
   const premiumSubscription = subscriptions?.find(s => s.subscription_type === 'premium');
   const enterpriseSubscription = subscriptions?.find(s => s.subscription_type === 'enterprise');
   
   // Get personas
-  const personas = await personasService.getAllPersonas(db as Firestore);
+  const personas = await personasService.getAllPersonas();
   
   // Get topics
-  const topics = await topicsService.getAllTopics(db as Firestore);
+  const topics = await topicsService.getAllTopics();
   
   const users = [
     {
@@ -810,16 +814,16 @@ async function seedUsers() {
   ];
   
   for (const user of users) {
-    await databaseService.createWithId(db as Firestore,'users', user.user_id, user);
+    await databaseService.createWithId(,'users', user.user_id, user);
   }
   
   // Update questions with real user IDs
-  const questions = await questionsService.getAllQuestions(db as Firestore);
+  const questions = await questionsService.getAllQuestions();
   if (questions && questions?.length > 0) {
     for (const question of questions) {
       if (sampleUserIds.includes(question.user_id)) {
         const randomUser = users[Math.floor(Math.random() * users.length)];
-        await databaseService.update(db as Firestore, 'questions', question.id, {
+        await databaseService.update('questions', question.id, {
           user_id: randomUser.user_id});
       }
     }
@@ -830,7 +834,7 @@ async function seedChats() {
   console.log('Seeding chats...');
   
   // Get users
-  const users = await usersService.getAllUsers(db as Firestore);
+  const users = await usersService.getAllUsers();
   
   if (!users || users?.length === 0) {
     console.error('No users found for chats');
@@ -879,7 +883,7 @@ async function seedChats() {
     ];
   
     for (const message of chats) {
-      await databaseService.create(db as Firestore, 'chats', message);
+      await databaseService.create('chats', message);
     }
   }
 }

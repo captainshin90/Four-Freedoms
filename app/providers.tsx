@@ -4,8 +4,10 @@ import { useEffect } from "react";
 import { AuthProvider } from "@/hooks/use-auth";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/toaster";
-import { authService } from "@/lib/services/auth-service";
+import { AuthService } from "@/lib/services/auth-service";
 import { useToast } from "@/hooks/use-toast";
+
+let authService = AuthService.getInstance();
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const { toast } = useToast();

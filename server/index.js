@@ -4,12 +4,8 @@ const dotenv = require('dotenv');
 const apiRoutes = require('./routes/api');
 const config = require('./config');
 
-// Load environment variables
-dotenv.config();
-
 // Initialize Express app
 const app = express();
-const PORT = config.port;
 
 // Middleware
 app.use(cors());
@@ -27,8 +23,22 @@ app.use((err, req, res, next) => {
   });
 });
 
-// initialize Firebase
-initFirebase("fourfreedoms-db1");
+// Load environment variables - it doesn't load properly here, it's done in firebase.js
+// none of the .env parameters are ready properly here - why?
+dotenv.config();
+
+const PORT = config.port;
+const dbid = config.firestore.databaseId;
+const geminikey = config.gemini.apiKey;
+
+console.log(`Index.js: Port: ${PORT}`);
+console.log(`Index.js: Port: ${process.env.NEXT_PUBLIC_FIRESTORE_DATABASE_ID}`);
+console.log(`Index.js: Database id: ${dbid}`);
+console.log(`Index.js: Database id: ${process.env.NEXT_PUBLIC_FIRESTORE_DATABASE_ID}`);
+console.log(`Index.js: Gemini key: ${geminikey}`);
+
+// initialize Firebase - done by DatabaseService and AuthService
+// initFirebase();
 
 // Start server
 app.listen(PORT, () => {

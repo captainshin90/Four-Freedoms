@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "server": "node server/index.js",
+    "server": "node --require=dotenv/config server/index.js",
     "dev:all": "concurrently \"npm run dev\" \"npm run server\""
   },
   "dependencies": {
