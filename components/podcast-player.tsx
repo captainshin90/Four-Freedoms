@@ -14,7 +14,7 @@ import {
   ThumbsDown
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import Image from "next/image";
+import Image from "next/legacy/image";
 import { Slider } from "@/components/ui/slider";
 import { formatTime } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";

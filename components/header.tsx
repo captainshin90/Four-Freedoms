@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { User, Search, Home } from "lucide-react";
-import Image from "next/image";
+import Image from "next/legacy/image";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";

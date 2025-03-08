@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Image from "next/image";
+import Image from "next/legacy/image";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { PodcastList } from "@/components/podcast-list";
 import { ChatBox } from "@/components/chat-box";
