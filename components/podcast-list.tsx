@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Image from "next/legacy/image";
+import Image from "next/image";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Play, Plus, ThumbsUp, ThumbsDown } from "lucide-react";
@@ -191,7 +191,10 @@ export function PodcastList({ topicId, onSelectPodcast }: PodcastListProps) {
                 alt={podcast.podcast_title}
                 fill
                 className="object-cover transition-all"
-              />
+                style={{
+                  maxWidth: "100%",
+                  height: "auto"
+                }} />
               <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                 <Button 
                   size="icon" 

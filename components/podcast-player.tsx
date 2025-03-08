@@ -14,7 +14,7 @@ import {
   ThumbsDown
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import Image from "next/legacy/image";
+import Image from "next/image";
 import { Slider } from "@/components/ui/slider";
 import { formatTime } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
@@ -181,13 +181,19 @@ export function PodcastPlayer({ podcast, isMinimized = false, onToggleMinimize }
       <div className="border-t bg-card p-4 flex items-center justify-between">
         <div className="flex items-center space-x-4 w-1/4">
           <div className="h-12 w-12 rounded-md bg-muted overflow-hidden">
-            <Image src={podcast.image} alt={podcast.title} className="w-full h-full object-cover" />
+            <Image
+              src={podcast.image}
+              alt={podcast.title}
+              className="w-full h-full object-cover"
+              style={{
+                maxWidth: "100%",
+                height: "auto"
+              }} />
           </div>
           <div className="truncate">
             <h3 className="font-medium truncate">{podcast.title}</h3>
           </div>
         </div>
-        
         <div className="flex items-center space-x-4">
           <Button variant="ghost" size="icon" onClick={handleSkipBack}>
             <SkipBack className="h-5 w-5" />
@@ -204,7 +210,6 @@ export function PodcastPlayer({ podcast, isMinimized = false, onToggleMinimize }
             <SkipForward className="h-5 w-5" />
           </Button>
         </div>
-        
         <div className="flex items-center space-x-2 w-1/4 justify-end">
           <Button 
             variant="ghost" 
@@ -240,7 +245,6 @@ export function PodcastPlayer({ podcast, isMinimized = false, onToggleMinimize }
             </Button>
           )}
         </div>
-        
         <audio
           ref={audioRef}
           src={podcast.audioUrl}
@@ -258,7 +262,14 @@ export function PodcastPlayer({ podcast, isMinimized = false, onToggleMinimize }
       <div className="p-4 space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-              <Image src={podcast.image} alt={podcast.title} layout="fill" objectFit="cover" />
+              <Image
+                src={podcast.image}
+                alt={podcast.title}
+                fill
+                sizes="100vw"
+                style={{
+                  objectFit: "cover"
+                }} />
             <div>
               <h3 className="font-medium">{podcast.title}</h3>
             </div>
@@ -337,7 +348,6 @@ export function PodcastPlayer({ podcast, isMinimized = false, onToggleMinimize }
           </div>
         </div>
       </div>
-      
       <audio
         ref={audioRef}
         src={podcast.audioUrl}

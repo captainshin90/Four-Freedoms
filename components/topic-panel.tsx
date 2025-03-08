@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Image from "next/legacy/image";
+import Image from "next/image";
 import { PlusCircle, ChevronRight, ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -100,7 +100,6 @@ export function TopicPanel({ onSelectTopic }: TopicPanelProps) {
           </Button>
         </div>
       </div>
-      
       <ScrollArea className="flex-1">
         <div className="p-2 space-y-2">
           {mockTopics.map((topic) => (
@@ -109,12 +108,16 @@ export function TopicPanel({ onSelectTopic }: TopicPanelProps) {
                 <Card className="cursor-pointer hover:bg-accent transition-colors">
                   <CardContent className="p-3">
                     <div className="space-y-3">
-                        <Image 
-                          src={topic.topic_image} width="300" height="200" 
+                        <Image
+                          src={topic.topic_image}
+                          width="300"
+                          height="200"
                           alt={topic.topic_name}
-                          layout="fill"
-                          objectFit="cover"
-                        />
+                          fill
+                          sizes="100vw"
+                          style={{
+                            objectFit: "cover"
+                          }} />
                       </div>
                       <div>
                         <h3 className="font-medium">{topic.topic_name}</h3>
@@ -131,11 +134,16 @@ export function TopicPanel({ onSelectTopic }: TopicPanelProps) {
                   }`}
                 >
                   <div className="h-8 w-8 rounded-md overflow-hidden mr-2">
-                    <Image 
-                      src={topic.topic_image} width="300" height="200" 
+                    <Image
+                      src={topic.topic_image}
+                      width="300"
+                      height="200"
                       alt={topic.topic_name}
                       className="object-cover w-full h-full"
-                    />
+                      style={{
+                        maxWidth: "100%",
+                        height: "auto"
+                      }} />
                   </div>
                   <span className={`truncate ${isExpanded ? "block" : "hidden"}`}>{topic.topic_name}</span>
                 </div>

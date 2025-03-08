@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { User, Search, Home } from "lucide-react";
-import Image from "next/legacy/image";
+import Image from "next/image";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
@@ -48,7 +48,16 @@ export function Header() {
               </div>
               <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center overflow-hidden">
                 {userProfile ? (
-                  <Image src={userProfile.avatar || "/default-avatar.png"} alt={userProfile.first_name || "User"} className="h-full w-full object-cover" width={32} height={32} />
+                  <Image
+                    src={userProfile.avatar || "/default-avatar.png"}
+                    alt={userProfile.first_name || "User"}
+                    className="h-full w-full object-cover"
+                    width={32}
+                    height={32}
+                    style={{
+                      maxWidth: "100%",
+                      height: "auto"
+                    }} />
                 ) : (
                   <User className="h-4 w-4" />
                 )}
