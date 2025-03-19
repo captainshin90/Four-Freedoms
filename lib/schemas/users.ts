@@ -27,6 +27,8 @@ export interface User {
   card_city?: string;
   created_at: Date;
   updated_at: Date;
+  is_active: boolean;
+  is_deleted: boolean;
 }
 
 export interface Address {
@@ -55,7 +57,7 @@ export interface UserPreferences {
 // Helper function to convert Firestore data to User type
 export function convertToUser(data: any): User {
   return {
-    user_id: data.id || data.user_id,
+    user_id: data.user_id = crypto.randomUUID(),
     login_id: data.login_id,
     first_name: data.first_name,
     last_name: data.last_name,
@@ -81,6 +83,8 @@ export function convertToUser(data: any): User {
     card_cvv: data.card_cvv,
     card_city: data.card_city,
     created_at: data.created_at?.toDate(),
-    updated_at: data.updated_at?.toDate()
+    updated_at: data.updated_at?.toDate(),
+    is_active: data.is_active = true,
+    is_deleted: data.is_deleted = false
   };
 }

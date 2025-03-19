@@ -1,7 +1,7 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp, getApps, FirebaseApp } from "firebase/app";
 import { Auth, getAuth, GoogleAuthProvider, FacebookAuthProvider, OAuthProvider } from "firebase/auth";
-import { getFirestore, Firestore } from "firebase/firestore";
+import { initializeFirestore, getFirestore, Firestore, persistentLocalCache, persistentMultipleTabManager } from "firebase/firestore";
 
 // Load environment variables
 const dotenv = require('dotenv');
@@ -18,6 +18,25 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
+// Validate required configuration
+const requiredEnvVars = [
+  'NEXT_PUBLIC_FIREBASE_API_KEY',
+  'NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN',
+  'NEXT_PUBLIC_FIREBASE_PROJECT_ID',
+  'NEXT_PUBLIC_FIREBASE_APP_ID'
+];
+
+for (const envVar of requiredEnvVars) {
+  if (!process.env[envVar]) {
+    console.error(`Missing required environment variable: ${envVar}`);
+  }
+}
+
+console.log('Firebase Config:', {
+  ...firebaseConfig,
+  apiKey: firebaseConfig.apiKey ? '***' : undefined, // Hide API key in logs
+});
+
 const firestoreConfig = {
   databaseId: process.env.NEXT_PUBLIC_FIRESTORE_DATABASE_ID
 };
@@ -25,55 +44,57 @@ const firestoreConfig = {
 let app: FirebaseApp;
 let db: Firestore;
 let auth: Auth;
-let googleProvider: GoogleAuthProvider;
-let facebookProvider: FacebookAuthProvider;
-let microsoftProvider: OAuthProvider;
+
+// Create providers as constants instead of variables
+const googleProvider = new GoogleAuthProvider();
+const facebookProvider = new FacebookAuthProvider();
+const microsoftProvider = new OAuthProvider('microsoft.com');
+
+// Configure providers with additional OAuth scopes and custom parameters
+googleProvider.addScope('https://www.googleapis.com/auth/userinfo.email');
+googleProvider.addScope('https://www.googleapis.com/auth/userinfo.profile');
+googleProvider.setCustomParameters({
+  prompt: 'select_account',
+  login_hint: ''
+});
 
 export async function initAuth() : Promise<Auth> {
-
   if (!getApps().length) {
     try {
+      // Validate config before initialization
+      if (!firebaseConfig.apiKey || !firebaseConfig.authDomain) {
+        throw new Error('Missing required Firebase configuration. Check your environment variables.');
+      }
+      
       app = initializeApp(firebaseConfig); 
       console.log("Firebase app initialized successfully");
     } catch (error) {
       console.error("Firebase app initialization error:", error);
-//      return auth;
+      throw error;
     }
   } else {
-      app = getApps()[0];
-      console.log("Firebase app already initialized");
+    app = getApps()[0];
+    console.log("Firebase app already initialized");
   }
  
-  const auth = getAuth(app);
- 
-  // Initialize providers
-  const googleProvider = new GoogleAuthProvider();
-  const facebookProvider = new FacebookAuthProvider();
-  const microsoftProvider = new OAuthProvider('microsoft.com');
-
-  return auth ? Promise.resolve(auth) : Promise.reject("No user logged in");
-
+  auth = getAuth(app);
+  return auth;
 }
 
 export async function initFirestore(databaseId: string = "") : Promise<Firestore> {
-
-  // let db: any; // Declare db at the beginning
   let dbstr: string = "";
 
   if (!getApps().length) {
     try {
-      //console.log("Firebase apiKey=" + process.env.NEXT_PUBLIC_FIREBASE_API_KEY);
-      // console.log("Firebase appId=" + process.env.NEXT_PUBLIC_FIREBASE_APP_ID);
       console.log('Firebase databaseId=' + process.env.NEXT_PUBLIC_FIRESTORE_DATABASE_ID);
-
       app = initializeApp(firebaseConfig);      
       console.log("Firebase app initialized successfully");
     } catch (error) {
       console.error("Firebase app initialization error:", error);
     }
   } else {
-      app = getApps()[0];
-      console.log("Firebase app already initialized");
+    app = getApps()[0];
+    console.log("Firebase app already initialized");
   }
 
   if (firestoreConfig.databaseId != undefined) 
@@ -82,9 +103,21 @@ export async function initFirestore(databaseId: string = "") : Promise<Firestore
     dbstr = databaseId;   // database passed as argument
 
   try {
-      db = getFirestore(app, dbstr); 
-      console.log("Firestore database initialized: ", dbstr);
-    } catch (error) {
+    // Check if Firestore is already initialized
+    if (!db) {
+      // Initialize Firestore with persistence settings only if not already initialized
+      db = initializeFirestore(app, {
+        localCache: persistentLocalCache({
+          tabManager: persistentMultipleTabManager()
+        })
+      }, dbstr);
+      console.log("Firestore database initialized with persistence: ", dbstr);
+    } else {
+      // Use existing Firestore instance
+      db = getFirestore(app, dbstr);
+      console.log("Using existing Firestore instance: ", dbstr);
+    }
+  } catch (error) {
     console.error("Firestore database error:", error);
   }
 
@@ -94,7 +127,16 @@ export async function initFirestore(databaseId: string = "") : Promise<Firestore
 // module.export is the legacy CommmonJS syntax that uses require() to import
 // module.exports = { app, auth, db, firebaseConfig, firestoreConfig, googleProvider, facebookProvider, microsoftProvider };
 
-export { app, auth, db, firebaseConfig, firestoreConfig, googleProvider, facebookProvider, microsoftProvider };
+export { 
+  app, 
+  auth, 
+  db, 
+  firebaseConfig, 
+  firestoreConfig, 
+  googleProvider, 
+  facebookProvider, 
+  microsoftProvider 
+};
 
 
 // To add App Check (recaptcha) to your app, import the following functions

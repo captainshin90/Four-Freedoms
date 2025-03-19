@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -17,12 +17,13 @@ import { Separator } from "@/components/ui/separator";
 import { FallbackMessage } from "@/components/ui/fallback-message";
 
 
-type Message = {
+type PodcastData = {
   id: string;
-  content: string;
-  sender: "user" | "assistant" | "podcast";
-  timestamp: Date;
-  podcastData?: any;
+  title: string;
+  image: string;
+  audioUrl: string;
+  duration: number;
+  // ... add other podcast properties as needed
 };
 
 type SuggestedQuestion = {
@@ -30,16 +31,24 @@ type SuggestedQuestion = {
   text: string;
 };
 
+type Message = {
+  id: string;
+  content: string;
+  sender: "user" | "assistant" | "podcast";
+  timestamp: Date | Timestamp;
+  podcastData?: PodcastData;
+};
+
 interface ChatBoxProps {
   height?: number;
   onHeightChange?: (height: number) => void;
-  activePodcast?: any;
+  activePodcast?: PodcastData;
 }
 
 export function ChatBox({ height = 40, onHeightChange, activePodcast }: ChatBoxProps) {
   const [messages, setMessages] = useState<Message[]>([
     {
-      id: "1",
+      id: `welcome-${Date.now()}`,
       content: "Hello! I'm your podcast assistant. Ask me anything about the episodes you're listening to or any other questions you might have.",
       sender: "assistant",
       timestamp: new Date(),
@@ -52,10 +61,16 @@ export function ChatBox({ height = 40, onHeightChange, activePodcast }: ChatBoxP
   const [startY, setStartY] = useState(0);
   const [startHeight, setStartHeight] = useState(height);
   const [error, setError] = useState<string | null>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
   
   const { user } = useAuth();
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const scrollAreaRef = useRef<any>(null);
   const dragHandleRef = useRef<HTMLDivElement>(null);
+
+  // Helper function to ensure we have a Date object
+  const ensureDate = (timestamp: Date | Timestamp): Date => {
+    return timestamp instanceof Timestamp ? timestamp.toDate() : timestamp;
+  };
 
   // Load chat history from Firestore if user is logged in
   useEffect(() => {
@@ -71,7 +86,9 @@ export function ChatBox({ height = 40, onHeightChange, activePodcast }: ChatBoxP
               id: chat.id,
               content: chat.chat_text,
               sender: chat.is_user ? "user" : "assistant" as "user" | "assistant",
-              timestamp: chat.create_datetime
+              timestamp: chat.create_datetime instanceof Timestamp 
+                ? chat.create_datetime 
+                : new Date(chat.create_datetime)
             }));
             
             setMessages(formattedMessages);
@@ -86,11 +103,45 @@ export function ChatBox({ height = 40, onHeightChange, activePodcast }: ChatBoxP
     loadChatHistory();
   }, [user]);
 
+  const getFallbackQuestions = (): SuggestedQuestion[] => {
+    return [
+      { id: 'fallback-1', text: 'What are the key points discussed in this episode?' },
+      { id: 'fallback-2', text: 'Can you summarize the main takeaways?' },
+      { id: 'fallback-3', text: 'What are the practical applications of this topic?' }
+    ];
+  };
+
+  const loadSuggestedQuestions = useCallback(async (podcastId: string) => {
+    if (!podcastId) {
+      console.warn('No podcast ID provided for loading suggested questions');
+      return;
+    }
+
+    try {
+      setError(null);
+      const questions = await questionsService.getPopularQuestions(podcastId, 3);
+      
+      if (questions && questions.length > 0) {
+        setSuggestedQuestions(
+          questions.map(q => ({
+            id: q.id,
+            text: q.question_text
+          }))
+        );
+      } else {
+        setSuggestedQuestions(getFallbackQuestions());
+      }
+    } catch (error) {
+      console.error("Error loading suggested questions:", error);
+      setSuggestedQuestions(getFallbackQuestions());
+    }
+  }, []);
+
   // Add active podcast to chat when it changes
   useEffect(() => {
-    if (activePodcast) {
+    if (activePodcast && activePodcast.id) {
       const podcastMessage: Message = {
-        id: `podcast-${Date.now()}`,
+        id: `podcast-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         content: `Now playing: ${activePodcast.title}`,
         sender: "podcast",
         timestamp: new Date(),
@@ -99,17 +150,22 @@ export function ChatBox({ height = 40, onHeightChange, activePodcast }: ChatBoxP
       
       setMessages(prev => [...prev, podcastMessage]);
       
-      // Load suggested questions for this podcast
-      loadSuggestedQuestions(activePodcast.id.split('-')[0]); // Extract podcast ID from episode ID
+      // Safely extract podcast ID
+      const podcastId = activePodcast.id.toString().split('-')[0] || activePodcast.id.toString();
+      loadSuggestedQuestions(podcastId);
     }
-  }, [activePodcast]);
+  }, [activePodcast, loadSuggestedQuestions]);
 
   // Scroll to bottom when messages change
   useEffect(() => {
     if (scrollAreaRef.current) {
-      const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
-      if (scrollContainer) {
-        scrollContainer.scrollTop = scrollContainer.scrollHeight;
+      try {
+        const viewport = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
+        if (viewport) {
+          viewport.scrollTop = viewport.scrollHeight;
+        }
+      } catch (error) {
+        console.error('Error scrolling to bottom:', error);
       }
     }
   }, [messages]);
@@ -148,43 +204,12 @@ export function ChatBox({ height = 40, onHeightChange, activePodcast }: ChatBoxP
     setStartHeight(height);
   };
 
-  const loadSuggestedQuestions = async (podcastId: string) => {
-    try {
-      setError(null);
-      const questions = await questionsService.getPopularQuestions(podcastId, 3);
-      
-      if (questions && questions.length > 0) {
-        setSuggestedQuestions(
-          questions.map(q => ({
-            id: q.id,
-            text: q.question_text
-          }))
-        );
-      } else {
-        // Fallback questions if none found
-        setSuggestedQuestions([
-          { id: 'q1', text: 'What are the key points from this episode?' },
-          { id: 'q2', text: 'Can you summarize this podcast?' },
-          { id: 'q3', text: 'Who are the hosts of this podcast?' }
-        ]);
-      }
-    } catch (error) {
-      console.error("Error loading suggested questions:", error);
-      // Don't show error for suggested questions, just use fallbacks
-      setSuggestedQuestions([
-        { id: 'q1', text: 'What are the key points from this episode?' },
-        { id: 'q2', text: 'Can you summarize this podcast?' },
-        { id: 'q3', text: 'Who are the hosts of this podcast?' }
-      ]);
-    }
-  };
-
   const handleSendMessage = async () => {
     if (!inputValue.trim()) return;
     
     // Add user message
     const userMessage: Message = {
-      id: Date.now().toString(),
+      id: `user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       content: inputValue,
       sender: "user",
       timestamp: new Date(),
@@ -202,7 +227,7 @@ export function ChatBox({ height = 40, onHeightChange, activePodcast }: ChatBoxP
           await chatsService.createChatMessage({
             user_id: user.uid,
             chat_text: userMessage.content,
-            create_datetime: Timestamp.fromDate(userMessage.timestamp),
+            created_at: Timestamp.fromDate(ensureDate(userMessage.timestamp)),
             is_user: true
           });
         } catch (error) {
@@ -215,7 +240,7 @@ export function ChatBox({ height = 40, onHeightChange, activePodcast }: ChatBoxP
       const response = await chatService.sendMessage(userMessage.content);
       
       const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
+        id: `assistant-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         content: response.response || "I'm sorry, I couldn't process your request at this time.",
         sender: "assistant",
         timestamp: new Date(),
@@ -229,7 +254,7 @@ export function ChatBox({ height = 40, onHeightChange, activePodcast }: ChatBoxP
           await chatsService.createChatMessage({
             user_id: user.uid,
             chat_text: assistantMessage.content,
-            create_datetime: Timestamp.fromDate(assistantMessage.timestamp),
+            create_datetime: Timestamp.fromDate(ensureDate(assistantMessage.timestamp)),
             is_user: false
           });
         } catch (error) {
@@ -277,7 +302,9 @@ export function ChatBox({ height = 40, onHeightChange, activePodcast }: ChatBoxP
             id: chat.id,
             content: chat.chat_text,
             sender: chat.is_user ? "user" : "assistant" as "user" | "assistant",
-            timestamp: chat.create_datetime
+            timestamp: chat.create_datetime instanceof Timestamp 
+              ? chat.create_datetime 
+              : new Date(chat.create_datetime)
           }));
           
           setMessages(formattedMessages);
@@ -289,23 +316,8 @@ export function ChatBox({ height = 40, onHeightChange, activePodcast }: ChatBoxP
     }
   };
 
-  // Format time on client-side only to avoid hydration mismatch
-  const formatMessageTime = (date: Date) => {
-    return "";  // Return empty string initially to avoid hydration mismatch
-  };
-
-  // Update time display after component mounts
-  useEffect(() => {
-    // This will force a re-render after hydration is complete
-    const timer = setTimeout(() => {
-      setMessages(prev => [...prev]);
-    }, 0);
-    
-    return () => clearTimeout(timer);
-  }, []);
-
   return (
-    <div className="flex flex-col h-full border rounded-lg overflow-hidden">
+    <div className="flex flex-col h-full border rounded-lg overflow-hidden" suppressHydrationWarning>
       <div 
         ref={dragHandleRef}
         className="p-2 border-b flex items-center justify-center cursor-ns-resize bg-muted/30"
@@ -314,7 +326,11 @@ export function ChatBox({ height = 40, onHeightChange, activePodcast }: ChatBoxP
         <GripVertical className="h-4 w-4 text-muted-foreground" />
       </div>
       
-      <ScrollArea ref={scrollAreaRef} className="flex-1">
+      <ScrollArea 
+        ref={scrollAreaRef} 
+        className="flex-1"
+        suppressHydrationWarning
+      >
         <div className="p-4 space-y-4">
           {error && (
             <FallbackMessage
@@ -334,9 +350,9 @@ export function ChatBox({ height = 40, onHeightChange, activePodcast }: ChatBoxP
                 message.sender === "podcast" ? "justify-center" : ""
               )}
             >
-              {message.sender === "podcast" ? (
+              {message.sender === "podcast" && message.podcastData ? (
                 <div className="w-full max-w-[90%]">
-                  <PodcastPlayer podcast={message.podcastData} />
+                  <PodcastPlayer podcast={message.podcastData} audioRef={audioRef} />
                   
                   {suggestedQuestions.length > 0 && (
                     <div className="mt-4 space-y-2">
@@ -375,12 +391,19 @@ export function ChatBox({ height = 40, onHeightChange, activePodcast }: ChatBoxP
                       </Avatar>
                     )}
                     <div>
-                      <p>{message.content}</p>
+                      <p className="text-sm">{message.content}</p>
                       <p className="text-xs opacity-50 mt-1">
-                        {typeof window !== 'undefined' ? message.timestamp.toLocaleTimeString([], {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        }) : ''}
+                        {message.sender === "assistant" && (
+                          <span suppressHydrationWarning>
+                            {(message.timestamp instanceof Timestamp 
+                              ? message.timestamp.toDate() 
+                              : message.timestamp
+                            ).toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </span>
+                        )}
                       </p>
                     </div>
                   </div>

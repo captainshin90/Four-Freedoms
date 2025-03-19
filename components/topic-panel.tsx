@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { PlusCircle, ChevronRight, ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,8 +9,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/hooks/use-auth";
 import { topicsService } from "@/lib/services/database-service";
 import { Topic } from "@/lib/schemas/topics";
-import {db} from "@/lib/firebase";
-import { Firestore } from "firebase/firestore";
+// import {db} from "@/lib/firebase";
+// import { Firestore } from "firebase/firestore";
 
 interface TopicPanelProps {
   onSelectTopic?: (topicId: string) => void;
@@ -22,6 +22,61 @@ export function TopicPanel({ onSelectTopic }: TopicPanelProps) {
   const [selectedTopic, setSelectedTopic] = useState<Topic | null>(null);
   const [userLocation, setUserLocation] = useState<string>("Newton, MA"); // Default location
   const { user, userProfile } = useAuth();
+  const [isHovered, setIsHovered] = useState(false);
+  const [isClicked, setIsClicked] = useState(false);
+  const hoverTimeoutRef = useRef<NodeJS.Timeout>();
+
+  // Handle mouse enter
+  const handleMouseEnter = () => {
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+    }
+    setIsHovered(true);
+    setIsExpanded(true);
+  };
+
+  // Handle mouse leave
+  const handleMouseLeave = () => {
+    if (!isClicked) {
+      hoverTimeoutRef.current = setTimeout(() => {
+        setIsHovered(false);
+        setIsExpanded(false);
+      }, 300); // Small delay before closing
+    }
+  };
+
+  // Handle panel click
+  const handlePanelClick = () => {
+    setIsClicked(!isClicked);
+    setIsExpanded(true);
+  };
+
+  // Handle click outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const panel = document.getElementById('topic-panel');
+      if (panel && !panel.contains(event.target as Node)) {
+        setIsClicked(false);
+        if (!isHovered) {
+          setIsExpanded(false);
+        }
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isHovered]);
+
+  // Clean up timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (hoverTimeoutRef.current) {
+        clearTimeout(hoverTimeoutRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     const fetchTopics = async () => {
@@ -88,17 +143,32 @@ export function TopicPanel({ onSelectTopic }: TopicPanelProps) {
 
   return (
     <div 
-      className={`border-r bg-card transition-all duration-300 flex flex-col h-full ${
+      id="topic-panel"
+      className={`border-r bg-card transition-all duration-500 flex flex-col h-full ${
         isExpanded ? "w-1/4" : "w-[10%]"
       }`}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      onClick={handlePanelClick}
     >
       <div className="p-4 border-b flex items-center justify-between">
         <h2 className={`font-semibold ${isExpanded ? "block" : "hidden"}`}>Topics</h2>
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" onClick={handleAddTopic} title="Add Topic">
+          <Button variant="ghost" size="icon" onClick={(e) => {
+            e.stopPropagation();
+            handleAddTopic();
+          }} title="Add Topic">
             <PlusCircle className="h-5 w-5" />
           </Button>
-          <Button variant="ghost" size="icon" onClick={toggleExpand} className="md:hidden">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleExpand();
+            }} 
+            className="md:hidden"
+          >
             {isExpanded ? <ChevronLeft className="h-5 w-5" /> : <ChevronRight className="h-5 w-5" />}
           </Button>
         </div>
@@ -170,6 +240,8 @@ const mockTopics = [
     related_topic_tags: ["Massachusetts", "Boston suburbs", "education"],
     datetime: new Date(),
     is_private: false,
+    is_active: true,
+    is_deleted: false,
     created_at: new Date(),
     updated_at: new Date()
   },
@@ -181,6 +253,8 @@ const mockTopics = [
     related_topic_tags: ["New England", "Boston", "education", "politics"],
     datetime: new Date(),
     is_private: false,
+    is_active: true,
+    is_deleted: false,
     created_at: new Date(),
     updated_at: new Date()
   },
@@ -192,6 +266,8 @@ const mockTopics = [
     related_topic_tags: ["education", "schools", "policy"],
     datetime: new Date(),
     is_private: false,
+    is_active: true,
+    is_deleted: false,
     created_at: new Date(),
     updated_at: new Date()
   }

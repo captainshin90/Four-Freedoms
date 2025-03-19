@@ -30,9 +30,10 @@ interface PodcastPlayerProps {
   };
   isMinimized?: boolean;
   onToggleMinimize?: () => void;
+  audioRef: React.RefObject<HTMLAudioElement>;
 }
 
-export function PodcastPlayer({ podcast, isMinimized = false, onToggleMinimize }: PodcastPlayerProps) {
+export function PodcastPlayer({ podcast, isMinimized = false, onToggleMinimize, audioRef }: PodcastPlayerProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(podcast.duration || 0);
@@ -40,180 +41,184 @@ export function PodcastPlayer({ podcast, isMinimized = false, onToggleMinimize }
   const [isMuted, setIsMuted] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
   const [isDisliked, setIsDisliked] = useState(false);
+  const [timeDisplay, setTimeDisplay] = useState("");
+  const [isAudioReady, setIsAudioReady] = useState(false);
   
-  const audioRef = useRef<HTMLAudioElement>(null);
   const { user } = useAuth();
   const { toast } = useToast();
-  
+
+  // Initialize audio element
   useEffect(() => {
-    // Auto-play when podcast changes
-    if (audioRef.current) {
-      audioRef.current.play().catch(error => {
-        console.error("Auto-play failed:", error);
-        setIsPlaying(false);
-      });
-      setIsPlaying(true);
-    }
+    if (!audioRef?.current) return;
+
+    const audio = audioRef.current;
     
+    // Set up event listeners
+    const handleTimeUpdate = () => {
+      setCurrentTime(audio.currentTime);
+    };
+
+    const handleDurationChange = () => {
+      setDuration(audio.duration);
+    };
+
+    const handleError = (e: ErrorEvent) => {
+      console.error('Audio error:', e);
+      toast({
+        title: "Error playing audio",
+        description: "There was an error playing the podcast. Please try again.",
+        variant: "destructive",
+      });
+    };
+
+    const handleCanPlay = () => {
+      setIsAudioReady(true);
+    };
+
+    audio.addEventListener('timeupdate', handleTimeUpdate);
+    audio.addEventListener('durationchange', handleDurationChange);
+    audio.addEventListener('error', handleError);
+    audio.addEventListener('canplay', handleCanPlay);
+
     return () => {
-      if (audioRef.current) {
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-        audioRef.current.pause();
+      audio.removeEventListener('timeupdate', handleTimeUpdate);
+      audio.removeEventListener('durationchange', handleDurationChange);
+      audio.removeEventListener('error', handleError);
+      audio.removeEventListener('canplay', handleCanPlay);
+    };
+  }, [audioRef, toast]);
+
+  // Handle podcast changes
+  useEffect(() => {
+    if (!audioRef?.current || !isAudioReady) return;
+
+    const audio = audioRef.current;
+    const playAudio = async () => {
+      try {
+        audio.src = podcast.audioUrl;
+        await audio.play();
+        setIsPlaying(true);
+      } catch (error) {
+        if (error instanceof Error && error.name !== 'AbortError') {
+          console.error("Auto-play failed:", error);
+          setIsPlaying(false);
+        }
       }
     };
-  }, [podcast.id]);
-  
-  const togglePlay = () => {
-    if (audioRef.current) {
-      if (isPlaying) {
-        audioRef.current.pause();
-      } else {
-        audioRef.current.play().catch(error => {
-          console.error("Play failed:", error);
-        });
+    
+    playAudio();
+    
+    return () => {
+      if (audio) {
+        audio.pause();
+        setIsPlaying(false);
       }
-      setIsPlaying(!isPlaying);
+    };
+  }, [podcast.id, podcast.audioUrl, audioRef, isAudioReady]);
+  
+  useEffect(() => {
+    setTimeDisplay(new Date().toLocaleTimeString('en-US', { 
+      hour: '2-digit', 
+      minute: '2-digit'
+    }));
+  }, []);
+
+  const togglePlay = () => {
+    if (!audioRef?.current || !isAudioReady) {
+      console.warn('Audio element not ready');
+      return;
     }
+
+    const audio = audioRef.current;
+    if (isPlaying) {
+      audio.pause();
+    } else {
+      audio.play().catch(error => {
+        console.error('Error playing audio:', error);
+        setIsPlaying(false);
+      });
+    }
+    setIsPlaying(!isPlaying);
   };
   
   const toggleMute = () => {
-    if (audioRef.current) {
-      audioRef.current.muted = !isMuted;
-      setIsMuted(!isMuted);
-    }
+    if (!audioRef?.current || !isAudioReady) return;
+    setIsMuted(!isMuted);
+    audioRef.current.muted = !isMuted;
   };
   
   const handleVolumeChange = (value: number[]) => {
+    if (!audioRef?.current || !isAudioReady) return;
     const newVolume = value[0];
-    if (audioRef.current) {
-      audioRef.current.volume = newVolume / 100;
-      setVolume(newVolume);
-      setIsMuted(newVolume === 0);
-    }
-  };
-  
-  const handleTimeUpdate = () => {
-    if (audioRef.current) {
-      setCurrentTime(audioRef.current.currentTime);
-      if (audioRef.current.duration) {
-        setDuration(audioRef.current.duration);
-      }
-    }
+    setVolume(newVolume);
+    audioRef.current.volume = newVolume / 100;
+    setIsMuted(newVolume === 0);
   };
   
   const handleSeek = (value: number[]) => {
-    const seekTime = value[0];
-    if (audioRef.current) {
-      audioRef.current.currentTime = seekTime;
-      setCurrentTime(seekTime);
-    }
+    if (!audioRef?.current || !isAudioReady) return;
+    audioRef.current.currentTime = value[0];
   };
   
   const handleSkipBack = () => {
-    if (audioRef.current) {
-      audioRef.current.currentTime = Math.max(0, currentTime - 15);
-    }
+    if (!audioRef?.current || !isAudioReady) return;
+    audioRef.current.currentTime = Math.max(0, currentTime - 10);
   };
   
   const handleSkipForward = () => {
-    if (audioRef.current) {
-      audioRef.current.currentTime = Math.min(duration, currentTime + 15);
-    }
+    if (!audioRef?.current || !isAudioReady) return;
+    audioRef.current.currentTime = Math.min(duration, currentTime + 10);
   };
 
-  const handleLike = () => {
+  const handleLike = async () => {
     if (!user) {
       toast({
-        title: "Sign in required",
-        description: "Please sign in to like episodes.",
-        variant: "default"
+        title: "Please sign in",
+        description: "You need to be signed in to like podcasts.",
+        variant: "destructive",
       });
       return;
     }
-    
-    // Toggle like status
-    const newLikedState = !isLiked;
-    setIsLiked(newLikedState);
-    
-    // If liking, remove dislike
-    if (newLikedState && isDisliked) {
-      setIsDisliked(false);
-    }
-    
-    toast({
-      title: newLikedState ? "Liked" : "Removed Like",
-      description: `You ${newLikedState ? "liked" : "removed your like from"} this episode.`
-    });
-    
-    // Here you would update the like in your database
-    // This is a placeholder for the actual implementation
+
+    setIsLiked(!isLiked);
+    setIsDisliked(false);
+    // TODO: Implement like functionality
   };
 
-  const handleDislike = () => {
+  const handleDislike = async () => {
     if (!user) {
       toast({
-        title: "Sign in required",
-        description: "Please sign in to dislike episodes.",
-        variant: "default"
+        title: "Please sign in",
+        description: "You need to be signed in to dislike podcasts.",
+        variant: "destructive",
       });
       return;
     }
-    
-    // Toggle dislike status
-    const newDislikedState = !isDisliked;
-    setIsDisliked(newDislikedState);
-    
-    // If disliking, remove like
-    if (newDislikedState && isLiked) {
-      setIsLiked(false);
-    }
-    
-    toast({
-      title: newDislikedState ? "Disliked" : "Removed Dislike",
-      description: `You ${newDislikedState ? "disliked" : "removed your dislike from"} this episode.`
-    });
-    
-    // Here you would update the dislike in your database
-    // This is a placeholder for the actual implementation
+
+    setIsDisliked(!isDisliked);
+    setIsLiked(false);
+    // TODO: Implement dislike functionality
   };
 
   if (isMinimized) {
     return (
-      <div className="border-t bg-card p-4 flex items-center justify-between">
-        <div className="flex items-center space-x-4 w-1/4">
-          <div className="h-12 w-12 rounded-md bg-muted overflow-hidden">
+      <div className="flex items-center justify-between p-2 bg-card rounded-lg border">
+        <div className="flex items-center space-x-3">
+          <div className="relative w-[40px] h-[40px] rounded-md overflow-hidden">
             <Image
               src={podcast.image}
               alt={podcast.title}
-              width={48}
-              height={48}
-              className="w-full h-full object-cover"
-              style={{
-                maxWidth: "100%",
-                height: "auto"
-              }} />
+              fill
+              sizes="40px"
+              className="object-cover"
+            />
           </div>
-          <div className="truncate">
-            <h3 className="font-medium truncate">{podcast.title}</h3>
+          <div>
+            <h3 className="font-medium text-sm">{podcast.title}</h3>
+            <p className="text-xs text-muted-foreground">{formatTime(currentTime)} / {formatTime(duration)}</p>
           </div>
         </div>
-        <div className="flex items-center space-x-4">
-          <Button variant="ghost" size="icon" onClick={handleSkipBack}>
-            <SkipBack className="h-5 w-5" />
-          </Button>
-          <Button 
-            onClick={togglePlay} 
-            variant="outline" 
-            size="icon" 
-            className="h-10 w-10 rounded-full"
-          >
-            {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
-          </Button>
-          <Button variant="ghost" size="icon" onClick={handleSkipForward}>
-            <SkipForward className="h-5 w-5" />
-          </Button>
-        </div>
-        <div className="flex items-center space-x-2 w-1/4 justify-end">
+        <div className="flex items-center space-x-2">
           <Button 
             variant="ghost" 
             size="icon" 
@@ -248,14 +253,6 @@ export function PodcastPlayer({ podcast, isMinimized = false, onToggleMinimize }
             </Button>
           )}
         </div>
-        <audio
-          ref={audioRef}
-          src={podcast.audioUrl}
-          onTimeUpdate={handleTimeUpdate}
-          onEnded={() => setIsPlaying(false)}
-          onLoadedMetadata={handleTimeUpdate}
-          className="hidden"
-        />
       </div>
     );
   }
@@ -265,16 +262,15 @@ export function PodcastPlayer({ podcast, isMinimized = false, onToggleMinimize }
       <div className="p-4 space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
+            <div className="relative w-[100px] h-[100px] rounded-md overflow-hidden">
               <Image
                 src={podcast.image}
                 alt={podcast.title}
-                width={100}
-                height={100}
-                //fill
-                sizes="100vw"
-                style={{
-                  objectFit: "cover"
-                }} />
+                fill
+                sizes="100px"
+                className="object-cover"
+              />
+            </div>
             <div>
               <h3 className="font-medium">{podcast.title}</h3>
             </div>
@@ -307,7 +303,7 @@ export function PodcastPlayer({ podcast, isMinimized = false, onToggleMinimize }
         <div>
           <div className="space-y-2">
             <div className="flex justify-between text-xs text-muted-foreground">
-              <span>{formatTime(currentTime)}</span>
+              <span>{timeDisplay}</span>
               <span>{formatTime(duration)}</span>
             </div>
             <Slider
@@ -353,14 +349,6 @@ export function PodcastPlayer({ podcast, isMinimized = false, onToggleMinimize }
           </div>
         </div>
       </div>
-      <audio
-        ref={audioRef}
-        src={podcast.audioUrl}
-        onTimeUpdate={handleTimeUpdate}
-        onEnded={() => setIsPlaying(false)}
-        onLoadedMetadata={handleTimeUpdate}
-        className="hidden"
-      />
     </div>
   );
 }

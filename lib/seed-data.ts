@@ -23,6 +23,9 @@ let db: Firestore | null;
 let databaseService = DatabaseService.getInstance();
 
 
+// PROBLEM: this seed data is not setting prompt_id, podcast_id, etc.
+
+
 // Function to seed initial data into Firestore
 export async function seedDatabase() {
     console.log('Starting database seeding...');
@@ -108,6 +111,7 @@ async function seedSubscriptions() {
       subscription_price: 0,
       subscription_period: 'monthly',
       is_active: true,
+      is_deleted: false,
       features: ['Basic podcast access', 'Limited chat functionality', 'Ad-supported experience']
     },
     {
@@ -117,6 +121,7 @@ async function seedSubscriptions() {
       subscription_price: 9.99,
       subscription_period: 'monthly',
       is_active: true,
+      is_deleted: false,
       features: ['Full podcast library', 'Advanced chat features', 'Ad-free experience', 'Personalized recommendations']
     },
     {
@@ -126,6 +131,7 @@ async function seedSubscriptions() {
       subscription_price: 29.99,
       subscription_period: 'monthly',
       is_active: true,
+      is_deleted: false,
       features: ['Everything in Premium', 'Team collaboration', 'API access', 'Priority support', 'Custom integrations']
     }
   ];
@@ -143,30 +149,40 @@ async function seedPersonas() {
       persona_name: 'Local Resident',
       persona_type: 'resident',
       persona_description: 'A local resident interested in community issues',
+      is_active: true,
+      is_deleted: false,
       persona_image: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=200&h=200&fit=crop'
     },
     {
       persona_name: 'College Student',
       persona_type: 'student',
       persona_description: 'A student interested in educational content',
+      is_active: true,
+      is_deleted: false,
       persona_image: 'https://images.unsplash.com/photo-1517256673644-36ad11246d21?w=200&h=200&fit=crop'
     },
     {
       persona_name: 'City Official',
       persona_type: 'official',
       persona_description: 'A city official interested in governance',
+      is_active: true,
+      is_deleted: false,
       persona_image: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=200&h=200&fit=crop'
     },
     {
       persona_name: 'Community Advocate',
       persona_type: 'lobbyst',
       persona_description: 'An advocate for community causes',
+      is_active: true,
+      is_deleted: false,
       persona_image: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&h=200&fit=crop'
     },
     {
       persona_name: 'Local Politician',
       persona_type: 'politician',
       persona_description: 'A politician interested in policy discussions',
+      is_active: true,
+      is_deleted: false,
       persona_image: 'https://images.unsplash.com/photo-1566492031773-4f4e44671857?w=200&h=200&fit=crop'
     }
   ];
@@ -186,7 +202,9 @@ async function seedTopics() {
       topic_type: 'place',
       related_topic_tags: ['Massachusetts', 'Boston suburbs', 'education'],
       datetime: Timestamp.now(),
-      is_private: false
+      is_private: false,
+      is_active: true,
+      is_deleted: false
     },
     {
       topic_name: 'Weston, MA',
@@ -194,7 +212,9 @@ async function seedTopics() {
       topic_type: 'place',
       related_topic_tags: ['Massachusetts', 'Boston suburbs', 'affluent communities'],
       datetime: Timestamp.now(),
-      is_private: false
+      is_private: false,
+      is_active: true,
+      is_deleted: false
     },
     {
       topic_name: 'Massachusetts',
@@ -202,7 +222,9 @@ async function seedTopics() {
       topic_type: 'place',
       related_topic_tags: ['New England', 'Boston', 'education', 'politics'],
       datetime: Timestamp.now(),
-      is_private: false
+      is_private: false,
+      is_active: true,
+      is_deleted: false
     },
     {
       topic_name: 'Elizabeth Warren',
@@ -210,7 +232,9 @@ async function seedTopics() {
       topic_type: 'person',
       related_topic_tags: ['politics', 'Massachusetts', 'Senate', 'Democrats'],
       datetime: Timestamp.now(),
-      is_private: false
+      is_private: false,
+      is_active: true,
+      is_deleted: false
     },
     {
       topic_name: 'Newton High School',
@@ -218,7 +242,9 @@ async function seedTopics() {
       topic_type: 'school',
       related_topic_tags: ['education', 'Newton MA', 'high school', 'students'],
       datetime: Timestamp.now(),
-      is_private: false
+      is_private: false,
+      is_active: true,
+      is_deleted: false
     },
     {
       topic_name: 'Soccer',
@@ -226,7 +252,9 @@ async function seedTopics() {
       topic_type: 'sport',
       related_topic_tags: ['sports', 'youth activities', 'recreation', 'fitness'],
       datetime: Timestamp.now(),
-      is_private: false
+      is_private: false,
+      is_active: true,
+      is_deleted: false
     },
     {
       topic_name: 'Local Government',
@@ -234,7 +262,9 @@ async function seedTopics() {
       topic_type: 'issue',
       related_topic_tags: ['politics', 'governance', 'community'],
       datetime: Timestamp.now(),
-      is_private: false
+      is_private: false,
+      is_active: true,
+      is_deleted: false
     },
     {
       topic_name: 'Education Reform',
@@ -242,7 +272,9 @@ async function seedTopics() {
       topic_type: 'issue',
       related_topic_tags: ['education', 'schools', 'policy'],
       datetime: Timestamp.now(),
-      is_private: false
+      is_private: false,
+      is_active: true,
+      is_deleted: false
     },
     {
       topic_name: 'Community Development',
@@ -250,7 +282,9 @@ async function seedTopics() {
       topic_type: 'issue',
       related_topic_tags: ['development', 'community', 'planning'],
       datetime: Timestamp.now(),
-      is_private: false
+      is_private: false,
+      is_active: true,
+      is_deleted: false
     },
     {
       topic_name: 'Public Health',
@@ -258,7 +292,9 @@ async function seedTopics() {
       topic_type: 'issue',
       related_topic_tags: ['health', 'wellness', 'policy'],
       datetime: Timestamp.now(),
-      is_private: false
+      is_private: false,
+      is_active: true,
+      is_deleted: false
     }
   ];
   
@@ -290,8 +326,8 @@ async function seedPrompts() {
       prompt_name: 'Community Issues Overview',
       prompt_desc: 'A prompt to discuss local community issues',
       created_by: 'system',
-      create_datetime: Timestamp.now(),
       is_active: true,
+      is_deleted: false,
       target_persona: residentPersona?.id || personas[0].id,
       prompt_text: 'What are the most pressing issues facing our community today?'
     },
@@ -299,8 +335,8 @@ async function seedPrompts() {
       prompt_name: 'Education System Analysis',
       prompt_desc: 'A prompt to analyze the education system',
       created_by: 'system',
-      create_datetime: Timestamp.now(),
       is_active: true,
+      is_deleted: false,
       target_persona: studentPersona?.id || personas[0].id,
       prompt_text: 'How can we improve the education system to better serve students?'
     },
@@ -308,8 +344,8 @@ async function seedPrompts() {
       prompt_name: 'Governance Challenges',
       prompt_desc: 'A prompt to discuss governance challenges',
       created_by: 'system',
-      create_datetime: Timestamp.now(),
       is_active: true,
+      is_deleted: false,
       target_persona: officialPersona?.id || personas[0].id,
       prompt_text: 'What are the biggest challenges in governing a diverse community?'
     },
@@ -317,8 +353,8 @@ async function seedPrompts() {
       prompt_name: 'Newton Development',
       prompt_desc: 'A prompt to discuss Newton development issues',
       created_by: 'system',
-      create_datetime: Timestamp.now(),
       is_active: true,
+      is_deleted: false,
       target_persona: lobbystPersona?.id || personas[0].id,
       prompt_text: 'What are the key development priorities for Newton in the next five years?'
     },
@@ -326,8 +362,8 @@ async function seedPrompts() {
       prompt_name: 'Massachusetts Politics',
       prompt_desc: 'A prompt to discuss Massachusetts political landscape',
       created_by: 'system',
-      create_datetime: Timestamp.now(),
       is_active: true,
+      is_deleted: false,
       target_persona: politicianPersona?.id || personas[0].id,
       prompt_text: 'How is the political landscape in Massachusetts evolving?'
     },
@@ -335,8 +371,8 @@ async function seedPrompts() {
       prompt_name: 'Youth Sports Importance',
       prompt_desc: 'A prompt to discuss the importance of youth sports',
       created_by: 'system',
-      create_datetime: Timestamp.now(),
       is_active: true,
+      is_deleted: false,
       target_persona: residentPersona?.id || personas[0].id,
       prompt_text: 'Why are youth sports programs like soccer important for community development?'
     }
@@ -372,7 +408,9 @@ async function seedDocuments() {
       doc_extracted_text: "The City of Newton's fiscal year 2023 budget allocates $450 million to various departments including education, public works, and public safety...",
       extract_tool: 'PyPDF',
       extract_datetime: Timestamp.now(),
-      doc_source_format: 'pdf'
+      doc_source_format: 'pdf',
+      is_active: true,
+      is_deleted: false
     },
     {
       doc_name: 'Massachusetts Education Statistics',
@@ -382,7 +420,9 @@ async function seedDocuments() {
       doc_extracted_text: "Massachusetts continues to lead the nation in K-12 education outcomes, with 79% of students meeting or exceeding standards in reading and mathematics...",
       extract_tool: 'PyPDF',
       extract_datetime: Timestamp.now(),
-      doc_source_format: 'pdf'
+      doc_source_format: 'pdf',
+      is_active: true,
+      is_deleted: false
     },
     {
       doc_name: 'Newton Youth Soccer Program Guide',
@@ -392,7 +432,9 @@ async function seedDocuments() {
       doc_extracted_text: "The Newton Youth Soccer program offers recreational and competitive leagues for children ages 5-18. Registration begins in August for the fall season...",
       extract_tool: 'DocxParser',
       extract_datetime: Timestamp.now(),
-      doc_source_format: 'docx'
+      doc_source_format: 'docx',
+      is_active: true,
+      is_deleted: false
     },
     {
       doc_name: 'Newton High School Academic Performance',
@@ -402,7 +444,9 @@ async function seedDocuments() {
       doc_extracted_text: "Newton High School students achieved an average SAT score of 1320 in 2023, with 94% of graduates continuing to higher education...",
       extract_tool: 'TextExtractor',
       extract_datetime: Timestamp.now(),
-      doc_source_format: 'txt'
+      doc_source_format: 'txt',
+      is_active: true,
+      is_deleted: false
     },
     {
       doc_name: 'Senator Warren Town Hall Recording',
@@ -412,7 +456,9 @@ async function seedDocuments() {
       doc_extracted_text: "Senator Warren addressed concerns about healthcare, education funding, and environmental policy during the two-hour town hall meeting...",
       extract_tool: 'Whisper',
       extract_datetime: Timestamp.now(),
-      doc_source_format: 'mp3'
+      doc_source_format: 'mp3',
+      is_active: true,
+      is_deleted: false
     }
   ];
   
@@ -441,37 +487,42 @@ async function seedTranscripts() {
     {
       transcript_type: 'interview',
       topic_tags: [newtonTopic?.id, educationTopic?.id].filter(Boolean),
-      create_datetime: Timestamp.now(),
       transcript_model: 'gpt-4',
-      transcript_text: 'Interviewer: How would you assess the current state of education in Newton?\n\nSuperintendent: Newton has always prided itself on educational excellence. Our schools consistently rank among the top in Massachusetts. However, we face challenges in addressing achievement gaps and ensuring equitable access to resources...'
+      transcript_text: 'Interviewer: How would you assess the current state of education in Newton?\n\nSuperintendent: Newton has always prided itself on educational excellence. Our schools consistently rank among the top in Massachusetts. However, we face challenges in addressing achievement gaps and ensuring equitable access to resources...',
+      is_active: true,
+      is_deleted: false
     },
     {
       transcript_type: 'meeting',
       topic_tags: [newtonTopic?.id].filter(Boolean),
-      create_datetime: Timestamp.now(),
       transcript_model: 'whisper-large',
-      transcript_text: "Chair: I call this meeting of the Newton City Council to order. First on our agenda is the proposed zoning change for the Washington Street corridor.\n\nCouncilor Johnson: Thank you, Chair. I'd like to present the planning committee's recommendations..."
+      transcript_text: "Chair: I call this meeting of the Newton City Council to order. First on our agenda is the proposed zoning change for the Washington Street corridor.\n\nCouncilor Johnson: Thank you, Chair. I'd like to present the planning committee's recommendations...",
+      is_active: true,
+      is_deleted: false
     },
     {
       transcript_type: 'article',
       topic_tags: [massTopic?.id, warrenTopic?.id].filter(Boolean),
-      create_datetime: Timestamp.now(),
       transcript_model: 'claude-2',
-      transcript_text: 'Senator Elizabeth Warren Announces Education Initiative\n\nBoston, MA - Senator Elizabeth Warren today announced a new initiative aimed at addressing student loan debt and expanding access to higher education across Massachusetts...'
+      transcript_text: 'Senator Elizabeth Warren Announces Education Initiative\n\nBoston, MA - Senator Elizabeth Warren today announced a new initiative aimed at addressing student loan debt and expanding access to higher education across Massachusetts...',
+      is_active: true,
+      is_deleted: false
     },
     {
       transcript_type: 'petition',
       topic_tags: [newtonTopic?.id, topics?.find(t => t.topic_name === 'Community Development')?.id].filter(Boolean),
-      create_datetime: Timestamp.now(),
       transcript_model: 'gpt-3.5-turbo',
-      transcript_text: 'Petition for Increased Green Space in Newton City Center\n\nWe, the undersigned residents of Newton, Massachusetts, petition the City Council to allocate funds for the creation and maintenance of additional green spaces in the city center...'
+      transcript_text: 'Petition for Increased Green Space in Newton City Center\n\nWe, the undersigned residents of Newton, Massachusetts, petition the City Council to allocate funds for the creation and maintenance of additional green spaces in the city center...',
+      is_active: true,
+      is_deleted: false
     },
     {
       transcript_type: 'interview',
       topic_tags: [topics?.find(t => t.topic_name === 'Soccer')?.id, newtonTopic?.id].filter(Boolean),
-      create_datetime: Timestamp.now(),
       transcript_model: 'whisper-large',
-      transcript_text: "Interviewer: How has the Newton Youth Soccer program evolved over the past decade?\n\nProgram Director: When we started, we had about 200 kids participating. Now we're serving over 1,500 young athletes across all age groups. The growth has been phenomenal..."
+      transcript_text: "Interviewer: How has the Newton Youth Soccer program evolved over the past decade?\n\nProgram Director: When we started, we had about 200 kids participating. Now we're serving over 1,500 young athletes across all age groups. The growth has been phenomenal...",
+      is_active: true,
+      is_deleted: false
     }
   ];
   
@@ -500,6 +551,8 @@ async function seedPodcasts() {
   const warrenTopic = topics?.find(t => t.topic_name === 'Elizabeth Warren');
   const soccerTopic = topics?.find(t => t.topic_name === 'Soccer');
   
+
+
   const podcasts = [
     {
       podcast_title: 'Newton Community Voices',
@@ -509,8 +562,9 @@ async function seedPodcasts() {
       podcast_hosts: ['Jane Smith', 'John Doe'],
       podcast_format: 'mp3',
       topic_tags: [newtonTopic?.id, topics.find(t => t.topic_name === 'Community Development')?.id].filter(Boolean),
-      create_datetime: Timestamp.now(),
-      subscription_type: 'free'
+      subscription_type: 'free',
+      is_active: true,
+      is_deleted: false
     },
     {
       podcast_title: 'Massachusetts Education Matters',
@@ -520,8 +574,9 @@ async function seedPodcasts() {
       podcast_hosts: ['Dr. Emily Johnson', 'Prof. Michael Brown'],
       podcast_format: 'mp3',
       topic_tags: [massTopic?.id, educationTopic?.id].filter(Boolean),
-      create_datetime: Timestamp.now(),
-      subscription_type: 'free'
+      subscription_type: 'free',
+      is_active: true,
+      is_deleted: false
     },
     {
       podcast_title: 'Policy Insights with Senator Warren',
@@ -531,8 +586,9 @@ async function seedPodcasts() {
       podcast_hosts: ['Sarah Williams', 'Senator Elizabeth Warren'],
       podcast_format: 'mp3',
       topic_tags: [warrenTopic?.id, massTopic?.id].filter(Boolean),
-      create_datetime: Timestamp.now(),
-      subscription_type: 'premium'
+      subscription_type: 'premium',
+      is_active: true,
+      is_deleted: false
     },
     {
       podcast_title: 'Newton High School Sports Report',
@@ -542,8 +598,21 @@ async function seedPodcasts() {
       podcast_hosts: ['David Green', 'Lisa Park'],
       podcast_format: 'mp3',
       topic_tags: [topics.find(t => t.topic_name === 'Newton High School')?.id, soccerTopic?.id].filter(Boolean),
-      create_datetime: Timestamp.now(),
-      subscription_type: 'free'
+      subscription_type: 'free',
+      is_active: true,
+      is_deleted: false
+    },
+    {
+      podcast_title: 'Lexington High School Sports Report',
+      podcast_image: 'https://images.unsplash.com/photo-1444653614773-995cb1ef9efa?w=500&h=500&fit=crop',
+      podcast_desc: 'Coverage of Lexington High School sports teams and events',
+      podcast_type: 'audio_podcast',
+      podcast_hosts: ['Paul Green', 'John Park'],
+      podcast_format: 'mp3',
+      topic_tags: [topics.find(t => t.topic_name === 'Lexington High School')?.id, soccerTopic?.id].filter(Boolean),
+      subscription_type: 'free',
+      is_active: true,
+      is_deleted: false
     },
     {
       podcast_title: 'Weston & Newton Community Health',
@@ -553,8 +622,9 @@ async function seedPodcasts() {
       podcast_hosts: ['Dr. James Wilson', 'Nurse Maria Garcia'],
       podcast_format: 'mp3',
       topic_tags: [newtonTopic?.id, topics.find(t => t.topic_name === 'Weston, MA')?.id, topics.find(t => t.topic_name === 'Public Health')?.id].filter(Boolean),
-      create_datetime: Timestamp.now(),
-      subscription_type: 'premium'
+      subscription_type: 'premium',
+      is_active: true,
+      is_deleted: false
     }
   ];
   
@@ -572,11 +642,12 @@ async function seedPodcasts() {
         views: Math.floor(Math.random() * 1000),
         likes: Math.floor(Math.random() * 100),
         dislikes: Math.floor(Math.random() * 10),
-        create_datetime: Timestamp.now(),
         publish_datetime: Timestamp.now(),
         content_duration: 1800, // 30 minutes in seconds
         content_url: 'https://example.com/audio/episode1.mp3',
-        content_image: podcast.podcast_image
+        content_image: podcast.podcast_image,
+        is_active: true,
+        is_deleted: false
       },
       {
         podcast_id: podcastId,
@@ -586,11 +657,12 @@ async function seedPodcasts() {
         views: Math.floor(Math.random() * 1000),
         likes: Math.floor(Math.random() * 100),
         dislikes: Math.floor(Math.random() * 10),
-        create_datetime: Timestamp.now(),
         publish_datetime: Timestamp.now(),
         content_duration: 2400, // 40 minutes in seconds
         content_url: 'https://example.com/audio/episode2.mp3',
-        content_image: podcast.podcast_image
+        content_image: podcast.podcast_image,
+        is_active: true,
+        is_deleted: false
       },
       {
         podcast_id: podcastId,
@@ -600,11 +672,12 @@ async function seedPodcasts() {
         views: Math.floor(Math.random() * 1000),
         likes: Math.floor(Math.random() * 100),
         dislikes: Math.floor(Math.random() * 10),
-        create_datetime: Timestamp.now(),
         publish_datetime: Timestamp.now(),
         content_duration: 3000, // 50 minutes in seconds
         content_url: 'https://example.com/audio/episode3.mp3',
-        content_image: podcast.podcast_image
+        content_image: podcast.podcast_image,
+        is_active: true,
+        is_deleted: false
       }
     ];
     
@@ -636,21 +709,24 @@ async function seedQuestions() {
         question_text: 'What are the key takeaways from this episode?',
         clicks: Math.floor(Math.random() * 50),
         user_id: sampleUserIds[Math.floor(Math.random() * sampleUserIds.length)],
-        create_datetime: Timestamp.now()
+        is_active: true,
+        is_deleted: false
       },
       {
         podcast_id: podcast.id,
         question_text: 'Can you provide more context on the topic discussed at the 15-minute mark?',
         clicks: Math.floor(Math.random() * 50),
         user_id: sampleUserIds[Math.floor(Math.random() * sampleUserIds.length)],
-        create_datetime: Timestamp.now()
+        is_active: true,
+        is_deleted: false
       },
       {
         podcast_id: podcast.id,
         question_text: 'What resources were mentioned for further reading?',
         clicks: Math.floor(Math.random() * 50),
         user_id: sampleUserIds[Math.floor(Math.random() * sampleUserIds.length)],
-        create_datetime: Timestamp.now()
+        is_active: true,
+        is_deleted: false
       }
     ];
     
@@ -682,6 +758,8 @@ async function seedUsers() {
   const users = [
     {
       user_id: 'user1',
+      is_active: true,
+      is_deleted: false,
       login_id: 'john.doe@example.com',
       first_name: 'John',
       last_name: 'Doe',
@@ -721,6 +799,8 @@ async function seedUsers() {
     },
     {
       user_id: 'user2',
+      is_active: true,
+      is_deleted: false,
       login_id: 'jane.smith@example.com',
       first_name: 'Jane',
       last_name: 'Smith',
@@ -767,6 +847,8 @@ async function seedUsers() {
     },
     {
       user_id: 'user3',
+      is_active: true,
+      is_deleted: false,
       login_id: 'robert.chen@example.com',
       first_name: 'Robert',
       last_name: 'Chen',
@@ -847,38 +929,38 @@ async function seedChats() {
       {
         user_id: user.id,
         chat_text: 'Hello, I have a question about the latest podcast on education reform.',
-        create_datetime: Timestamp.fromDate(new Date(Date.now() - 3 * 24 * 60 * 60 * 1000)), // 3 days ago
-        is_user: true
+        is_user: true,
+        is_deleted: false
       },
       {
         user_id: user.id,
         chat_text: 'Of course! I\'d be happy to help with any questions about the education reform podcast. What specific aspect would you like to know more about?',
-        create_datetime: Timestamp.fromDate(new Date(Date.now() - 3 * 24 * 60 * 60 * 1000 + 1 * 60 * 1000)), // 1 minute later
-        is_user: false
+        is_user: false,
+        is_deleted: false
       },
       {
         user_id: user.id,
         chat_text: 'Can you summarize the main points discussed about school funding?',
-        create_datetime: Timestamp.fromDate(new Date(Date.now() - 3 * 24 * 60 * 60 * 1000 + 5 * 60 * 1000)), // 5 minutes later
-        is_user: true
+        is_user: true,
+        is_deleted: false
       },
       {
         user_id: user.id,
         chat_text: 'The podcast discussed three main points about school funding: 1) The current formula for distributing state funds to districts, 2) Proposed changes to increase equity across wealthy and less affluent communities, and 3) The impact of property taxes on educational resources. The experts suggested that a more balanced approach combining state and local funding could help address disparities.',
-        create_datetime: Timestamp.fromDate(new Date(Date.now() - 3 * 24 * 60 * 60 * 1000 + 7 * 60 * 1000)), // 7 minutes later
-        is_user: false
+        is_user: false,
+        is_deleted: false
       },
       {
         user_id: user.id,
         chat_text: 'Thanks! Are there any upcoming episodes that will continue this discussion?',
-        create_datetime: Timestamp.fromDate(new Date(Date.now() - 2 * 24 * 60 * 60 * 1000)), // 2 days ago
-        is_user: true
+        is_user: true,
+        is_deleted: false
       },
       {
         user_id: user.id,
         chat_text: 'Yes, the podcast host mentioned that next week\'s episode will feature an interview with the state education secretary to discuss implementation plans for the new funding proposals. It\'s scheduled to be released next Tuesday.',
-        create_datetime: Timestamp.fromDate(new Date(Date.now() - 2 * 24 * 60 * 60 * 1000 + 2 * 60 * 1000)), // 2 minutes later
-        is_user: false
+        is_user: false,
+        is_deleted: false
       }
     ];
   

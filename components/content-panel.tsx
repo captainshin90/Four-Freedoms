@@ -13,17 +13,21 @@ interface ContentPanelProps {
   activePodcast?: any | null;
   onSelectPodcast: (podcast: any) => void;
   showFullPlayer?: boolean;
+  searchQuery?: string;
+  audioRef: React.RefObject<HTMLAudioElement>;
 }
 
 export function ContentPanel({ 
   selectedTopicId, 
   activePodcast, 
   onSelectPodcast,
-  showFullPlayer = false
+  showFullPlayer = false,
+  searchQuery = "",
+  audioRef
 }: ContentPanelProps) {
   const [chatHeight, setChatHeight] = useState(40); // 40% of the panel height
   const [bannerImage, setBannerImage] = useState("/banner.jpg");
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
 
   // Set banner image based on selected topic
   useEffect(() => {
@@ -40,9 +44,16 @@ export function ContentPanel({
     setChatHeight(height);
   };
 
+  const handleTimeUpdate = () => {
+    if (audioRef.current) {
+      const currentTime = audioRef.current.currentTime;
+      const duration = audioRef.current.duration;
+      // Update any components that need this information
+    }
+  };
+
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden">
-      <audio ref={audioRef} style={{ display: 'none' }} controls />
       <ScrollArea className="flex-1" style={{ height: `${100 - chatHeight}%` }}>
         <div className="p-6 space-y-6">
           <div className="relative w-full h-48 rounded-lg overflow-hidden">
@@ -52,6 +63,7 @@ export function ContentPanel({
               className="w-full h-full"
               fill
               sizes="100vw"
+              priority
               style={{
                 objectFit: "cover"
               }} />
@@ -74,14 +86,9 @@ export function ContentPanel({
               {selectedTopicId ? "Topic Podcasts" : "Recommended For You"}
             </h2>
             <PodcastList 
-              topicId={selectedTopicId} 
-              onSelectPodcast={(podcast) => {
-                if (audioRef.current) {
-                  audioRef.current.src = podcast.audioUrl;
-                  audioRef.current.play();
-                }
-                onSelectPodcast(podcast);
-              }} 
+              topicId={selectedTopicId}
+              searchQuery={searchQuery}
+              onSelectPodcast={onSelectPodcast}
             />
           </div>
         </div>
@@ -89,7 +96,10 @@ export function ContentPanel({
       <div style={{ height: `${chatHeight}%` }}>
         {showFullPlayer && activePodcast ? (
           <div className="p-4">
-            <PodcastPlayer podcast={activePodcast} />
+            <PodcastPlayer 
+              podcast={activePodcast} 
+              audioRef={audioRef}
+            />
           </div>
         ) : (
           <ChatBox 

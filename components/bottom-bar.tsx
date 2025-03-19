@@ -5,9 +5,10 @@ import { PodcastPlayer } from "@/components/podcast-player";
 interface BottomBarProps {
   activePodcast: any | null;
   onTogglePlayer: () => void;
+  audioRef: React.RefObject<HTMLAudioElement>;
 }
 
-export function BottomBar({ activePodcast, onTogglePlayer }: BottomBarProps) {
+export function BottomBar({ activePodcast, onTogglePlayer, audioRef }: BottomBarProps) {
   if (!activePodcast) {
     return null;
   }
@@ -17,6 +18,7 @@ export function BottomBar({ activePodcast, onTogglePlayer }: BottomBarProps) {
       podcast={activePodcast} 
       isMinimized={true} 
       onToggleMinimize={onTogglePlayer}
+      audioRef={audioRef}
     />
   );
 }

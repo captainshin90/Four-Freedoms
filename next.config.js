@@ -5,7 +5,7 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
   images: { unoptimized: true },
-  webpack: (config) => {
+  webpack: (config, { dev }) => {
     // This is needed to handle the private class fields in undici
     config.module.rules.push({
       test: /node_modules\/undici\/lib\/web\/fetch\/util\.js$/,
@@ -17,8 +17,14 @@ const nextConfig = {
         },
       },
     });
+    if (dev) {
+      config.infrastructureLogging = {
+        level: 'error', // Only show error messages
+      }
+    }
     return config;
   },
+  productionBrowserSourceMaps: false,
 };
 
 module.exports = nextConfig;

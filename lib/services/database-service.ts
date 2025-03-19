@@ -62,12 +62,14 @@ export class DatabaseService {
 
   private async init() {
     try {
-        this.db = await initFirestore();
-//      const auth = await initAuth();
-//      const currentUser = (getAuth(app)).currentUser;          
+      this.db = await initFirestore();
+      if (!this.db) {
+        throw new Error("Failed to initialize Firestore");
+      }
+      console.log("Database service initialized successfully");
     } catch (error) {
       console.error("Firestore initialization error:", error);
-      throw error;
+      // Don't throw the error, let the app continue with limited functionality
     }
   }
 
@@ -238,13 +240,50 @@ export class DatabaseService {
   // Handle Firestore errors with more detailed logging
   private handleFirestoreError(error: FirestoreError): void {
     if (error.code === 'unavailable') {
-      console.error('Firebase connection unavailable. Check your internet connection and Firebase project configuration.');
+      console.warn('Firebase connection unavailable. Attempting to use cached data...');
+      // Don't throw the error, let the app continue with cached data
     } else if (error.code === 'permission-denied') {
       console.error('Firebase permission denied. Check your security rules and authentication.');
+      throw error;
     } else if (error.code === 'not-found') {
-      console.error('Firebase resource not found. Check that the collection or document exists.');
+      console.warn('Firebase resource not found. This might be expected for new users.');
+      // Don't throw the error for not-found as it might be expected
     } else if (error.code === 'resource-exhausted') {
       console.error('Firebase resource exhausted. You may have exceeded your quota or rate limits.');
+      throw error;
+    } else {
+      console.error('Firebase error:', error);
+      throw error;
+    }
+  }
+
+  async getActiveChatHistory(userId: string): Promise<DocumentData[] | null> {
+    if (!this.db) return null;
+    
+    try {
+      const chatsRef = collection(this.db, 'chats');
+      const q = query(
+        chatsRef,
+        where('user_id', '==', userId),
+        where('is_deleted', '==', false)  // TODO: uncomment this when we have a delete_datetime field
+      );
+      
+      const querySnapshot = await getDocs(q);
+      const chats = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        create_datetime: doc.data().create_datetime as Timestamp
+      }));
+      
+      // Sort in memory instead of in the database
+      return chats.sort((a, b) => {
+        const aTime = a.create_datetime?.toDate() || new Date(0);
+        const bTime = b.create_datetime?.toDate() || new Date(0);
+        return aTime.getTime() - bTime.getTime();
+      });
+    } catch (error) {
+      console.error('Error getting active chat history:', error);
+      throw error;
     }
   }
 }
@@ -578,14 +617,6 @@ export const chatsService = {
   },
   
   async getActiveChatHistory(userId: string): Promise<DocumentData[] | null> {
-    return databaseService.query(
-      'chats',
-      [
-        { field: 'user_id', operator: '==', value: userId },
-        { field: 'delete_datetime', operator: '==', value: null }
-      ],
-      'create_datetime',
-      'asc'
-    );
+    return databaseService.getActiveChatHistory(userId);
   }
 };

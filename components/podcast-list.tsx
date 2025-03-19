@@ -9,19 +9,39 @@ import { podcastsService } from "@/lib/services/database-service";
 import { Podcast } from "@/lib/schemas/podcasts";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
+import { episodesService } from "@/lib/services/database-service";
+import { topicsService } from "@/lib/services/database-service";
+import { usersService } from "@/lib/services/database-service";
 
 interface PodcastListProps {
   topicId?: string;
+  searchQuery?: string;
   onSelectPodcast: (podcast: any) => void;
 }
 
-export function PodcastList({ topicId, onSelectPodcast }: PodcastListProps) {
+export function PodcastList({ topicId, searchQuery, onSelectPodcast }: PodcastListProps) {
   const [podcasts, setPodcasts] = useState<Podcast[]>([]);
   const [loading, setLoading] = useState(true);
   const [likedPodcasts, setLikedPodcasts] = useState<Record<string, boolean>>({});
   const [dislikedPodcasts, setDislikedPodcasts] = useState<Record<string, boolean>>({});
+  const [showEmptyMessage, setShowEmptyMessage] = useState(false);
   const { user, userProfile } = useAuth();
   const { toast } = useToast();
+
+  // Function to fetch default podcasts
+  const fetchDefaultPodcasts = async () => {
+    try {
+      setLoading(true);
+      const podcastData = await podcastsService.getAllPodcasts();
+      const validPodcasts = (podcastData as Podcast[]).filter(podcast => podcast.podcast_id);
+      setPodcasts(validPodcasts);
+    } catch (error) {
+      console.error("Error fetching default podcasts:", error);
+      setPodcasts(mockPodcasts);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     const fetchPodcasts = async () => {
@@ -35,10 +55,10 @@ export function PodcastList({ topicId, onSelectPodcast }: PodcastListProps) {
           podcastData = await podcastsService.getAllPodcasts();
         }
         
-        setPodcasts(podcastData as Podcast[]);
+        const validPodcasts = (podcastData as Podcast[]).filter(podcast => podcast.podcast_id);
+        setPodcasts(validPodcasts);
       } catch (error) {
         console.error("Error fetching podcasts:", error);
-        // Fallback to mock data
         setPodcasts(mockPodcasts);
       } finally {
         setLoading(false);
@@ -48,7 +68,95 @@ export function PodcastList({ topicId, onSelectPodcast }: PodcastListProps) {
     fetchPodcasts();
   }, [topicId]);
 
-  const handlePlayPodcast = (podcast: Podcast) => {
+  // Add search effect
+  useEffect(() => {
+    const searchPodcasts = async () => {
+      if (!searchQuery) {
+        setShowEmptyMessage(false);
+        fetchDefaultPodcasts();
+        return;
+      }
+
+      try {
+        setLoading(true);
+        setShowEmptyMessage(false);
+        
+        // Get all podcasts and their episodes
+        const [podcastData, allEpisodes] = await Promise.all([
+          podcastsService.getAllPodcasts(),
+          Promise.all((await podcastsService.getAllPodcasts() || []).map(
+            podcast => episodesService.getAllEpisodes(podcast.podcast_id)
+          ))
+        ]);
+
+        if (!podcastData) {
+          setPodcasts([]);
+          setShowEmptyMessage(true);
+          // Show default podcasts after 3 seconds
+          setTimeout(() => {
+            setShowEmptyMessage(false);
+            fetchDefaultPodcasts();
+          }, 3000);
+          return;
+        }
+
+        // Flatten episodes array
+        const episodes = allEpisodes.flat().filter(Boolean);
+
+        // Search through podcasts and their episodes
+        const searchResults = (podcastData as Podcast[]).filter(podcast => {
+          const matchInPodcast = 
+            podcast.podcast_title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            podcast.podcast_desc.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            podcast.podcast_hosts.some(host => 
+              host.toLowerCase().includes(searchQuery.toLowerCase())
+            ) ||
+            podcast.topic_tags.some(tag => 
+              tag.toLowerCase().includes(searchQuery.toLowerCase())
+            );
+
+          const matchInEpisodes = episodes
+            .filter(episode => episode && episode.podcast_id === podcast.podcast_id)
+            .some(episode => episode && (
+              episode.episode_title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+              episode.episode_desc.toLowerCase().includes(searchQuery.toLowerCase()) ||
+              episode.topic_tags.some((tag: string) => 
+                tag.toLowerCase().includes(searchQuery.toLowerCase())
+              )
+            ));
+
+          return matchInPodcast || matchInEpisodes;
+        });
+
+        if (searchResults.length === 0) {
+          setShowEmptyMessage(true);
+          setTimeout(() => {
+            setShowEmptyMessage(false);
+            fetchDefaultPodcasts();
+          }, 3000);
+        }
+        setPodcasts(searchResults);
+      } catch (error) {
+        console.error("Error searching podcasts:", error);
+        toast({
+          title: "Search Error",
+          description: "Failed to search podcasts. Please try again.",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    // Debounce search to avoid too many requests
+    const timeoutId = setTimeout(() => {
+      searchPodcasts();
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery]);
+
+  const handlePlayPodcast = async (podcast: Podcast) => {
     // Check if premium content is accessible
     if (podcast.subscription_type === 'premium' && (!user || userProfile?.subscription_type !== 'premium')) {
       toast({
@@ -59,24 +167,134 @@ export function PodcastList({ topicId, onSelectPodcast }: PodcastListProps) {
       return;
     }
     
-    // Get the first episode for this podcast
-    const firstEpisode = {
-      id: `${podcast.podcast_id}-ep1`,
-      title: podcast.podcast_title,
-      image: podcast.podcast_image,
-      audioUrl: '/podcasts/example.mp3', // This would be a real URL in production
-      duration: 180 // 30 minutes in seconds
-    };
-    
-    onSelectPodcast(firstEpisode);
+    try {
+      // Get the first episode for this podcast
+      const episodes = await episodesService.getAllEpisodes(podcast.podcast_id);
+      if (!episodes || episodes.length === 0) {
+        toast({
+          title: "Error",
+          description: "No episodes available for this podcast.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      const firstEpisode = episodes[0];
+      const episodeData = {
+        id: firstEpisode.episode_id,
+        title: firstEpisode.episode_title,
+        image: firstEpisode.content_image || podcast.podcast_image,
+        audioUrl: firstEpisode.content_url,
+        duration: firstEpisode.content_duration
+      };
+      
+      onSelectPodcast(episodeData);
+    } catch (error) {
+      console.error("Error fetching episode:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load the podcast episode. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
-  const handleAddToTopics = (podcast: Podcast) => {
-    // Implement add to topics functionality
-    toast({
-      title: "Added to Topics",
-      description: `${podcast.podcast_title} has been added to your topics.`
-    });
+  const handleAddToTopics = async (podcast: Podcast) => {
+    if (!user) {
+      toast({
+        title: "Sign in required",
+        description: "Please sign in to add podcasts to your topics.",
+        variant: "default"
+      });
+      return;
+    }
+
+    try {
+      // Get the podcast's topic tags
+      const topicTags = podcast.topic_tags || [];
+      if (topicTags.length === 0) {
+        toast({
+          title: "No Topics Available",
+          description: "This podcast doesn't have any associated topics.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Get the user's current profile
+      const currentProfile = userProfile;
+      if (!currentProfile) {
+        toast({
+          title: "Error",
+          description: "Could not find your user profile.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Get all topics
+      const allTopics = await topicsService.getAllTopics();
+      if (!allTopics) {
+        toast({
+          title: "Error",
+          description: "Could not fetch available topics.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Find matching topics from the podcast's tags
+      const matchingTopics = allTopics.filter(topic => 
+        topic.related_topic_tags?.some((tag: string) => topicTags.includes(tag))
+      );
+
+      if (matchingTopics.length === 0) {
+        toast({
+          title: "No Matching Topics",
+          description: "No matching topics found for this podcast.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Update user's following_topics array with new topic IDs
+      const updatedFollowingTopics = [...(currentProfile.following_topics || [])];
+      let newTopicsAdded = false;
+
+      matchingTopics.forEach(topic => {
+        if (!updatedFollowingTopics.includes(topic.topic_id)) {
+          updatedFollowingTopics.push(topic.topic_id);
+          newTopicsAdded = true;
+        }
+      });
+
+      if (!newTopicsAdded) {
+        toast({
+          title: "Already Following",
+          description: "You are already following all topics for this podcast.",
+          variant: "default"
+        });
+        return;
+      }
+
+      // Update the user's profile in the database
+      await usersService.updateUser(user.uid, {
+        following_topics: updatedFollowingTopics,
+        updated_at: new Date()
+      });
+
+      toast({
+        title: "Topics Added",
+        description: `Added ${matchingTopics.length} new topic${matchingTopics.length > 1 ? 's' : ''} to your following list.`
+      });
+    } catch (error) {
+      console.error("Error adding podcast to topics:", error);
+      toast({
+        title: "Error",
+        description: "Failed to add podcast to your topics. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleLike = (podcast: Podcast, event: React.MouseEvent) => {
@@ -161,7 +379,7 @@ export function PodcastList({ topicId, onSelectPodcast }: PodcastListProps) {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {[...Array(4)].map((_, i) => (
-          <Card key={i} className="overflow-hidden">
+          <Card key={`loading-${i}`} className="overflow-hidden">
             <CardContent className="p-0">
               <div className="relative aspect-video bg-muted animate-pulse"></div>
               <div className="p-4 space-y-2">
@@ -175,32 +393,49 @@ export function PodcastList({ topicId, onSelectPodcast }: PodcastListProps) {
     );
   }
 
+  if (showEmptyMessage) {
+    return (
+      <div className="flex flex-col items-center justify-center p-8 text-center">
+        <div className="text-lg font-semibold mb-2">No podcasts found</div>
+        <p className="text-muted-foreground mb-4">
+          We couldn't find any podcasts matching your search.
+          <br />
+          Showing you our recommended podcasts in a moment...
+        </p>
+      </div>
+    );
+  }
+
   // If no podcasts from database, use mock data
   const displayPodcasts = podcasts && podcasts.length > 0 ? podcasts : mockPodcasts;
   
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {displayPodcasts.map((podcast) => (
-        <Card key={podcast.podcast_id} className="overflow-hidden group">
+        <Card 
+          key={`podcast-${podcast.podcast_id || `fallback-${Math.random()}`}`}
+          className="cursor-pointer hover:shadow-lg transition-shadow group"
+          onClick={() => onSelectPodcast(podcast)}
+        >
           <CardContent className="p-0">
-            <div className="relative aspect-video">
+            <div className="relative aspect-video group">
               <Image
                 src={podcast.podcast_image}
                 alt={podcast.podcast_title}
-                width={300}
-                height={200}
-                //fill
+                fill
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                 className="object-cover transition-all"
-                style={{
-                  maxWidth: "100%",
-                  height: "auto"
-                }} />
+                //priority={podcast.podcast_id === "mock-1"}
+              />
               <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                 <Button 
                   size="icon" 
                   variant="secondary" 
                   className="rounded-full h-12 w-12 mr-2"
-                  onClick={() => handlePlayPodcast(podcast)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handlePlayPodcast(podcast);
+                  }}
                 >
                   <Play className="h-6 w-6" />
                 </Button>
@@ -208,7 +443,10 @@ export function PodcastList({ topicId, onSelectPodcast }: PodcastListProps) {
                   size="icon" 
                   variant="secondary" 
                   className="rounded-full h-12 w-12"
-                  onClick={() => handleAddToTopics(podcast)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleAddToTopics(podcast);
+                  }}
                 >
                   <Plus className="h-6 w-6" />
                 </Button>
@@ -255,60 +493,64 @@ export function PodcastList({ topicId, onSelectPodcast }: PodcastListProps) {
 }
 
 // Mock data for fallback
-const mockPodcasts = [
+const mockPodcasts: Podcast[] = [
   {
-    podcast_id: "1",
+    podcast_id: "mock-1",
     podcast_title: "Newton Community Voices",
     podcast_hosts: ["Jane Smith", "John Doe"],
     podcast_image: "https://images.unsplash.com/photo-1478737270239-2f02b77fc618?w=500&h=500&fit=crop",
     podcast_desc: "A podcast featuring voices from the Newton community discussing local issues",
-    podcast_type: "audio_podcast" as const,
-    podcast_format: "mp3" as const,
+    podcast_type: "audio_podcast",
+    podcast_format: "mp3",
     topic_tags: [],
-    create_datetime: new Date(),
-    subscription_type: "free",
+    subscription_type: "free" as const,
+    is_active: true,
+    is_deleted: false,
     created_at: new Date(),
     updated_at: new Date()
   },
   {
-    podcast_id: "2",
+    podcast_id: "mock-2",
     podcast_title: "Massachusetts Education Matters",
     podcast_hosts: ["Dr. Emily Johnson", "Prof. Michael Brown"],
     podcast_image: "https://images.unsplash.com/photo-1526628953301-3e589a6a8b74?w=500&h=500&fit=crop",
     podcast_desc: "Debug: Discussions about education policy and reform in Massachusetts",
-    podcast_type: "audio_podcast" as const,
-    podcast_format: "mp3" as const,
+    podcast_type: "audio_podcast",
+    podcast_format: "mp3",
     topic_tags: [],
-    create_datetime: new Date(),
-    subscription_type: "premium",
+    subscription_type: "premium" as const,
+    is_active: true,
+    is_deleted: false,
     created_at: new Date(),
     updated_at: new Date()
   },
   {
-    podcast_id: "3",
+    podcast_id: "mock-3",
     podcast_title: "Policy Insights with Senator Warren",
     podcast_hosts: ["Sarah Williams", "Senator Elizabeth Warren"],
     podcast_image: "https://images.unsplash.com/photo-1526628953301-3e589a6a8b74?w=500&h=500&fit=crop",
     podcast_desc: "Debug: Deep dives into policy issues with Senator Elizabeth Warren",
-    podcast_type: "audio_podcast" as const,
-    podcast_format: "mp3" as const,
+    podcast_type: "audio_podcast",
+    podcast_format: "mp3",
     topic_tags: [],
-    create_datetime: new Date(),
-    subscription_type: "premium",
+    subscription_type: "premium" as const,
+    is_active: true,
+    is_deleted: false,
     created_at: new Date(),
     updated_at: new Date()
   },
   {
-    podcast_id: "4",
+    podcast_id: "mock-4",
     podcast_title: "Newton High School Sports Report",
     podcast_hosts: ["David Green", "Lisa Park"],
     podcast_image: "https://images.unsplash.com/photo-1444653614773-995cb1ef9efa?w=500&h=500&fit=crop",
     podcast_desc: "Coverage of Newton High School sports teams and events",
-    podcast_type: "audio_podcast" as const,
-    podcast_format: "mp3" as const,
+    podcast_type: "audio_podcast",
+    podcast_format: "mp3",
     topic_tags: [],
-    create_datetime: new Date(),
-    subscription_type: "free",
+    subscription_type: "free" as const,
+    is_active: true,
+    is_deleted: false,
     created_at: new Date(),
     updated_at: new Date()
   }

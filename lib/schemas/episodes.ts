@@ -7,7 +7,6 @@ export interface Episode {
   views: number;
   likes: number;
   dislikes: number;
-  create_datetime: Date;
   publish_datetime: Date;
   expire_datetime?: Date;
   content_duration: number; // in seconds
@@ -15,12 +14,14 @@ export interface Episode {
   content_image: string;
   created_at: Date;
   updated_at: Date;
+  is_active: boolean;
+  is_deleted: boolean;
 }
 
 // Helper function to convert Firestore data to Episode type
 export function convertToEpisode(data: any): Episode {
   return {
-    episode_id: data.id || data.episode_id,
+    episode_id: data.episode_id = crypto.randomUUID(),
     podcast_id: data.podcast_id,
     episode_title: data.episode_title,
     episode_desc: data.episode_desc,
@@ -28,13 +29,14 @@ export function convertToEpisode(data: any): Episode {
     views: data.views,
     likes: data.likes,
     dislikes: data.dislikes,
-    create_datetime: data.create_datetime?.toDate(),
     publish_datetime: data.publish_datetime?.toDate(),
     expire_datetime: data.expire_datetime?.toDate(),
     content_duration: data.content_duration,
     content_url: data.content_url,
     content_image: data.content_image,
     created_at: data.created_at?.toDate(),
-    updated_at: data.updated_at?.toDate()
+    updated_at: data.updated_at?.toDate(),
+    is_active: data.is_active = true,
+    is_deleted: data.is_deleted = false
   };
 }

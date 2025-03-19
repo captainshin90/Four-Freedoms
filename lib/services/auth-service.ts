@@ -15,6 +15,7 @@ import {
 import { Firestore } from "firebase/firestore";
 import { app, initFirestore, initAuth, googleProvider, facebookProvider, microsoftProvider } from "@/lib/firebase";
 import { usersService } from "./database-service";
+import { GoogleAuthProvider, FacebookAuthProvider, OAuthProvider } from "firebase/auth";
 
 export type AuthProvider = 'google' | 'facebook' | 'microsoft';
 export type AuthMethod = 'popup' | 'redirect';
@@ -25,16 +26,26 @@ export class AuthService {
   public db: Firestore | undefined;
   public auth: Auth | undefined;
   public currentUser: User | null = null;
+  private initialized: boolean = false;
 
   constructor() {
     this.init();    
   } 
 
   private async init() {
+    if (this.initialized) {
+      return;
+    }
+
     try {
-      this.db = await initFirestore();
       this.auth = await initAuth();
-      this.currentUser = (getAuth(app)).currentUser;          
+      this.db = await initFirestore();
+      
+      if (this.auth) {
+        this.currentUser = this.auth.currentUser;
+        this.initialized = true;
+        console.log("Firebase services initialized successfully");
+      }
     } catch (error) {
       console.error("Firestore or Auth initialization error:", error);
       throw error;
@@ -51,11 +62,7 @@ export class AuthService {
 
   // Get the current user
   getCurrentUser(): User | null {
-//    if (auth)
-//      currentUser = auth.currentUser;  
-    return this.currentUser? this.currentUser : null;
-    
-   // return auth ? auth.currentUser : null;
+    return this.currentUser;
   }
 
   // Sign up with email and password
@@ -109,23 +116,34 @@ export class AuthService {
 
   // Sign in with a social provider
   async signInWithProvider(providerName: AuthProvider, method: AuthMethod = 'popup'): Promise<UserCredential | void> {
-    let provider;
-
-    if (!this.db || !this.auth) {
+    // Ensure initialization
+    await this.init();
+    
+    if (!this.auth) {
       return Promise.reject(new Error("Firebase Auth is not initialized."));
-//        throw new Error(`Database or Authentication failure...`);
     }
 
+    let provider;
     try {
-        switch (providerName) {
+      // Get the provider instance
+      switch (providerName) {
         case 'google':
           provider = googleProvider;
+          if (!(provider instanceof GoogleAuthProvider)) {
+            throw new Error('Google provider not properly initialized');
+          }
           break;
         case 'facebook':
           provider = facebookProvider;
+          if (!(provider instanceof FacebookAuthProvider)) {
+            throw new Error('Facebook provider not properly initialized');
+          }
           break;
         case 'microsoft':
           provider = microsoftProvider;
+          if (!(provider instanceof OAuthProvider)) {
+            throw new Error('Microsoft provider not properly initialized');
+          }
           break;
         default:
           throw new Error(`Unsupported provider: ${providerName}`);
@@ -142,7 +160,7 @@ export class AuthService {
       } else {
         // For redirect method, we initiate the redirect and don't get a result immediately
         console.log(`Redirecting to ${providerName} sign in page...`);
-          await signInWithRedirect(this.auth, provider);
+        await signInWithRedirect(this.auth, provider);
         return; // The function will return here, and the page will redirect
       }
       

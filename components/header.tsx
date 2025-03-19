@@ -8,7 +8,11 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 
-export function Header() {
+interface HeaderProps {
+  onSearch: (query: string) => void;
+}
+
+export function Header({ onSearch }: HeaderProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const { user, userProfile } = useAuth();
 
@@ -34,7 +38,10 @@ export function Header() {
               placeholder="What are you looking for?"
               className="pl-8 w-full"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                onSearch(e.target.value);
+              }}
             />
           </form>
         </div>

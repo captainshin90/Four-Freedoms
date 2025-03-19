@@ -6,6 +6,7 @@ export interface Subscription {
   subscription_price: number;
   subscription_period: string; // monthly, yearly, etc.
   is_active: boolean;
+  is_deleted: boolean;
   features?: string[];
   created_at: Date;
   updated_at: Date;
@@ -14,13 +15,14 @@ export interface Subscription {
 // Helper function to convert Firestore data to Subscription type
 export function convertToSubscription(data: any): Subscription {
   return {
-    subscription_id: data.id || data.subscription_id,
+    subscription_id: data.subscription_id = crypto.randomUUID(),
     subscription_type: data.subscription_type,
     subscription_name: data.subscription_name,
     subscription_desc: data.subscription_desc,
     subscription_price: data.subscription_price,
     subscription_period: data.subscription_period,
-    is_active: data.is_active,
+    is_active: data.is_active = true,
+    is_deleted: data.is_deleted = false,
     features: data.features,
     created_at: data.created_at?.toDate(),
     updated_at: data.updated_at?.toDate()

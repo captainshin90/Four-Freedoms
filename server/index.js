@@ -27,7 +27,7 @@ app.use((err, req, res, next) => {
 // none of the .env parameters are ready properly here - why?
 dotenv.config();
 
-const PORT = config.port;
+const PORT = process.env.PORT || 3001;
 const dbid = config.firestore.databaseId;
 const geminikey = config.gemini.apiKey;
 
@@ -40,7 +40,23 @@ console.log(`Index.js: Gemini key: ${geminikey}`);
 // initialize Firebase - done by DatabaseService and AuthService
 // initFirebase();
 
-// Start server
-app.listen(PORT, () => {
+// Start server with error handling
+const server = app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+}).on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    console.error(`Port ${PORT} is already in use. Please try a different port or kill the existing process.`);
+    process.exit(1);
+  } else {
+    console.error('Server error:', err);
+  }
+});
+
+// Handle graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('SIGTERM received. Shutting down gracefully...');
+  server.close(() => {
+    console.log('Server closed');
+    process.exit(0);
+  });
 });

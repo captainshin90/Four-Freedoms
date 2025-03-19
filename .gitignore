@@ -37,3 +37,5 @@ next-env.d.ts
 # other
 .devcontainer
 .bolt
+# Local Netlify folder
+.netlify
