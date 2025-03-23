@@ -470,28 +470,7 @@ export function PodcastList({ topicId, searchQuery, onSelectPodcast, onAddPodcas
                   onClick={(e) => {
                     e.stopPropagation();
                     if (onAddPodcast && user) {
-                      /*
-                      // Convert to expected Podcast type
-                      const podcastToAdd: Podcast = {
-                        id: podcast.id,
-                        podcast_id: podcast.podcast_id,
-                        podcast_title: podcast.podcast_title,
-                        podcast_image: podcast.podcast_image,
-                        podcast_desc: podcast.podcast_desc,
-                        podcast_hosts: podcast.podcast_hosts || [],
-                        podcast_type: podcast.podcast_type || 'audio_podcast',
-                        podcast_format: podcast.podcast_format || 'mp3',
-                        topic_tags: podcast.topic_tags || [],
-                        subscription_type: podcast.subscription_type || 'free',
-                        followed_by_users: podcast.followed_by_users || [],
-                        is_active: podcast.is_active || true,
-                        is_deleted: podcast.is_deleted || false,
-                        created_at: podcast.created_at || new Date(),
-                        updated_at: podcast.updated_at || new Date()
-                        */
                         onAddPodcast(podcast);
-                      // };
-                      // onAddPodcast(podcastToAdd);
                     } else if (!user) {
                       toast({
                         title: "Sign in required",
@@ -559,9 +538,9 @@ const mockPodcasts: Podcast[] = [
     topic_tags: [],
     subscription_type: "free" as const,
     is_active: true,
-    is_deleted: false,
-    created_at: new Date(),
-    updated_at: new Date()
+    // is_deleted: false,
+    // created_at: new Date(),
+    // updated_at: new Date()
   },
   {
     id: "mock-2",
@@ -575,9 +554,9 @@ const mockPodcasts: Podcast[] = [
     topic_tags: [],
     subscription_type: "premium" as const,
     is_active: true,
-    is_deleted: false,
-    created_at: new Date(),
-    updated_at: new Date()
+    // is_deleted: false,
+    // created_at: new Date(),
+    // updated_at: new Date()
   },
   {
     id: "mock-3",
@@ -591,9 +570,9 @@ const mockPodcasts: Podcast[] = [
     topic_tags: [],
     subscription_type: "premium" as const,
     is_active: true,
-    is_deleted: false,
-    created_at: new Date(),
-    updated_at: new Date()
+    // is_deleted: false,
+    // created_at: new Date(),
+    // updated_at: new Date()
   },
   {
     id: "mock-4",
@@ -607,8 +586,8 @@ const mockPodcasts: Podcast[] = [
     topic_tags: [],
     subscription_type: "free" as const,
     is_active: true,
-    is_deleted: false,
-    created_at: new Date(),
-    updated_at: new Date()
+    // is_deleted: false,
+    // created_at: new Date(),
+    // updated_at: new Date()
   }
 ];

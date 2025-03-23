@@ -17,6 +17,7 @@ router.get('/health', (req, res) => {
 
 ///////////////////////////////////////////////////////////////////////////////
 // Chat routes to LLMs
+// Parameters: message, conversationId, context, episodeContext (must match the route in lib/services/api-service.ts)
 ///////////////////////////////////////////////////////////////////////////////
 router.post('/chat', async (req, res) => {
   try {
@@ -37,6 +38,7 @@ router.post('/chat', async (req, res) => {
       preferredProvider
     );
     
+    // response must match the format in lib/services/api-service.ts
     res.status(200).json({
       response: response.content,
       provider: response.provider,

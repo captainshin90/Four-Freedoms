@@ -93,6 +93,7 @@ export class DatabaseService {
         await setDoc(docRef, {
           ...data,
           created_at: Timestamp.now(),
+          is_deleted: false
         });
       }
     } catch (error) {
@@ -112,6 +113,7 @@ export class DatabaseService {
 
           ...data,
           created_at: Timestamp.now(),
+          is_deleted: false
         });
         return docRef.id;        
       } catch (error) {
@@ -300,6 +302,8 @@ export let databaseService = DatabaseService.getInstance();
 
 ///////////////////////////////////////////////////////////////////////////////
 // Specific services for each collection
+// Be Careful: Uses any data type and does not validate data
+// 
 ///////////////////////////////////////////////////////////////////////////////
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -639,8 +643,7 @@ export const episodesService = {
     return databaseService.query(
       'episodes', 
       [], 
-      'publish_datetime', 'desc', 
-      limit
+      'publish_datetime', 'desc', limit
     );
   },
   
@@ -648,8 +651,7 @@ export const episodesService = {
     return databaseService.query(
       'episodes', 
       [], 
-      'views', 'desc', 
-      limit
+      'views', 'desc', limit
     );
   }
 };

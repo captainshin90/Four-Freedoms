@@ -6,10 +6,10 @@ export interface Question {
   question_audio?: string; // Question Audio
   clicks: number; // Clicks
   user_id: string; // User ID
-  created_at: Date; // Created Date and Time
-  updated_at: Date; // Updated Date and Time
   is_active: boolean; // Is Active
-  is_deleted: boolean; // Is Deleted
+  // created_at: Date; // Created Date and Time - updated by the database service
+  // updated_at: Date; // Updated Date and Time - updated by the database service
+  // is_deleted: boolean; // Is Deleted - updated by the database service
 }
 
 // Helper function to convert Firestore data to Question type
@@ -22,9 +22,9 @@ export function convertToQuestion(data: any): Question {
     question_audio: data.question_audio,
     clicks: data.clicks,
     user_id: data.user_id,
-    created_at: data.created_at?.toDate(),
-    updated_at: data.updated_at?.toDate(),
     is_active: data.is_active = true,
-    is_deleted: data.is_deleted = false
+    // created_at: data.created_at?.toDate(), // updated by the database service
+    // updated_at: data.updated_at?.toDate(), // updated by the database service  
+    // is_deleted: data.is_deleted = false // updated by the database service
   };
 }

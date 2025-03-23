@@ -84,10 +84,11 @@ class LLMService {
 
   // TODO: should reset conversationId when user clicks on a new episode?
   // Initialize a new conversation and return its ID
-  initializeConversation(message) {
+  initializeConversation() {
     const conversationId = this.generateConversationId();
-    this.conversationHistory.set(conversationId, []);
-    return conversationId;
+    // Blank message must be passed to the conversation history
+    this.conversationHistory.set(conversationId, []);  
+    return conversationId;                             
   }
 
   // Format podcast context for LLMs
@@ -134,7 +135,7 @@ Please use this context to provide relevant and informed responses about the pod
 
       // Generate new conversation ID if none exists
       if (!conversationId) {
-        conversationId = this.initializeConversation(message);
+        conversationId = this.initializeConversation();
       }
 
       // Get conversation history
@@ -197,7 +198,7 @@ Please use this context to provide relevant and informed responses about the pod
 
       // Generate new conversation ID if none exists
       if (!conversationId) {
-        conversationId = this.initializeConversation(message);
+        conversationId = this.initializeConversation();
       }
 
       const model = gemini.getGenerativeModel({ model: process.env.GEMINI_LLM_MODEL || config.gemini.llmModel });
@@ -261,7 +262,7 @@ Please use this context to provide relevant and informed responses about the pod
       // TODO: should reset conversationId when user clicks on a new episode?
       // Generate new conversation ID if none exists
       if (!conversationId) {
-        conversationId = this.initializeConversation(message);
+        conversationId = this.initializeConversation();
       }
 
       // Get conversation history

@@ -2,12 +2,12 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
-import { PlusCircle, ChevronRight, ChevronLeft, X, MoreHorizontal } from "lucide-react";
+import { PlusCircle, ChevronRight, ChevronLeft, X, MoreHorizontal, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/hooks/use-auth";
-import { topicsService, usersService, podcastsService } from "@/lib/services/database-service";
+import { topicsService, usersService, podcastsService, episodesService } from "@/lib/services/database-service";
 import { Topic } from "@/lib/schemas/topics";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -19,13 +19,14 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Podcast } from "@/lib/schemas/podcasts";
+import { Episode, PlayerEpisode, convertToPlayerEpisode } from "@/lib/schemas/episodes";
 
 ///////////////////////////////////////////////////////////////////////////////
 // TopicPanel component
 ///////////////////////////////////////////////////////////////////////////////
 interface TopicPanelProps {
   onSelectTopic?: (topicId: string) => void;
-  onSelectPodcast?: (podcastId: string) => void;
+  onSelectPodcast?: (podcast: PlayerEpisode) => void;
   onInitAddPodcast?: (callback: (podcast: Podcast) => void) => void;
 }
 
@@ -215,14 +216,25 @@ export function TopicPanel({ onSelectTopic, onSelectPodcast, onInitAddPodcast }:
   ////////////////////////////////////////////////////////////////////////////////
   // Handle podcast click
   ////////////////////////////////////////////////////////////////////////////////
-  const handlePodcastClick = (podcast: any) => {
-    setSelectedPodcast(podcast);
-    if (onSelectPodcast) {
-      onSelectPodcast(podcast.id);
-    }
-    
-    if (!isExpanded) {
-      setIsExpanded(true);
+  const handlePodcastClick = async (podcast: Podcast) => {
+    try {
+      // Get the first episode for this podcast
+      const episodes = await episodesService.getAllEpisodes(podcast.podcast_id);
+      if (!episodes || episodes.length === 0) {
+        console.error("No episodes found for podcast:", podcast.podcast_id);
+        return;
+      }
+
+      // Convert the first episode to a PlayerEpisode
+      const firstEpisode = episodes[0] as Episode;
+      const playerEpisode = convertToPlayerEpisode(podcast, firstEpisode);
+      
+      // Call the onSelectPodcast callback with the episode data
+      if (onSelectPodcast) {
+        onSelectPodcast(playerEpisode);
+      }
+    } catch (error) {
+      console.error("Error loading podcast episode:", error);
     }
   };
 
@@ -590,7 +602,7 @@ export function TopicPanel({ onSelectTopic, onSelectPodcast, onInitAddPodcast }:
           <ScrollArea className="flex-1">
             <div className="p-2 space-y-2">
               {displayedPodcasts.map((podcast) => (
-                <div key={podcast.podcast_id} className="relative" onClick={() => handlePodcastClick(podcast)}>
+                <div key={podcast.podcast_id} className="relative" onClick={() => setSelectedPodcast(podcast)}>
                   {isExpanded && selectedPodcast?.podcast_id === podcast.podcast_id ? (
                     <Card className="cursor-pointer hover:bg-accent transition-colors">
                       <CardContent className="p-3">
@@ -607,7 +619,7 @@ export function TopicPanel({ onSelectTopic, onSelectPodcast, onInitAddPodcast }:
                             <X className="h-4 w-4" />
                           </Button>
                         </div>
-                        <div className="space-y-3">
+                        <div className="space-y-3 relative group">
                           <Image
                             src={podcast.podcast_image || '/placeholder-podcast.jpg'}
                             width={200}
@@ -620,6 +632,19 @@ export function TopicPanel({ onSelectTopic, onSelectPodcast, onInitAddPodcast }:
                               height: "auto"
                             }}
                           />
+                          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <Button 
+                              size="icon" 
+                              variant="secondary" 
+                              className="rounded-full h-8 w-8"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handlePodcastClick(podcast);
+                              }}
+                            >
+                              <Play className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </div>
                         <div>
                           <h3 className="font-semibold">{podcast.podcast_title}</h3>
@@ -637,7 +662,7 @@ export function TopicPanel({ onSelectTopic, onSelectPodcast, onInitAddPodcast }:
                         selectedPodcast?.podcast_id === podcast.podcast_id ? "bg-accent" : ""
                       }`}
                     >
-                      <div className="h-8 w-8 rounded-md overflow-hidden mr-2">
+                      <div className="h-8 w-8 rounded-md overflow-hidden mr-2 relative group">
                         <Image
                           src={podcast.podcast_image || '/placeholder-podcast.jpg'}
                           width={32}
@@ -649,6 +674,19 @@ export function TopicPanel({ onSelectTopic, onSelectPodcast, onInitAddPodcast }:
                             height: "100%"
                           }}
                         />
+                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <Button 
+                            size="icon" 
+                            variant="secondary" 
+                            className="rounded-full h-6 w-6"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handlePodcastClick(podcast);
+                            }}
+                          >
+                            <Play className="h-3 w-3" />
+                          </Button>
+                        </div>
                       </div>
                       <span className={`truncate font-semibold ${isExpanded ? "block" : "hidden"}`}>{podcast.podcast_title}</span>
                       {isExpanded && (

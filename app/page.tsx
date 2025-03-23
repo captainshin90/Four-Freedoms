@@ -5,8 +5,9 @@ import { Header } from "@/components/header";
 import { TopicPanel } from "@/components/topic-panel";
 import { ContentPanel } from "@/components/content-panel";
 import { BottomBar } from "@/components/bottom-bar";
-import { PlayerEpisode } from "@/lib/schemas/episodes";
+import { PlayerEpisode, convertToPlayerEpisode } from "@/lib/schemas/episodes";
 import { Podcast } from "@/lib/schemas/podcasts";
+import { episodesService } from "@/lib/services/database-service";
 
 ///////////////////////////////////////////////////////////////////////////////
 // Home component
@@ -30,8 +31,8 @@ export default function Home() {
   // Handle select podcast called from onSelectPodcast events in PodcastList.tsx 
   // and ContentPanel.tsx
   ///////////////////////////////////////////////////////////////////////////////
-  const handleSelectPodcast = (podcast: PlayerEpisode) => {
-    setActivePodcast(podcast);
+  const handleSelectPodcast = (playerEpisode: PlayerEpisode) => {
+    setActivePodcast(playerEpisode);
     setShowFullPlayer(false);
   };
 
@@ -50,6 +51,13 @@ export default function Home() {
   };
 
   ///////////////////////////////////////////////////////////////////////////////
+  // Handle clear topic
+  ///////////////////////////////////////////////////////////////////////////////
+  const handleClearTopic = () => {
+    setSelectedTopicId(undefined);
+  };
+
+  ///////////////////////////////////////////////////////////////////////////////
   // Render the Home component
   ///////////////////////////////////////////////////////////////////////////////
   return (
@@ -64,6 +72,7 @@ export default function Home() {
       <div className="flex flex-1 overflow-hidden">
         <TopicPanel 
           onSelectTopic={handleSelectTopic} 
+          onSelectPodcast={handleSelectPodcast}
           onInitAddPodcast={(callback) => {
             console.log("Setting podcast callback");
             setHandleAddPodcastCallback(() => callback);
@@ -77,6 +86,7 @@ export default function Home() {
           searchQuery={searchQuery}
           audioRef={audioRef}
           onAddPodcast={handleAddPodcastCallback}
+          onClearTopic={handleClearTopic}
         />
       </div>
       

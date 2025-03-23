@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Send, Bot, Mic, GripVertical } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
-import { chatService } from "@/lib/services/api-service";
+import { chatAPIService } from "@/lib/services/api-service";
 import { chatsService } from "@/lib/services/database-service";
 import { questionsService } from "@/lib/services/database-service";
 import { Timestamp, Firestore } from "firebase/firestore";
@@ -85,7 +85,9 @@ export function ChatBox({ height = 40, onHeightChange, activeEpisode }: ChatBoxP
     return timestamp instanceof Timestamp ? timestamp.toDate() : timestamp;
   };
 
+  ////////////////////////////////////////////////////////////////////////////////
   // Load chat history from Firestore if user is logged in
+  ////////////////////////////////////////////////////////////////////////////////
   useEffect(() => {
     const loadChatHistory = async () => {
       if (user) {
@@ -126,9 +128,11 @@ export function ChatBox({ height = 40, onHeightChange, activeEpisode }: ChatBoxP
     };
     
     loadChatHistory();
-  }, [user]);
+  }, [user]); // loadChatHistory
 
+  ////////////////////////////////////////////////////////////////////////////////
   // Get fallback questions
+  ////////////////////////////////////////////////////////////////////////////////
   const getFallbackQuestions = (): SuggestedQuestion[] => {
     return [
       { id: 'fallback-1', text: 'What are the key points discussed in this episode?' },
@@ -137,7 +141,9 @@ export function ChatBox({ height = 40, onHeightChange, activeEpisode }: ChatBoxP
     ];
   };
 
+  ////////////////////////////////////////////////////////////////////////////////
   // Load suggested questions from Firestore
+  ////////////////////////////////////////////////////////////////////////////////
   const loadSuggestedQuestions = useCallback(async (podcastId: string) => {
     if (!podcastId) {
       console.warn('No podcast ID provided for loading suggested questions');
@@ -162,9 +168,11 @@ export function ChatBox({ height = 40, onHeightChange, activeEpisode }: ChatBoxP
       console.error("Error loading suggested questions:", error);
       setSuggestedQuestions(getFallbackQuestions());
     }
-  }, []);
+  }, []); // loadSuggestedQuestions
 
+  ////////////////////////////////////////////////////////////////////////////////
   // Add active podcast to chat when it changes
+  ////////////////////////////////////////////////////////////////////////////////
   useEffect(() => {
     if (activeEpisode && activeEpisode.id) {
       const podcastMessage: Message = {
@@ -198,7 +206,9 @@ export function ChatBox({ height = 40, onHeightChange, activeEpisode }: ChatBoxP
     }
   }, [messages]);
 
+  ////////////////////////////////////////////////////////////////////////////////
   // Set up drag handlers for resizing
+  ////////////////////////////////////////////////////////////////////////////////
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (!isDragging) return;
@@ -226,7 +236,10 @@ export function ChatBox({ height = 40, onHeightChange, activeEpisode }: ChatBoxP
     };
   }, [isDragging, startY, startHeight, onHeightChange]);
 
+  
+  ////////////////////////////////////////////////////////////////////////////////
   // Handle drag start
+  ////////////////////////////////////////////////////////////////////////////////
   const handleDragStart = (e: React.MouseEvent) => {
     setIsDragging(true);
     setStartY(e.clientY);
@@ -282,12 +295,17 @@ export function ChatBox({ height = 40, onHeightChange, activeEpisode }: ChatBoxP
       }
       
       // Get response from API in api-service.ts
-      const response = await chatService.sendMessage(
+      // Parameters: message, conversationId, podcastContext (must match the route in lib/services/api-service.ts)
+      const response = await chatAPIService.sendMessage(
         userMessage.content,
         conversationId || undefined,
         podcastContext || undefined
       );
-      
+      // response must match the format in lib/services/api-service.ts
+      // response: response.content,
+      // provider: response.provider,
+      // conversationId: response.conversation_id
+
       // Ensure we have a conversation ID from the response
       if (response?.conversation_id && !conversationId) {
         setConversationId(response.conversation_id);
@@ -340,20 +358,26 @@ export function ChatBox({ height = 40, onHeightChange, activeEpisode }: ChatBoxP
     }
   }; // handleSendMessage
 
+  ////////////////////////////////////////////////////////////////////////////////
   // Handle suggested question
+  ////////////////////////////////////////////////////////////////////////////////
   const handleSuggestedQuestion = (question: string) => {
     setInputValue(question);
     handleSendMessage();
   };
 
+  ////////////////////////////////////////////////////////////////////////////////
   // Handle key down event
+  ////////////////////////////////////////////////////////////////////////////////
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && !isLoading) {
       handleSendMessage();
     }
   };
 
+  ////////////////////////////////////////////////////////////////////////////////
   // Retry loading chat history
+  ////////////////////////////////////////////////////////////////////////////////
   const retryLoadingHistory = async () => {
     if (user) {
       try {

@@ -16,10 +16,10 @@ export interface Episode {
   content_duration: number; // in seconds
   content_url: string; // Content URL
   content_image: string; // Content Image
-  created_at: Date; // Created Date and Time
-  updated_at: Date; // Updated Date and Time
   is_active: boolean; // Is Active
-  is_deleted: boolean; // Is Deleted
+  // created_at: Date; // Created Date and Time - updated by the database service
+  // updated_at: Date; // Updated Date and Time - updated by the database service
+  // is_deleted: boolean; // Is Deleted - updated by the database service
 }
 
 export interface PlayerEpisode {
@@ -52,10 +52,10 @@ export function convertToEpisode(data: any): Episode {
     content_duration: data.content_duration,
     content_url: data.content_url,
     content_image: data.content_image,
-    created_at: data.created_at?.toDate(),
-    updated_at: data.updated_at?.toDate(),
     is_active: data.is_active = true,
-    is_deleted: data.is_deleted = false
+    // created_at: data.created_at?.toDate(), // updated by the database service
+    // updated_at: data.updated_at?.toDate(), // updated by the database service
+    // is_deleted: data.is_deleted = false // updated by the database service
   };
 }
 

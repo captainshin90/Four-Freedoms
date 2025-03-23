@@ -23,6 +23,18 @@ x - display markdown text from AI response in the chatbox
 x - add button under user menu to clear chat history
 x - show suggested questions to the right of the audio player
 x - Define gemini model in a config
+x - For Topics panel, have tabs for "Topics", "Podcasts" that the user is following
+x - use font-family: "Clarkson", "Proxima Nova", "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+x - add hover on podcasts in Topic Panel
+x - deploy to Fly.io: fourfreedoms.fly.dev
+x - load .env to Fly.io
+x - add See All button to reset podcast list
+x - Implement "following_podcasts" for a user
+x - Make the Add Topic + button handle both topics and podcasts
+x - run npm audit fix --force
+x - upgrade to Next.js 15.2.3 
+x - move database_seed to a server script
+x - created Firebase composite indexes for questions and chats
 
 ### Bug Fixes
 x - Play/add to favorites overlay on podcast not working
@@ -52,23 +64,10 @@ x - when updating, creating, or getting by Id, it needs to be Firestore Document
 x - Add and remove topics. Click on Add topic does nothing (see topic-panel.tsx "handleAddTopic"). Issue with "topic" being text, not id?
 x - Topic list icons are cut off
 x - podcast-list: handleAddToTopics - needs rework. should be handleAddtoPodcasts. 
-x - Implement "following_podcasts" for a user
 x - Topic tags should be just unique names (#soccer), not Ids?
-x - Make the Add Topic + button handle both topics and podcasts
 
 ### To Do
-- User signup form: interests, issues, personal info
-  - check: https://github.com/crysxd/shared-firebase-preferences
-- try Google GenKit API to query a PDF doc
-- make the app all database-driven: users, topics, personas, with correct normalized entity (one-to-many) relationships, etc.
-- add topic bubble of trending topics: based on views/plays, likes, timeframe
-- promote new podcast on the top banner
-- connect to Spotify API to get more content (can ask questions about the podcasts)
-- add location support to pull nearby towns
-- generate headline, 2-3 sentence summary, cover image for episodes
-- Podcast shorts, tikpods, instapods, with link to source documents
-- find real-time AI voice chat, interactive podcast (audio/text): Sesame
-- Audio samples: https://www.thepodcastexchange.ca/audio-samples
+- see Google Keep notes
 
 Gemini models:
 https://ai.google.dev/gemini-api/docs/models#gemini-2.0-flash-lite
@@ -82,7 +81,7 @@ Later (rearchitect, cleanup):
 - play with Chroma db - can use for simple data?
 - cookies or offline json for user preferences
 - hide podcasts behind an API and credentials
-- upgrade Next.js, Node/Bun, Express, Tailwind, Radix, Axios, Cors, React, etc.  
+- upgrade Node/Bun, Express, Tailwind, Radix, Axios, Cors, React, etc.  
 - add database indexes to improve performance
 
 ### New Feature Ideas

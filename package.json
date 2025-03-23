@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "server": "node --require=dotenv/config server/index.js",
-    "dev:all": "concurrently \"npm run dev\" \"npm run server\""
+    "dev:all": "concurrently \"npm run dev\" \"npm run server\"",
+    "seed": "ts-node -r tsconfig-paths/register scripts/seed.ts"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.0",
@@ -57,15 +58,15 @@
     "eslint": "8.49.0",
     "eslint-config-next": "13.5.1",
     "express": "^4.18.3",
-    "firebase": "^10.14.1",
+    "firebase": "^11.5.0",
     "firebase-admin": "^13.2.0",
     "input-otp": "^1.2.4",
     "localforage": "^1.10.0",
     "lucide-react": "^0.446.0",
-    "next": "13.5.1",
+    "next": "^15.2.3",
     "next-themes": "^0.3.0",
     "openai": "^4.28.4",
-    "postcss": "8.4.30",
+    "postcss": "^8.5.3",
     "react": "18.2.0",
     "react-day-picker": "^8.10.1",
     "react-dom": "18.2.0",
@@ -83,6 +84,9 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "@tailwindcss/typography": "^0.5.16"
+    "@flydotio/dockerfile": "^0.7.8",
+    "@tailwindcss/typography": "^0.5.16",
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0"
   }
 }

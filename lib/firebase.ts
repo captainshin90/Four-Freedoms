@@ -3,9 +3,9 @@ import { initializeApp, getApps, FirebaseApp } from "firebase/app";
 import { Auth, getAuth, GoogleAuthProvider, FacebookAuthProvider, OAuthProvider } from "firebase/auth";
 import { initializeFirestore, getFirestore, Firestore, persistentLocalCache, persistentMultipleTabManager } from "firebase/firestore";
 
-// Load environment variables
-const dotenv = require('dotenv');
-dotenv.config();
+// Load environment variables not needed here, done in server/index.js
+// const dotenv = require('dotenv');
+// dotenv.config();
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -25,17 +25,6 @@ const requiredEnvVars = [
   'NEXT_PUBLIC_FIREBASE_PROJECT_ID',
   'NEXT_PUBLIC_FIREBASE_APP_ID'
 ];
-
-for (const envVar of requiredEnvVars) {
-  if (!process.env[envVar]) {
-    console.error(`Missing required environment variable: ${envVar}`);
-  }
-}
-
-// console.log('Firebase Config:', {
-//   ...firebaseConfig,
-//   apiKey: firebaseConfig.apiKey ? '***' : undefined, // Hide API key in logs
-// });
 
 const firestoreConfig = {
   databaseId: process.env.NEXT_PUBLIC_FIRESTORE_DATABASE_ID
@@ -58,6 +47,9 @@ googleProvider.setCustomParameters({
   login_hint: ''
 });
 
+//////////////////////////////////////////////////////////////// 
+// This is the client side initialization of Firebase Auth 
+////////////////////////////////////////////////////////////////
 export async function initAuth() : Promise<Auth> {
   if (!getApps().length) {
     try {
@@ -81,6 +73,10 @@ export async function initAuth() : Promise<Auth> {
   return auth;
 }
 
+
+//////////////////////////////////////////////////////////////// 
+// This is the client side initialization of Firestore
+////////////////////////////////////////////////////////////////
 export async function initFirestore(databaseId: string = "") : Promise<Firestore> {
   let dbstr: string = "";
 

@@ -6,9 +6,9 @@ const config = require('./config');
 
 // Verify environment variables are loaded
 console.log('Environment variables loaded:', {
-  hasGeminiKey: !!process.env.GEMINI_API_KEY,
-  hasOpenAIKey: !!process.env.OPENAI_API_KEY,
-  nodeEnv: process.env.NODE_ENV
+   hasGeminiKey: !!process.env.GEMINI_API_KEY,
+   hasOpenAIKey: !!process.env.OPENAI_API_KEY,
+   nodeEnv: process.env.NODE_ENV
 });
 
 // Initialize Express app
@@ -18,7 +18,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Routes
+// Routes - must be after middleware
 app.use('/api', apiRoutes);
 
 // Error handling middleware
@@ -33,14 +33,13 @@ app.use((err, req, res, next) => {
 // Load environment variables - it doesn't load properly here, it's done in firebase.js
 // none of the .env parameters are ready properly here - why?
 const PORT = process.env.PORT || 3001;
-const dbid = config.firestore.databaseId;
-const geminikey = config.gemini.apiKey;
+// const dbid = config.firestore.databaseId;
+// const geminikey = config.gemini.apiKey;
 
 console.log(`Index.js: Port: ${PORT}`);
-console.log(`Index.js: Port: ${process.env.NEXT_PUBLIC_FIRESTORE_DATABASE_ID}`);
-console.log(`Index.js: Database id: ${dbid}`);
-console.log(`Index.js: Database id: ${process.env.NEXT_PUBLIC_FIRESTORE_DATABASE_ID}`);
-console.log(`Index.js: Gemini key: ${geminikey}`);
+// console.log(`Index.js: Database id: ${process.env.NEXT_PUBLIC_FIRESTORE_DATABASE_ID}`);
+// console.log(`Index.js: Database id: ${dbid}`);
+// console.log(`Index.js: Gemini key: ${geminikey}`);
 
 // initialize Firebase - done by DatabaseService and AuthService
 // initFirebase();

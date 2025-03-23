@@ -3,10 +3,11 @@ import { episodesService, transcriptsService } from './database-service';
 
 // Create axios instance with base configuration
 const apiClient = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api',
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api',  // removed /api from base URL
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: 10000, // Add timeout
 });
 
 // Add request interceptor to include auth token
@@ -21,58 +22,96 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+// Add response interceptor for better error handling
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response) {
+      // The request was made and the server responded with a status code
+      // that falls out of the range of 2xx
+      console.error('API Error Response:', {
+        status: error.response.status,
+        data: error.response.data,
+        headers: error.response.headers,
+      });
+    } else if (error.request) {
+      // The request was made but no response was received
+      console.error('API No Response:', error.request);
+    } else {
+      // Something happened in setting up the request that triggered an Error
+      console.error('API Request Error:', error.message);
+    }
+    return Promise.reject(error);
+  }
+);
 
 ///////////////////////////////////////////////////////////////////////////////
-// chatService API service for chat/LLM
+// chatAPIService API service for chat/LLM
 ///////////////////////////////////////////////////////////////////////////////
-export const chatService = {
+export const chatAPIService = {
 
   // Send message to LLM
+  // Parameters: message, conversationId, podcastContext
   sendMessage: async (
     message: string, 
     conversationId?: string,
     podcastContext?: {
-      episodeId: string;
-      // podcastId: string;
-      // transcriptId: string;
+    episodeId: string;
     }
   ) => {
-    let episodeContext = null;
-    
-    // If podcast context is provided, fetch the episode details
-    if (podcastContext) {
-      try {
-        const episode = await episodesService.getEpisodeById(podcastContext.episodeId);
-        const transcript = await transcriptsService.getTranscriptById(episode?.transcript_id);
-        if (episode) {
-          episodeContext = {   
-            // episode_id: episode.id,  // no need to send this to LLM
-            episode_title: episode.episode_title,
-            episode_desc: episode.episode_desc,
-            content_duration: episode.content_duration,
-            transcript_type: transcript?.transcript_type,
-            transcript_text: transcript?.transcript_text,   // should be full source transcript document
-            // documents:[transcrip?.documents]       // TODO: can have multiple documents
-            // topic_tags: episode.topic_tags         // not needed for now
-          };
+    try {
+      let episodeContext = null;
+      
+      // If podcast context is provided, fetch the episode details
+      if (podcastContext) {
+        try {
+          const episode = await episodesService.getEpisodeById(podcastContext.episodeId);
+          const transcript = await transcriptsService.getTranscriptById(episode?.transcript_id);
+          if (episode) {
+            episodeContext = {   
+              // be careful as this must match formatPodcastContext in server/services/llm-service.js
+              // episode_id: episode.id,  // no need to send this to LLM
+              episode_title: episode.episode_title,
+              episode_desc: episode.episode_desc,
+              content_duration: episode.content_duration,
+              transcript_type: transcript?.transcript_type,
+              transcript_text: transcript?.transcript_text,   // should be full source transcript document
+              // documents:[transcript?.documents]       // TODO: can have multiple documents
+              // topic_tags: episode.topic_tags         
+              topic_tags: ['townhall', 'politics', 'election']  // hard code for now
+            };
+          }
+        } catch (error) {
+          console.error('Error fetching episode context:', error);
+          // Continue without episode context if fetch fails
         }
-      } catch (error) {
-        console.error('Error fetching episode context:', error);
-        // Continue without episode context if fetch fails
       }
+      
+      // Context array for additional context (not needed with conversationId)
+      const context: any[] = [];
+      // TODO: should reset conversationId when user clicks on a new episode?      
+      // send message to LLM service server-side (must match the route in server/routes/api.js)
+      // Parameters: message, conversationId, context, episodeContext (must match the route in server/routes/api.js)
+      const response = await apiClient.post('/chat', { 
+        message, 
+        conversationId,                  // conversationId needed for LLM service
+        context,                         // context not needed with conversationId
+        episodeContext                   // episodeContext needed for LLM service
+      });
+
+      // response must match the format in server/routes/api.js
+      // response: response.content,
+      // provider: response.provider,
+      // conversationId: response.conversation_id
+      if (!response.data) {
+        throw new Error('No data received from API');
+      }
+
+      return response.data;
+    } catch (error) {
+      console.error('Error in sendMessage:', error);
+      throw error; // Re-throw to be handled by the caller
     }
-    
-    // Context array for additional context (not needed with conversationId)
-    const context: any[] = [];
-    // TODO: should reset conversationId when user clicks on a new episode?      
-    // send message to LLM service server-side (must match the route in server/routes/api.js)
-    const response = await apiClient.post('/chat', { 
-      message, 
-      conversationId,                  // conversationId needed for LLM service
-      context,                         // context not needed with conversationId
-      episodeContext                   // episodeContext needed for LLM service
-    });
-    return response.data;
   },
 
   

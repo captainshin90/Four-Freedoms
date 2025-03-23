@@ -10,6 +10,7 @@ import { PodcastPlayer } from "@/components/podcast-player";
 import { PlayerEpisode } from "@/lib/schemas/episodes";
 import { Podcast } from "@/lib/schemas/podcasts";
 import { RefObject } from "react";
+import { Button } from "@/components/ui/button";
 
 ///////////////////////////////////////////////////////////////////////////////
 // ContentPanel component props
@@ -22,6 +23,7 @@ interface ContentPanelProps {
   searchQuery: string;
   audioRef: RefObject<HTMLAudioElement>;
   onAddPodcast: ((podcast: Podcast) => void) | null;
+  onClearTopic?: () => void;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -34,7 +36,8 @@ export function ContentPanel({
   showFullPlayer = false,
   searchQuery = "",
   audioRef,
-  onAddPodcast
+  onAddPodcast,
+  onClearTopic
 }: ContentPanelProps) {
   const [chatHeight, setChatHeight] = useState(40); // 40% of the panel height
   const [bannerImage, setBannerImage] = useState("/banner.jpg");
@@ -104,9 +107,21 @@ export function ContentPanel({
           </div>
           
           <div className="space-y-4">
-            <h2 className="text-xl font-bold">
-              {selectedTopicId ? "Topic Podcasts" : "Recommended For You"}
-            </h2>
+            <div className="flex items-center justify-left gap-4">
+              {selectedTopicId && onClearTopic && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={onClearTopic}
+                  className="text-muted-foreground hover:text-primary bg-muted/50"
+                >
+                  See All
+                </Button>
+              )}
+              <h2 className="text-xl font-bold">
+                {selectedTopicId ? "Topic Podcasts" : "Recommended For You"}
+              </h2>
+            </div>
             <PodcastList 
               topicId={selectedTopicId}
               searchQuery={searchQuery}

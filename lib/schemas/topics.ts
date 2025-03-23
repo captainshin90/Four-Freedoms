@@ -8,15 +8,15 @@ export interface Topic {
   topic_image?: string; // Topic Image
 //  topic_type: TopicType;
   topic_type: string; // Topic Type
-  related_topic_tags?: string[]; // Related Topic Tags
-  // datetime: Date; // Datetime
+  related_topic_tags?: string[]; // Related Topic Tags, should be names not IDs
   followed_by_users?: string[]; // Followed By Users
   is_private: boolean; // Is Private
   managed_by?: string[]; // Managed By
   is_active: boolean; // Is Active
-  is_deleted: boolean; // Is Deleted
-  created_at: Date; // Created Date and Time
-  updated_at: Date; // Updated Date and Time
+  // is_deleted: boolean; // Is Deleted - updated by the database service
+  // created_at: Date; // Created Date and Time - updated by the database service
+  // updated_at: Date; // Updated Date and Time - updated by the database service
+  // datetime: Date; // Datetime
 }
 
 // Helper function to convert Firestore data to Topic type
@@ -28,13 +28,13 @@ export function convertToTopic(data: any): Topic {
     topic_image: data.topic_image,
     topic_type: data.topic_type,
     related_topic_tags: data.related_topic_tags,
-    // datetime: data.datetime?.toDate(),
     followed_by_users: data.followed_by_users,
     is_private: data.is_private,
     managed_by: data.managed_by,
     is_active: data.is_active = true,
-    is_deleted: data.is_deleted = false,
-    created_at: data.created_at?.toDate(),
-    updated_at: data.updated_at?.toDate()
+    // is_deleted: data.is_deleted = false, // updated by the database service
+    // created_at: data.created_at?.toDate(), // updated by the database service
+    // updated_at: data.updated_at?.toDate() // updated by the database service
+    // datetime: data.datetime?.toDate(),
   };
 }

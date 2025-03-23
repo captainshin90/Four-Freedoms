@@ -11,10 +11,10 @@ export interface Document {
   extract_tool: string; // Extract Tool
   extract_datetime: Date; // Extract Date and Time
   doc_source_format: DocumentSourceFormat; // Document Source Format
-  created_at: Date; // Created Date and Time
-  updated_at: Date; // Updated Date and Time
   is_active: boolean; // Is Active
-  is_deleted: boolean; // Is Deleted
+  // created_at: Date; // Created Date and Time
+  // updated_at: Date; // Updated Date and Time
+  // is_deleted: boolean; // Is Deleted
 }
 
 // Helper function to convert Firestore data to Document type
@@ -30,9 +30,9 @@ export function convertToDocument(data: any): Document {
     extract_tool: data.extract_tool,
     extract_datetime: data.extract_datetime?.toDate(),
     doc_source_format: data.doc_source_format,
-    created_at: data.created_at?.toDate(),
-    updated_at: data.updated_at?.toDate(),
     is_active: data.is_active = true,
-    is_deleted: data.is_deleted = false
+    // created_at: data.created_at?.toDate(),
+    // updated_at: data.updated_at?.toDate(),
+    // is_deleted: data.is_deleted = false
   };
 }
