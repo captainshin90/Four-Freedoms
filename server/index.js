@@ -1,8 +1,15 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const dotenv = require('dotenv');
 const apiRoutes = require('./routes/api');
 const config = require('./config');
+
+// Verify environment variables are loaded
+console.log('Environment variables loaded:', {
+  hasGeminiKey: !!process.env.GEMINI_API_KEY,
+  hasOpenAIKey: !!process.env.OPENAI_API_KEY,
+  nodeEnv: process.env.NODE_ENV
+});
 
 // Initialize Express app
 const app = express();
@@ -25,8 +32,6 @@ app.use((err, req, res, next) => {
 
 // Load environment variables - it doesn't load properly here, it's done in firebase.js
 // none of the .env parameters are ready properly here - why?
-dotenv.config();
-
 const PORT = process.env.PORT || 3001;
 const dbid = config.firestore.databaseId;
 const geminikey = config.gemini.apiKey;

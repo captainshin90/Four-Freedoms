@@ -1,22 +1,24 @@
 export type TranscriptType = 'interview' | 'meeting' | 'article' | 'petition';
 
 export interface Transcript {
-  transcript_id: string;
-  transcript_type: TranscriptType;
-  topic_tags: string[];
-  modified_datetime?: Date;
-  delete_datetime?: Date;
-  transcript_model: string;
-  transcript_text: string;
-  created_at: Date;
-  updated_at: Date;
-  is_active: boolean;
-  is_deleted: boolean;
+  id: string; // Firestore Document ID
+  transcript_id: string; // Transcript ID
+  transcript_type: TranscriptType; // Transcript Type
+  topic_tags: string[]; // Topic Tags
+  modified_datetime?: Date; // Modified Date and Time
+  delete_datetime?: Date; // Delete Date and Time
+  transcript_model: string; // Transcript Model
+  transcript_text: string; // Transcript Text
+  created_at: Date; // Created Date and Time
+  updated_at: Date; // Updated Date and Time
+  is_active: boolean; // Is Active
+  is_deleted: boolean; // Is Deleted
 }
 
 // Helper function to convert Firestore data to Transcript type
 export function convertToTranscript(data: any): Transcript {
   return {
+    id: data.id,
     transcript_id: data.transcript_id = crypto.randomUUID(),
     transcript_type: data.transcript_type,
     topic_tags: data.topic_tags,

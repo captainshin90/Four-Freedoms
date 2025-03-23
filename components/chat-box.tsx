@@ -12,40 +12,52 @@ import { chatService } from "@/lib/services/api-service";
 import { chatsService } from "@/lib/services/database-service";
 import { questionsService } from "@/lib/services/database-service";
 import { Timestamp, Firestore } from "firebase/firestore";
+import { Episode, PlayerEpisode, convertToPlayerEpisode } from "@/lib/schemas/episodes";
 import { PodcastPlayer } from "@/components/podcast-player";
 import { Separator } from "@/components/ui/separator";
 import { FallbackMessage } from "@/components/ui/fallback-message";
+import Image from "next/image";
+import { convertToChat } from "@/lib/schemas/chats";
+import ReactMarkdown from 'react-markdown';
 
-
-type PodcastData = {
-  id: string;
-  title: string;
-  image: string;
-  audioUrl: string;
-  duration: number;
-  // ... add other podcast properties as needed
-};
 
 type SuggestedQuestion = {
   id: string;
   text: string;
 };
 
-type Message = {
-  id: string;
+type Message = { // Message type for chat history
+  id?: string;
+  uid?: string;
+  conversation_id?: string;
   content: string;
   sender: "user" | "assistant" | "podcast";
   timestamp: Date | Timestamp;
-  podcastData?: PodcastData;
+  PlayerEpisode?: PlayerEpisode;
 };
 
+type ChatMessageResponse = {
+  id: string;
+  uid?: string;
+  conversation_id?: string;
+  content: string;
+  sender: string;
+  timestamp: Timestamp;
+};
+
+///////////////////////////////////////////////////////////////////////////////
+// ChatBox component props
+///////////////////////////////////////////////////////////////////////////////
 interface ChatBoxProps {
   height?: number;
   onHeightChange?: (height: number) => void;
-  activePodcast?: PodcastData;
+  activeEpisode?: PlayerEpisode;
 }
 
-export function ChatBox({ height = 40, onHeightChange, activePodcast }: ChatBoxProps) {
+///////////////////////////////////////////////////////////////////////////////
+// ChatBox component
+///////////////////////////////////////////////////////////////////////////////
+export function ChatBox({ height = 40, onHeightChange, activeEpisode }: ChatBoxProps) {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: `welcome-${Date.now()}`,
@@ -61,6 +73,7 @@ export function ChatBox({ height = 40, onHeightChange, activePodcast }: ChatBoxP
   const [startY, setStartY] = useState(0);
   const [startHeight, setStartHeight] = useState(height);
   const [error, setError] = useState<string | null>(null);
+  const [conversationId, setConversationId] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   
   const { user } = useAuth();
@@ -80,17 +93,29 @@ export function ChatBox({ height = 40, onHeightChange, activePodcast }: ChatBoxP
           setError(null);
 
           const chatHistory = await chatsService.getActiveChatHistory(user.uid);
-          
+
           if (chatHistory && chatHistory.length > 0) {
-            const formattedMessages = chatHistory.map(chat => ({
-              id: chat.id,
+            const formattedMessages: Message[] = chatHistory.map(chat => ({
+              id: chat.chat_id,
+              uid: chat.user_id,
+              conversation_id: chat.conversation_id,
               content: chat.chat_text,
-              sender: chat.is_user ? "user" : "assistant" as "user" | "assistant",
-              timestamp: chat.create_datetime instanceof Timestamp 
-                ? chat.create_datetime 
-                : new Date(chat.create_datetime)
+              sender: chat.sender,
+              timestamp: chat.created_at
             }));
-            
+/*
+          if (chatHistory && chatHistory.length > 0) {
+            const formattedMessages: Message[] = chatHistory.map(chat => ({
+              id: chat.id,
+              uid: chat.uid,
+              conversation_id: chat.conversation_id,
+              content: chat.content,
+              sender: chat.sender,
+              timestamp: chat.timestamp instanceof Timestamp 
+                ? chat.timestamp 
+                : new Date(chat.timestamp)
+            }));
+*/
             setMessages(formattedMessages);
           }
         } catch (error) {
@@ -103,6 +128,7 @@ export function ChatBox({ height = 40, onHeightChange, activePodcast }: ChatBoxP
     loadChatHistory();
   }, [user]);
 
+  // Get fallback questions
   const getFallbackQuestions = (): SuggestedQuestion[] => {
     return [
       { id: 'fallback-1', text: 'What are the key points discussed in this episode?' },
@@ -111,6 +137,7 @@ export function ChatBox({ height = 40, onHeightChange, activePodcast }: ChatBoxP
     ];
   };
 
+  // Load suggested questions from Firestore
   const loadSuggestedQuestions = useCallback(async (podcastId: string) => {
     if (!podcastId) {
       console.warn('No podcast ID provided for loading suggested questions');
@@ -139,22 +166,23 @@ export function ChatBox({ height = 40, onHeightChange, activePodcast }: ChatBoxP
 
   // Add active podcast to chat when it changes
   useEffect(() => {
-    if (activePodcast && activePodcast.id) {
+    if (activeEpisode && activeEpisode.id) {
       const podcastMessage: Message = {
-        id: `podcast-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        content: `Now playing: ${activePodcast.title}`,
+        id: `podcast-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
+        uid: user?.uid,
+        conversation_id: conversationId || undefined,
+        content: `Now playing: ${activeEpisode.title}`,
         sender: "podcast",
         timestamp: new Date(),
-        podcastData: activePodcast
+        PlayerEpisode: activeEpisode
       };
       
       setMessages(prev => [...prev, podcastMessage]);
       
-      // Safely extract podcast ID
-      const podcastId = activePodcast.id.toString().split('-')[0] || activePodcast.id.toString();
+      const podcastId = activeEpisode.podcastId.toString();
       loadSuggestedQuestions(podcastId);
     }
-  }, [activePodcast, loadSuggestedQuestions]);
+  }, [activeEpisode, loadSuggestedQuestions, conversationId, user?.uid]);
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -198,23 +226,28 @@ export function ChatBox({ height = 40, onHeightChange, activePodcast }: ChatBoxP
     };
   }, [isDragging, startY, startHeight, onHeightChange]);
 
+  // Handle drag start
   const handleDragStart = (e: React.MouseEvent) => {
     setIsDragging(true);
     setStartY(e.clientY);
     setStartHeight(height);
   };
 
+  ////////////////////////////////////////////////////////////////////////////////
+  // Handle sending a message
+  ////////////////////////////////////////////////////////////////////////////////
   const handleSendMessage = async () => {
-    if (!inputValue.trim()) return;
-    
-    // Add user message
+    if (!inputValue.trim() || isLoading) return;
+
     const userMessage: Message = {
-      id: `user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      id: `user-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
+      uid: user?.uid,
+      conversation_id: conversationId || undefined,
       content: inputValue,
       sender: "user",
       timestamp: new Date(),
     };
-    
+
     setMessages((prev) => [...prev, userMessage]);
     setInputValue("");
     setIsLoading(true);
@@ -224,26 +257,49 @@ export function ChatBox({ height = 40, onHeightChange, activePodcast }: ChatBoxP
       // Save user message to Firestore if logged in
       if (user) {
         try {
-          await chatsService.createChatMessage({
-            user_id: user.uid,
-            chat_text: userMessage.content,
-            created_at: Timestamp.fromDate(ensureDate(userMessage.timestamp)),
-            is_user: true
-          });
+          const chatMessage = convertToChat(userMessage);
+          const chatMessageResult = await chatsService.createChatMessage(chatMessage);
+          
+          if (chatMessageResult && typeof chatMessageResult === 'object') {
+            const chatMessage = chatMessageResult as ChatMessageResponse;
+            // Set conversation ID if not already set
+            if (!conversationId && chatMessage?.conversation_id) {
+              setConversationId(chatMessage.conversation_id);
+            }
+          }
         } catch (error) {
           console.error("Error saving user message to Firestore:", error);
           // Continue with API call even if Firestore save fails
         }
       }
       
-      // Get response from API
-      const response = await chatService.sendMessage(userMessage.content);
+      // Get podcast context if there's an active podcast episode selected
+      let podcastContext = undefined;
+      if (activeEpisode) {
+        podcastContext = {
+          episodeId: activeEpisode.id.toString(),
+        };
+      }
+      
+      // Get response from API in api-service.ts
+      const response = await chatService.sendMessage(
+        userMessage.content,
+        conversationId || undefined,
+        podcastContext || undefined
+      );
+      
+      // Ensure we have a conversation ID from the response
+      if (response?.conversation_id && !conversationId) {
+        setConversationId(response.conversation_id);
+      }
       
       const assistantMessage: Message = {
-        id: `assistant-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        id: `assistant-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
+        uid: user?.uid,
+        conversation_id: response?.conversation_id || conversationId,
         content: response.response || "I'm sorry, I couldn't process your request at this time.",
         sender: "assistant",
-        timestamp: new Date(),
+        timestamp: new Date()
       };
       
       setMessages((prev) => [...prev, assistantMessage]);
@@ -251,12 +307,16 @@ export function ChatBox({ height = 40, onHeightChange, activePodcast }: ChatBoxP
       // Save assistant message to Firestore if logged in
       if (user) {
         try {
-          await chatsService.createChatMessage({
-            user_id: user.uid,
-            chat_text: assistantMessage.content,
-            create_datetime: Timestamp.fromDate(ensureDate(assistantMessage.timestamp)),
-            is_user: false
-          });
+          const chatMessage = convertToChat(assistantMessage);
+          await chatsService.createChatMessage(chatMessage);
+
+          // await chatsService.createChatMessage({
+          //   user_id: user.uid,
+          //   content: assistantMessage.content,
+          //   timestamp: Timestamp.fromDate(ensureDate(assistantMessage.timestamp)),
+          //   sender: 'assistant',
+          //   conversation_id: response?.conversation_id || conversationId // Use the conversation ID from response or state
+          // });
         } catch (error) {
           console.error("Error saving assistant message to Firestore:", error);
           // Continue even if Firestore save fails
@@ -278,19 +338,22 @@ export function ChatBox({ height = 40, onHeightChange, activePodcast }: ChatBoxP
     } finally {
       setIsLoading(false);
     }
-  };
+  }; // handleSendMessage
 
+  // Handle suggested question
   const handleSuggestedQuestion = (question: string) => {
     setInputValue(question);
     handleSendMessage();
   };
 
+  // Handle key down event
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && !isLoading) {
       handleSendMessage();
     }
   };
 
+  // Retry loading chat history
   const retryLoadingHistory = async () => {
     if (user) {
       try {
@@ -298,15 +361,27 @@ export function ChatBox({ height = 40, onHeightChange, activePodcast }: ChatBoxP
         const chatHistory = await chatsService.getActiveChatHistory(user.uid);
         
         if (chatHistory && chatHistory.length > 0) {
+          const formattedMessages: Message[] = chatHistory.map(chat => ({
+            id: chat.chat_id,
+            uid: chat.user_id,
+            conversation_id: chat.conversation_id,
+            content: chat.chat_text,
+            sender: chat.sender,
+            timestamp: chat.created_at
+          }));
+/*
+        if (chatHistory && chatHistory.length > 0) {
           const formattedMessages = chatHistory.map(chat => ({
             id: chat.id,
-            content: chat.chat_text,
-            sender: chat.is_user ? "user" : "assistant" as "user" | "assistant",
-            timestamp: chat.create_datetime instanceof Timestamp 
-              ? chat.create_datetime 
-              : new Date(chat.create_datetime)
+            uid: chat.uid,
+            conversation_id: chat.conversation_id,
+            content: chat.content,
+            sender: chat.sender,
+            timestamp: chat.timestamp instanceof Timestamp 
+              ? chat.timestamp 
+              : new Date(chat.timestamp)
           }));
-          
+*/
           setMessages(formattedMessages);
         }
       } catch (error) {
@@ -315,7 +390,10 @@ export function ChatBox({ height = 40, onHeightChange, activePodcast }: ChatBoxP
       }
     }
   };
-
+   
+  ////////////////////////////////////////////////////////////////////////////////
+  // Render the chat box
+  ////////////////////////////////////////////////////////////////////////////////
   return (
     <div className="flex flex-col h-full border rounded-lg overflow-hidden" suppressHydrationWarning>
       <div 
@@ -347,39 +425,54 @@ export function ChatBox({ height = 40, onHeightChange, activePodcast }: ChatBoxP
               className={cn(
                 "flex",
                 message.sender === "user" ? "justify-end" : "justify-start",
-                message.sender === "podcast" ? "justify-center" : ""
+                message.sender === "podcast" ? "justify-left" : ""
               )}
             >
-              {message.sender === "podcast" && message.podcastData ? (
-                <div className="w-full max-w-[90%]">
-                  <PodcastPlayer podcast={message.podcastData} audioRef={audioRef} />
-                  
-                  {suggestedQuestions.length > 0 && (
-                    <div className="mt-4 space-y-2">
-                      <p className="text-sm font-medium">Suggested questions:</p>
-                      <div className="flex flex-wrap gap-2">
-                        {suggestedQuestions.map((question) => (
-                          <Button
-                            key={question.id}
-                            variant="outline"
-                            size="sm"
-                            className="rounded-full"
-                            onClick={() => handleSuggestedQuestion(question.text)}
-                          >
-                            {question.text}
-                          </Button>
-                        ))}
+              {message.sender === "podcast" && message.PlayerEpisode ? (
+                <div className="w-full max-w-[80%]">
+                  <div className="flex items-start gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-stretch gap-2">
+                        <div className="relative w-12 h-12 rounded-md overflow-hidden flex-shrink-0">
+                          <Image
+                            src={message.PlayerEpisode.image}
+                            alt={message.PlayerEpisode.title}
+                            fill
+                            sizes="96px"
+                            className="object-cover"
+                          />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <PodcastPlayer podcast={message.PlayerEpisode} audioRef={audioRef} />
+                        </div>
                       </div>
                     </div>
-                  )}
+                    
+                    {suggestedQuestions.length > 0 && (
+                      <div className="w-56 flex-shrink-0">
+                        <p className="text-sm font-medium mb-2">Suggested questions:</p>
+                        <div className="space-y-2">
+                          {suggestedQuestions.map((question) => (
+                            <Button
+                              key={question.id}
+                              variant="outline"
+                              size="sm"
+                              className="w-full text-left justify-start h-auto py-2 px-3 text-xs"
+                              onClick={() => handleSuggestedQuestion(question.text)}
+                            >
+                              {question.text}
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               ) : (
                 <div
                   className={cn(
                     "max-w-[80%] rounded-lg p-4",
-                    message.sender === "user"
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted"
+                    "bg-muted"
                   )}
                 >
                   <div className="flex items-start gap-3">
@@ -391,9 +484,13 @@ export function ChatBox({ height = 40, onHeightChange, activePodcast }: ChatBoxP
                       </Avatar>
                     )}
                     <div>
-                      <p className="text-sm">{message.content}</p>
+                      <div className="text-sm prose dark:prose-invert max-w-none">
+                        <ReactMarkdown>
+                          {message.content}
+                        </ReactMarkdown>
+                      </div>
                       <p className="text-xs opacity-50 mt-1">
-                        {message.sender === "assistant" && (
+                        {(message.sender === "assistant" || message.sender === "user") && (
                           <span suppressHydrationWarning>
                             {(message.timestamp instanceof Timestamp 
                               ? message.timestamp.toDate() 
@@ -461,5 +558,5 @@ export function ChatBox({ height = 40, onHeightChange, activePodcast }: ChatBoxP
         )}
       </div>
     </div>
-  );
-}
+  ); // Render ChatBox
+} // ChatBox

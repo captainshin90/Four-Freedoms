@@ -1,3 +1,8 @@
+// lib/services/database-service.ts
+// This is the database service for the client side of the application.
+// It is used to interact with the Firestore database.
+// It is also used to interact with the Firebase Auth service.
+
 import { 
   collection, 
   doc, 
@@ -16,6 +21,7 @@ import {
   DocumentData,
   FirestoreError,
   Firestore,
+  writeBatch,
 //  enableIndexedDbPersistence,
 //  CACHE_SIZE_UNLIMITED
 } from "firebase/firestore";
@@ -24,13 +30,9 @@ import { initFirestore, initAuth } from "@/lib/firebase";
 // import { useDebugValue } from "react";
 
 
-
-
-
 //if (!(this.db)) {
 //  throw new Error("Firestore database is not initialized.");
 //}
-
 
 // Enable offline persistence with a larger cache size
 //try {
@@ -51,7 +53,9 @@ import { initFirestore, initAuth } from "@/lib/firebase";
 //  console.error('Error enabling persistence:', error);
 //}
 
+///////////////////////////////////////////////////////////////////////////////
 // Generic database service for CRUD operations
+///////////////////////////////////////////////////////////////////////////////
 export class DatabaseService {
   private static instance: DatabaseService;
   public db: Firestore | undefined;
@@ -81,7 +85,7 @@ export class DatabaseService {
     return DatabaseService.instance;
   }
 
-  // Create a new document with a specific ID
+  // Create a new document with a specific Firestore Document ID
   async createWithId(collection: string, id: string, data: any): Promise<void> {
     try {
       if (this.db && collection && id) {
@@ -89,7 +93,6 @@ export class DatabaseService {
         await setDoc(docRef, {
           ...data,
           created_at: Timestamp.now(),
-          updated_at: Timestamp.now()
         });
       }
     } catch (error) {
@@ -99,7 +102,7 @@ export class DatabaseService {
     }
   }
 
-  // Create a new document with auto-generated ID
+  // Create a new document with auto-generated Firestore Document ID
   async create(collectionName: string, data: any): Promise<string | null> {
     if (this.db && collectionName) {
       try {
@@ -109,7 +112,6 @@ export class DatabaseService {
 
           ...data,
           created_at: Timestamp.now(),
-          updated_at: Timestamp.now()
         });
         return docRef.id;        
       } catch (error) {
@@ -120,7 +122,7 @@ export class DatabaseService {
     } else return null;
   }
 
-  // Get a document by ID
+  // Get a document by Firestore Document ID
   async getById(collectionName: string, id: string): Promise<DocumentData | null> {
     if (this.db && collectionName && id) {
       try {
@@ -139,7 +141,7 @@ export class DatabaseService {
     } else return null;
   }
 
-  // Update a document
+  // Update a document by Firestore Document ID
   async update(collectionName: string, id: string, data: any): Promise<void> {
     if (this.db && collectionName && id) {
       try {
@@ -156,12 +158,42 @@ export class DatabaseService {
     } else return;
   }
 
-  // Delete a document
+  // Delete all document matching the conditions
+  async deleteAll(collectionName: string, conditions: { field: string; operator: string; value: any }[]): Promise<void> {
+    if (this.db && collectionName) {
+      try {
+        const collectionRef = collection(this.db, collectionName);
+        const q = query(collectionRef, 
+          ...conditions.map(condition => where(condition.field, condition.operator as any, condition.value)));
+        const querySnapshot = await getDocs(q);
+        const batch = writeBatch(this.db);
+
+        querySnapshot.forEach((doc) => {
+          batch.update(doc.ref, {
+            deleted_at: Timestamp.now(),
+            is_deleted: true
+          });
+        });
+
+        await batch.commit();
+      } catch (error) {
+        console.error(`Error deleting documents from ${collectionName}:`, error);
+        this.handleFirestoreError(error as FirestoreError);
+        throw error;
+      }
+    } else return;
+  }
+
+  // Delete a document by Firestore Document ID
   async delete(collectionName: string, id: string): Promise<void> {
     if (this.db && collectionName && id) {
       try {
         const docRef = doc(this.db, collectionName, id);
-        await deleteDoc(docRef);
+        // await deleteDoc(docRef);
+        await updateDoc(docRef, {       // soft delete
+          deleted_at: Timestamp.now(),
+          is_deleted: true
+        });
       } catch (error) {
         console.error(`Error deleting document from ${collectionName} with ID ${id}:`, error);
         this.handleFirestoreError(error as FirestoreError);
@@ -257,52 +289,39 @@ export class DatabaseService {
     }
   }
 
-  async getActiveChatHistory(userId: string): Promise<DocumentData[] | null> {
-    if (!this.db) return null;
-    
-    try {
-      const chatsRef = collection(this.db, 'chats');
-      const q = query(
-        chatsRef,
-        where('user_id', '==', userId),
-        where('is_deleted', '==', false)  // TODO: uncomment this when we have a delete_datetime field
-      );
-      
-      const querySnapshot = await getDocs(q);
-      const chats = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        create_datetime: doc.data().create_datetime as Timestamp
-      }));
-      
-      // Sort in memory instead of in the database
-      return chats.sort((a, b) => {
-        const aTime = a.create_datetime?.toDate() || new Date(0);
-        const bTime = b.create_datetime?.toDate() || new Date(0);
-        return aTime.getTime() - bTime.getTime();
-      });
-    } catch (error) {
-      console.error('Error getting active chat history:', error);
-      throw error;
-    }
-  }
-}
+} // end of DatabaseService class
 
+///////////////////////////////////////////////////////////////////////////////
 // access singleton object
+///////////////////////////////////////////////////////////////////////////////
+
 export let databaseService = DatabaseService.getInstance();
 
+
+///////////////////////////////////////////////////////////////////////////////
 // Specific services for each collection
+///////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////////
+// User services
+///////////////////////////////////////////////////////////////////////////////
+
 export const usersService = {
   async createUser(userId: string, userData: any): Promise<void> {
     return databaseService.createWithId('users', userId, userData);
   },
   
   async getUserById(userId: string): Promise<DocumentData | null> {
-    return databaseService.getById('users', userId);
+    const users = await databaseService.query('users', [
+      { field: 'user_id', operator: '==', value: userId }
+    ]);
+    if (users)
+      return users.length > 0 ? users[0] : null;
+    else return null;
   },
   
-  async updateUser(userId: string, userData: any): Promise<void> {
-    return databaseService.update('users', userId, userData);
+  async updateUser(id: string, userData: any): Promise<void> {
+    return databaseService.update('users', id, userData);
   },
   
   async getUserByEmail(email: string): Promise<DocumentData | null> {
@@ -319,21 +338,30 @@ export const usersService = {
   }
 };
 
+///////////////////////////////////////////////////////////////////////////////
+// Subscription services
+///////////////////////////////////////////////////////////////////////////////
+
 export const subscriptionsService = {
   async getAllSubscriptions(): Promise<DocumentData[] | null> {
     return databaseService.getAll('subscriptions');
   },
   
   async getSubscriptionById(subscriptionId: string): Promise<DocumentData | null> {
-    return databaseService.getById('subscriptions', subscriptionId);
+    const subscriptions = await databaseService.query('subscriptions', [
+      { field: 'subscription_id', operator: '==', value: subscriptionId }
+    ]);
+    if (subscriptions)
+      return subscriptions.length > 0 ? subscriptions[0] : null;
+    else return null;
   },
   
   async createSubscription(subscriptionData: any): Promise<string | null> {
     return databaseService.create('subscriptions', subscriptionData);
   },
   
-  async updateSubscription(subscriptionId: string, subscriptionData: any): Promise<void> {
-    return databaseService.update('subscriptions', subscriptionId, subscriptionData);
+  async updateSubscription(id: string, subscriptionData: any): Promise<void> {
+    return databaseService.update('subscriptions', id, subscriptionData);
   },
   
   async getActiveSubscriptions( ): Promise<DocumentData[] | null> {
@@ -343,17 +371,30 @@ export const subscriptionsService = {
   }
 };
 
+///////////////////////////////////////////////////////////////////////////////
+// Persona services
+///////////////////////////////////////////////////////////////////////////////
+
 export const personasService = {
   async getAllPersonas(): Promise<DocumentData[] | null> {
     return databaseService.getAll('personas');
   },
   
   async getPersonaById(personaId: string): Promise<DocumentData | null> {
-    return databaseService.getById('personas', personaId);
+    const personas = await databaseService.query('personas', [
+      { field: 'persona_id', operator: '==', value: personaId }
+    ]);
+    if (personas)
+      return personas.length > 0 ? personas[0] : null;
+    else return null;
   },
   
   async createPersona(personaData: any): Promise<string | null> {
     return databaseService.create('personas', personaData);
+  },
+
+  async updatePersona(id: string, personaData: any): Promise<void> {
+    return databaseService.update('personas', id, personaData);
   },
   
   async getPersonasByType(type: string): Promise<DocumentData[] | null> {
@@ -363,21 +404,30 @@ export const personasService = {
   }
 };
 
+///////////////////////////////////////////////////////////////////////////////
+// Document services
+///////////////////////////////////////////////////////////////////////////////
+
 export const documentsService = {
   async getAllDocuments(): Promise<DocumentData[] | null> {
     return databaseService.getAll('documents');
   },
   
   async getDocumentById(docId: string): Promise<DocumentData | null> {
-    return databaseService.getById('documents', docId);
+    const documents = await databaseService.query('documents', [
+      { field: 'document_id', operator: '==', value: docId }
+    ]);
+    if (documents)
+      return documents.length > 0 ? documents[0] : null;
+    else return null;
   },
   
   async createDocument(documentData: any): Promise<string | null> {
     return databaseService.create('documents', documentData);
   },
   
-  async updateDocument(docId: string, documentData: any): Promise<void> {
-    return databaseService.update('documents', docId, documentData);
+  async updateDocument(id: string, documentData: any): Promise<void> {
+    return databaseService.update('documents', id, documentData);
   },
   
   async getDocumentsByTopic(topicTag: string): Promise<DocumentData[] | null> {
@@ -387,21 +437,30 @@ export const documentsService = {
   }
 };
 
+///////////////////////////////////////////////////////////////////////////////
+// Topic services
+///////////////////////////////////////////////////////////////////////////////
+
 export const topicsService = {
   async getAllTopics(): Promise<DocumentData[] | null> {
     return databaseService.getAll('topics');
   },
   
   async getTopicById(topicId: string): Promise<DocumentData | null> {
-    return databaseService.getById('topics', topicId);
+    const topics = await databaseService.query('topics', [
+      { field: 'topic_id', operator: '==', value: topicId }
+    ]);
+    if (topics)
+      return topics.length > 0 ? topics[0] : null;
+    else return null;
   },
   
   async createTopic(topicData: any): Promise<string | null> {
     return databaseService.create('topics', topicData);
   },
   
-  async updateTopic(topicId: string, topicData: any): Promise<void> {
-    return databaseService.update('topics', topicId, topicData);
+  async updateTopic(id: string, topicData: any): Promise<void> {
+    return databaseService.update('topics', id, topicData);
   },
   
   async getTopicsByType(type: string): Promise<DocumentData[] | null> {
@@ -417,21 +476,30 @@ export const topicsService = {
   }
 };
 
+///////////////////////////////////////////////////////////////////////////////
+// Transcript services
+///////////////////////////////////////////////////////////////////////////////
+
 export const transcriptsService = {
   async getAllTranscripts(): Promise<DocumentData[] | null> {
     return databaseService.getAll('transcripts');
   },
   
   async getTranscriptById(transcriptId: string): Promise<DocumentData | null> {
-    return databaseService.getById('transcripts', transcriptId);
+    const transcripts = await databaseService.query('transcripts', [
+      { field: 'transcript_id', operator: '==', value: transcriptId }
+    ]);
+    if (transcripts)
+      return transcripts.length > 0 ? transcripts[0] : null;
+    else return null;
   },
   
   async createTranscript(transcriptData: any): Promise<string | null> {
     return databaseService.create('transcripts', transcriptData);
   },
   
-  async updateTranscript(transcriptId: string, transcriptData: any): Promise<void> {
-    return databaseService.update('transcripts', transcriptId, transcriptData);
+  async updateTranscript(id: string, transcriptData: any): Promise<void> {
+    return databaseService.update('transcripts', id, transcriptData);
   },
   
   async getTranscriptsByType(type: string): Promise<DocumentData[] | null> {
@@ -447,21 +515,30 @@ export const transcriptsService = {
   }
 };
 
+///////////////////////////////////////////////////////////////////////////////
+// Prompt services
+///////////////////////////////////////////////////////////////////////////////
+
 export const promptsService = {
   async getAllPrompts(): Promise<DocumentData[] | null> {
     return databaseService.getAll('prompts');
   },
   
   async getPromptById(promptId: string): Promise<DocumentData | null> {
-    return databaseService.getById('prompts', promptId);
+    const prompts = await databaseService.query('prompts', [
+      { field: 'prompt_id', operator: '==', value: promptId }
+    ]);
+    if (prompts)
+      return prompts.length > 0 ? prompts[0] : null;
+    else return null;
   },
   
   async createPrompt(promptData: any): Promise<string | null> {
     return databaseService.create('prompts', promptData);
   },
   
-  async updatePrompt(promptId: string, promptData: any): Promise<void> {
-    return databaseService.update('prompts', promptId, promptData);
+  async updatePrompt(id: string, promptData: any): Promise<void> {
+    return databaseService.update('prompts', id, promptData);
   },
   
   async getActivePrompts(): Promise<DocumentData[] | null> {
@@ -477,21 +554,30 @@ export const promptsService = {
   }
 };
 
+///////////////////////////////////////////////////////////////////////////////
+// Podcast services
+///////////////////////////////////////////////////////////////////////////////
+
 export const podcastsService = {
   async getAllPodcasts(): Promise<DocumentData[] | null> {
     return databaseService.getAll('podcasts');
   },
   
   async getPodcastById(podcastId: string): Promise<DocumentData | null> {
-    return databaseService.getById('podcasts', podcastId);
+    const podcasts = await databaseService.query('podcasts', [
+      { field: 'podcast_id', operator: '==', value: podcastId }
+    ]);
+    if (podcasts)
+      return podcasts.length > 0 ? podcasts[0] : null;
+    else return null;
   },
   
   async createPodcast(podcastData: any): Promise<string | null> {
     return databaseService.create('podcasts', podcastData);
   },
   
-  async updatePodcast(podcastId: string, podcastData: any): Promise<void> {
-    return databaseService.update('podcasts', podcastId, podcastData);
+  async updatePodcast(id: string, podcastData: any): Promise<void> {
+    return databaseService.update('podcasts', id, podcastData);
   },
   
   async getPodcastsByType(type: string): Promise<DocumentData[] | null> {
@@ -513,16 +599,21 @@ export const podcastsService = {
   }
 };
 
+///////////////////////////////////////////////////////////////////////////////
+// Episode services
+///////////////////////////////////////////////////////////////////////////////
+
 export const episodesService = {
   async getAllEpisodes(podcastId: string): Promise<DocumentData[] | null> {
     return databaseService.query('episodes', [
       { field: 'podcast_id', operator: '==', value: podcastId }
     ]);
   },
-  
-  async getEpisodeById(podcastId: string, episodeId: string): Promise<DocumentData | null> {
+
+  // why need both podcastId and episodeId?
+  async getEpisodeById(/*podcastId: string,*/ episodeId: string): Promise<DocumentData | null> {
     const episodes = await databaseService.query('episodes', [
-      { field: 'podcast_id', operator: '==', value: podcastId },
+//      { field: 'podcast_id', operator: '==', value: podcastId },
       { field: 'episode_id', operator: '==', value: episodeId }
     ]);
     if (episodes)
@@ -534,8 +625,8 @@ export const episodesService = {
     return databaseService.create('episodes', episodeData);
   },
   
-  async updateEpisode(episodeId: string, episodeData: any): Promise<void> {
-    return databaseService.update('episodes', episodeId, episodeData);
+  async updateEpisode(id: string, episodeData: any): Promise<void> {
+    return databaseService.update('episodes', id, episodeData);
   },
   
   async getEpisodesByTopic(topicTag: string): Promise<DocumentData[] | null> {
@@ -548,8 +639,7 @@ export const episodesService = {
     return databaseService.query(
       'episodes', 
       [], 
-      'publish_datetime', 
-      'desc', 
+      'publish_datetime', 'desc', 
       limit
     );
   },
@@ -558,12 +648,15 @@ export const episodesService = {
     return databaseService.query(
       'episodes', 
       [], 
-      'views', 
-      'desc', 
+      'views', 'desc', 
       limit
     );
   }
 };
+
+///////////////////////////////////////////////////////////////////////////////
+// Question services
+///////////////////////////////////////////////////////////////////////////////
 
 export const questionsService = {
   async getAllQuestions(podcastId?: string): Promise<DocumentData[] | null> {
@@ -579,13 +672,14 @@ export const questionsService = {
     return databaseService.create('questions', questionData);
   },
   
+  async updateQuestion(id: string, questionData: any): Promise<void> {
+    return databaseService.update('questions', id, questionData);
+  },
+  
   async getPopularQuestions(podcastId: string, limit: number = 10): Promise<DocumentData[] | null> {
-    return databaseService.query(
-      'questions',
-      [{ field: 'podcast_id', operator: '==', value: podcastId }],
-      'clicks',
-      'desc',
-      limit
+    return databaseService.query('questions', 
+      [{ field: 'podcast_id', operator: '==', value: podcastId }], 
+      'clicks', 'desc', limit   // sort by clicks, descending, limit to 10
     );
   },
   
@@ -596,13 +690,16 @@ export const questionsService = {
   }
 };
 
+///////////////////////////////////////////////////////////////////////////////
+// Chat services
+///////////////////////////////////////////////////////////////////////////////
+
 export const chatsService = {
   async getChatHistory(userId: string): Promise<DocumentData[] | null> {
     return databaseService.query(
       'chats',
       [{ field: 'user_id', operator: '==', value: userId }],
-      'create_datetime',
-      'asc'
+      'created_at', 'asc'
     );
   },
   
@@ -610,13 +707,25 @@ export const chatsService = {
     return databaseService.create('chats', chatData);
   },
   
-  async deleteChatMessage(chatId: string): Promise<void> {
-    return databaseService.update('chats', chatId, {
-      delete_datetime: Timestamp.now()
+  async deleteChatMessage(id: string): Promise<void> {
+    return databaseService.update('chats', id, {
+      deleted_at: Timestamp.now()
     });
   },
   
+
   async getActiveChatHistory(userId: string): Promise<DocumentData[] | null> {
-    return databaseService.getActiveChatHistory(userId);
+    return databaseService.query(
+      'chats',
+      [{ field: 'user_id', operator: '==', value: userId }, 
+       { field: 'is_deleted', operator: '==', value: false }],
+      'created_at', 'asc'
+    );
+  },
+
+  async clearChatHistory(userId: string): Promise<void> {
+    return databaseService.deleteAll('chats', [
+      { field: 'user_id', operator: '==', value: userId }
+    ]);
   }
 };

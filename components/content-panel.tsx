@@ -7,29 +7,42 @@ import { PodcastList } from "@/components/podcast-list";
 import { ChatBox } from "@/components/chat-box";
 import { Separator } from "@/components/ui/separator";
 import { PodcastPlayer } from "@/components/podcast-player";
+import { PlayerEpisode } from "@/lib/schemas/episodes";
+import { Podcast } from "@/lib/schemas/podcasts";
+import { RefObject } from "react";
 
+///////////////////////////////////////////////////////////////////////////////
+// ContentPanel component props
+///////////////////////////////////////////////////////////////////////////////
 interface ContentPanelProps {
   selectedTopicId?: string;
-  activePodcast?: any | null;
-  onSelectPodcast: (podcast: any) => void;
-  showFullPlayer?: boolean;
-  searchQuery?: string;
-  audioRef: React.RefObject<HTMLAudioElement>;
+  activePodcast: PlayerEpisode | null;
+  onSelectPodcast: (podcast: PlayerEpisode) => void;
+  showFullPlayer: boolean;
+  searchQuery: string;
+  audioRef: RefObject<HTMLAudioElement>;
+  onAddPodcast: ((podcast: Podcast) => void) | null;
 }
 
+///////////////////////////////////////////////////////////////////////////////
+// ContentPanel component
+///////////////////////////////////////////////////////////////////////////////
 export function ContentPanel({ 
   selectedTopicId, 
   activePodcast, 
   onSelectPodcast,
   showFullPlayer = false,
   searchQuery = "",
-  audioRef
+  audioRef,
+  onAddPodcast
 }: ContentPanelProps) {
   const [chatHeight, setChatHeight] = useState(40); // 40% of the panel height
   const [bannerImage, setBannerImage] = useState("/banner.jpg");
   const [isPlaying, setIsPlaying] = useState(false);
 
+  ///////////////////////////////////////////////////////////////////////////////
   // Set banner image based on selected topic
+  ///////////////////////////////////////////////////////////////////////////////
   useEffect(() => {
     if (selectedTopicId) {
       // In a real app, you would fetch the banner image for the selected topic
@@ -40,10 +53,16 @@ export function ContentPanel({
     }
   }, [selectedTopicId]);
 
+  ///////////////////////////////////////////////////////////////////////////////
+  // Handle chat height change
+  ///////////////////////////////////////////////////////////////////////////////
   const handleChatHeightChange = (height: number) => {
     setChatHeight(height);
   };
 
+  ///////////////////////////////////////////////////////////////////////////////
+  // Handle time update
+  ///////////////////////////////////////////////////////////////////////////////
   const handleTimeUpdate = () => {
     if (audioRef.current) {
       const currentTime = audioRef.current.currentTime;
@@ -52,6 +71,9 @@ export function ContentPanel({
     }
   };
 
+  ///////////////////////////////////////////////////////////////////////////////
+  // Render the ContentPanel component
+  ///////////////////////////////////////////////////////////////////////////////
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden">
       <ScrollArea className="flex-1" style={{ height: `${100 - chatHeight}%` }}>
@@ -89,6 +111,7 @@ export function ContentPanel({
               topicId={selectedTopicId}
               searchQuery={searchQuery}
               onSelectPodcast={onSelectPodcast}
+              onAddPodcast={onAddPodcast || undefined}
             />
           </div>
         </div>
@@ -105,7 +128,7 @@ export function ContentPanel({
           <ChatBox 
             height={chatHeight} 
             onHeightChange={handleChatHeightChange}
-            activePodcast={activePodcast}
+            activeEpisode={activePodcast || undefined}
           />
         )}
       </div>

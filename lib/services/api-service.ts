@@ -1,10 +1,9 @@
 import axios from 'axios';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+import { episodesService, transcriptsService } from './database-service';
 
 // Create axios instance with base configuration
 const apiClient = axios.create({
-  baseURL: API_URL,
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -22,7 +21,82 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// API service for podcasts
+
+///////////////////////////////////////////////////////////////////////////////
+// chatService API service for chat/LLM
+///////////////////////////////////////////////////////////////////////////////
+export const chatService = {
+
+  // Send message to LLM
+  sendMessage: async (
+    message: string, 
+    conversationId?: string,
+    podcastContext?: {
+      episodeId: string;
+      // podcastId: string;
+      // transcriptId: string;
+    }
+  ) => {
+    let episodeContext = null;
+    
+    // If podcast context is provided, fetch the episode details
+    if (podcastContext) {
+      try {
+        const episode = await episodesService.getEpisodeById(podcastContext.episodeId);
+        const transcript = await transcriptsService.getTranscriptById(episode?.transcript_id);
+        if (episode) {
+          episodeContext = {   
+            // episode_id: episode.id,  // no need to send this to LLM
+            episode_title: episode.episode_title,
+            episode_desc: episode.episode_desc,
+            content_duration: episode.content_duration,
+            transcript_type: transcript?.transcript_type,
+            transcript_text: transcript?.transcript_text,   // should be full source transcript document
+            // documents:[transcrip?.documents]       // TODO: can have multiple documents
+            // topic_tags: episode.topic_tags         // not needed for now
+          };
+        }
+      } catch (error) {
+        console.error('Error fetching episode context:', error);
+        // Continue without episode context if fetch fails
+      }
+    }
+    
+    // Context array for additional context (not needed with conversationId)
+    const context: any[] = [];
+    // TODO: should reset conversationId when user clicks on a new episode?      
+    // send message to LLM service server-side (must match the route in server/routes/api.js)
+    const response = await apiClient.post('/chat', { 
+      message, 
+      conversationId,                  // conversationId needed for LLM service
+      context,                         // context not needed with conversationId
+      episodeContext                   // episodeContext needed for LLM service
+    });
+    return response.data;
+  },
+
+  
+  // TODO: These should be client side calls to databaseService?
+
+  // Get conversation history
+  getConversationHistory: async (conversationId: string) => {
+    const response = await apiClient.get(`/chat/conversations/${conversationId}`);
+    return response.data;
+  },
+  
+  // Get all conversations
+  getConversations: async () => {
+    const response = await apiClient.get('/chat/conversations');
+    return response.data;
+  },
+};
+
+
+///////////////////////////////////////////////////////////////////////////////
+// podcastService API service for podcasts to server-side API points
+///////////////////////////////////////////////////////////////////////////////
+// TODO: These should be client side calls to databaseService?
+
 export const podcastService = {
   // Get featured podcasts
   getFeaturedPodcasts: async () => {
@@ -42,11 +116,17 @@ export const podcastService = {
     return response.data;
   },
   
-  // Get episode by ID
-  getEpisode: async (podcastId: string, episodeId: string) => {
-    const response = await apiClient.get(`/podcasts/${podcastId}/episodes/${episodeId}`);
-    return response.data;
-  },
+    // Get episode by ID
+    getEpisode: async (podcastId: string, episodeId: string) => {
+      const response = await apiClient.get(`/podcasts/${podcastId}/episodes/${episodeId}`);
+      return response.data;
+    },
+
+    // Get transcript by ID
+    getTranscript: async (transcriptId: string) => {
+      const response = await apiClient.get(`/transcripts/${transcriptId}`);
+      return response.data;
+    },
   
   // Search podcasts
   searchPodcasts: async (query: string) => {
@@ -55,28 +135,12 @@ export const podcastService = {
   },
 };
 
-// API service for chat/LLM
-export const chatService = {
-  // Send message to LLM
-  sendMessage: async (message: string, conversationId?: string) => {
-    const response = await apiClient.post('/chat', { message, conversationId });
-    return response.data;
-  },
-  
-  // Get conversation history
-  getConversationHistory: async (conversationId: string) => {
-    const response = await apiClient.get(`/chat/conversations/${conversationId}`);
-    return response.data;
-  },
-  
-  // Get all conversations
-  getConversations: async () => {
-    const response = await apiClient.get('/chat/conversations');
-    return response.data;
-  },
-};
 
-// API service for user preferences
+///////////////////////////////////////////////////////////////////////////////
+// userService API service for user preferences
+///////////////////////////////////////////////////////////////////////////////
+// TODO: These should be client side calls to databaseService?
+
 export const userService = {
   // Get user profile
   getProfile: async () => {

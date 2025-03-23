@@ -1,27 +1,46 @@
+///////////////////////////////////////////////////////////////////////////////
+// Server-side API routes
+///////////////////////////////////////////////////////////////////////////////
+
 const express = require('express');
-const router = express.Router();
 const llmService = require('../services/llm-service');
 const ttsService = require('../services/tts-service');
+const config = require('../config');
+
+const router = express.Router();
 
 // Health check route
 router.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok', message: 'API is running' });
 });
 
-// Chat routes
+
+///////////////////////////////////////////////////////////////////////////////
+// Chat routes to LLMs
+///////////////////////////////////////////////////////////////////////////////
 router.post('/chat', async (req, res) => {
   try {
-    const { message, context = [], preferredProvider } = req.body;
-    
-    const response = await llmService.processMessage(
+    const { 
       message, 
-      context, 
+      conversationId,
+      context,                 // context not needed with conversationId
+      episodeContext
+    } = req.body;
+  
+    const preferredProvider = config.defaultLlmProvider || 'gemini';
+
+    const response = await llmService.processMessage(
+      message,
+      conversationId,
+      context,                 // context not needed with conversationId
+      episodeContext,
       preferredProvider
     );
     
     res.status(200).json({
       response: response.content,
       provider: response.provider,
+      conversationId: response.conversation_id
     });
   } catch (error) {
     console.error('Error in chat endpoint:', error);
@@ -32,10 +51,16 @@ router.post('/chat', async (req, res) => {
   }
 });
 
-// Text-to-Speech routes
+
+///////////////////////////////////////////////////////////////////////////////
+// Text-to-Speech routes - not used yet
+///////////////////////////////////////////////////////////////////////////////
+
 router.post('/tts', async (req, res) => {
   try {
-    const { text, preferredProvider } = req.body;
+    const { text } = req.body;
+
+    const preferredProvider = config.defaultTtsProvider || 'elevenlabs';
     
     const response = await ttsService.generateSpeech(
       text, 
@@ -66,7 +91,12 @@ router.post('/tts', async (req, res) => {
   }
 });
 
-// Podcast routes (mock data for now)
+
+///////////////////////////////////////////////////////////////////////////////
+// Podcast routes (mock data for now). 
+// These should be client side calls to databaseService?
+///////////////////////////////////////////////////////////////////////////////
+
 router.get('/podcasts/featured', (req, res) => {
   res.status(200).json({
     podcasts: [
@@ -123,7 +153,12 @@ router.get('/podcasts/:podcastId/episodes/:episodeId', (req, res) => {
   });
 });
 
+
+///////////////////////////////////////////////////////////////////////////////
 // User routes (would require authentication in production)
+// These should be client side calls to databaseService?
+///////////////////////////////////////////////////////////////////////////////
+
 router.get('/user/profile', (req, res) => {
   // This would normally verify the user's token
   res.status(200).json({

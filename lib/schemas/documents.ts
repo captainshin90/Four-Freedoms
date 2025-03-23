@@ -1,24 +1,26 @@
 export type DocumentSourceFormat = 'txt' | 'pdf' | 'docx' | 'mp3';
 
 export interface Document {
-  doc_id: string;
-  doc_name: string;
-  doc_desc: string;
-  topic_tags: string[];
-  doc_source_url: string;
-  doc_extracted_text: string;
-  extract_tool: string;
-  extract_datetime: Date;
-  doc_source_format: DocumentSourceFormat;
-  created_at: Date;
-  updated_at: Date;
-  is_active: boolean;
-  is_deleted: boolean;
+  id: string; // Firestore Document ID
+  doc_id: string; // Document ID
+  doc_name: string; // Document Name
+  doc_desc: string; // Document Description
+  topic_tags: string[]; // Topic Tags
+  doc_source_url: string; // Document Source URL
+  doc_extracted_text: string; // Document Extracted Text
+  extract_tool: string; // Extract Tool
+  extract_datetime: Date; // Extract Date and Time
+  doc_source_format: DocumentSourceFormat; // Document Source Format
+  created_at: Date; // Created Date and Time
+  updated_at: Date; // Updated Date and Time
+  is_active: boolean; // Is Active
+  is_deleted: boolean; // Is Deleted
 }
 
 // Helper function to convert Firestore data to Document type
 export function convertToDocument(data: any): Document {
   return {
+    id: data.id,
     doc_id: data.doc_id = crypto.randomUUID(), 
     doc_name: data.doc_name,
     doc_desc: data.doc_desc,

@@ -1,32 +1,34 @@
 export interface User {
-  user_id: string;
-  login_id: string;
+  id: string; // Firestore Document ID  
+  user_id: string; // User ID
+  login_id: string; // Login ID
   password?: string; // Not stored in Firestore, only used for registration
-  first_name: string;
-  last_name: string;
-  email1: string;
-  email2?: string;
-  phone?: string;
-  avatar?: string;
-  addresses?: Address[];
-  preferences?: UserPreferences;
-  personas?: string[]; // Array of persona_ids
-  following_topics?: string[]; // Array of topic_ids
-  following_users?: string[]; // Array of user_ids
-  followed_by_users?: string[]; // Array of user_ids
-  subscription_type?: string;
-  subscription_startdate?: Date;
-  subscription_enddate?: Date;
-  last_payment_date?: Date;
-  next_payment_date?: Date;
-  payment_method?: string;
-  card_name?: string;
-  card_number?: string; // Should be encrypted or tokenized in production
+  first_name: string; // First Name
+  last_name: string; // Last Name
+  email1: string; // Primary Email
+  email2?: string; // Secondary Email
+  phone?: string; // Phone Number
+  avatar?: string; // Avatar URL
+  addresses?: Address[]; // Array of Addresses
+  preferences?: UserPreferences; // User Preferences
+  personas?: string[];           // Array of persona_ids
+  following_topics?: string[];   // Array of topic_ids
+  following_podcasts?: string[]  // Array of podcast_ids
+  following_users?: string[];    // Array of user_ids
+  followed_by_users?: string[];  // Array of user_ids
+  subscription_type?: string;    // free, basic, premium, etc.
+  subscription_startdate?: Date; // Subscription Start Date
+  subscription_enddate?: Date;   // Subscription End Date
+  last_payment_date?: Date;      // Last Payment Date
+  next_payment_date?: Date;      // Next Payment Date
+  payment_method?: string;       // Payment Method
+  card_name?: string;            // Card Name
+  card_number?: string;          // Should be encrypted or tokenized in production
   card_expire?: string;
-  card_cvv?: string; // Should not be stored in production
+  card_cvv?: string;             // Should not be stored in production
   card_city?: string;
-  created_at: Date;
-  updated_at: Date;
+  // created_at: Date;             // updated by the database service
+  // updated_at: Date;             // updated by the database service
   is_active: boolean;
   is_deleted: boolean;
 }
@@ -57,6 +59,7 @@ export interface UserPreferences {
 // Helper function to convert Firestore data to User type
 export function convertToUser(data: any): User {
   return {
+    id: data.id,
     user_id: data.user_id = crypto.randomUUID(),
     login_id: data.login_id,
     first_name: data.first_name,
@@ -69,6 +72,7 @@ export function convertToUser(data: any): User {
     preferences: data.preferences,
     personas: data.personas,
     following_topics: data.following_topics,
+    following_podcasts: data.following_podcasts,
     following_users: data.following_users,
     followed_by_users: data.followed_by_users,
     subscription_type: data.subscription_type,
@@ -82,8 +86,8 @@ export function convertToUser(data: any): User {
     card_expire: data.card_expire,
     card_cvv: data.card_cvv,
     card_city: data.card_city,
-    created_at: data.created_at?.toDate(),
-    updated_at: data.updated_at?.toDate(),
+    // created_at: data.created_at?.toDate(),    // updated by the database service
+    // updated_at: data.updated_at?.toDate(),    // updated by the database service
     is_active: data.is_active = true,
     is_deleted: data.is_deleted = false
   };

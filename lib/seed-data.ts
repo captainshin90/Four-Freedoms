@@ -23,7 +23,7 @@ let db: Firestore | null;
 let databaseService = DatabaseService.getInstance();
 
 
-// PROBLEM: this seed data is not setting prompt_id, podcast_id, etc.
+// ISSUE: this seed data is not setting prompt_id, podcast_id, etc.
 
 
 // Function to seed initial data into Firestore
@@ -635,6 +635,7 @@ async function seedPodcasts() {
     // Create episodes for each podcast
     const episodes = [
       {
+        episode_id: '123',
         podcast_id: podcastId,
         episode_title: 'Episode 1: Introduction',
         episode_desc: 'An introduction to the podcast series',
@@ -647,9 +648,11 @@ async function seedPodcasts() {
         content_url: 'https://example.com/audio/episode1.mp3',
         content_image: podcast.podcast_image,
         is_active: true,
-        is_deleted: false
+        is_deleted: false,
+        transcript_id: '123'
       },
       {
+        episode_id: '1234',
         podcast_id: podcastId,
         episode_title: 'Episode 2: Deep Dive',
         episode_desc: 'A deeper exploration of the main topics',
@@ -662,9 +665,11 @@ async function seedPodcasts() {
         content_url: 'https://example.com/audio/episode2.mp3',
         content_image: podcast.podcast_image,
         is_active: true,
-        is_deleted: false
+        is_deleted: false,
+        transcript_id: '1235'
       },
       {
+        episode_id: '1235',
         podcast_id: podcastId,
         episode_title: 'Episode 3: Expert Interview',
         episode_desc: 'An interview with an expert in the field',
@@ -677,7 +682,8 @@ async function seedPodcasts() {
         content_url: 'https://example.com/audio/episode3.mp3',
         content_image: podcast.podcast_image,
         is_active: true,
-        is_deleted: false
+        is_deleted: false,
+        transcript_id: '1234'
       }
     ];
     
@@ -929,37 +935,37 @@ async function seedChats() {
       {
         user_id: user.id,
         chat_text: 'Hello, I have a question about the latest podcast on education reform.',
-        is_user: true,
+        sender: 'user',
         is_deleted: false
       },
       {
         user_id: user.id,
         chat_text: 'Of course! I\'d be happy to help with any questions about the education reform podcast. What specific aspect would you like to know more about?',
-        is_user: false,
+        sender: 'assistant',
         is_deleted: false
       },
       {
         user_id: user.id,
         chat_text: 'Can you summarize the main points discussed about school funding?',
-        is_user: true,
+        sender: 'user',
         is_deleted: false
       },
       {
         user_id: user.id,
         chat_text: 'The podcast discussed three main points about school funding: 1) The current formula for distributing state funds to districts, 2) Proposed changes to increase equity across wealthy and less affluent communities, and 3) The impact of property taxes on educational resources. The experts suggested that a more balanced approach combining state and local funding could help address disparities.',
-        is_user: false,
+        sender: 'assistant',
         is_deleted: false
       },
       {
         user_id: user.id,
         chat_text: 'Thanks! Are there any upcoming episodes that will continue this discussion?',
-        is_user: true,
+        sender: 'user',
         is_deleted: false
       },
       {
         user_id: user.id,
         chat_text: 'Yes, the podcast host mentioned that next week\'s episode will feature an interview with the state education secretary to discuss implementation plans for the new funding proposals. It\'s scheduled to be released next Tuesday.',
-        is_user: false,
+        sender: 'assistant',
         is_deleted: false
       }
     ];

@@ -7,19 +7,24 @@ import { Button } from "@/components/ui/button";
 import { Play, Plus, ThumbsUp, ThumbsDown } from "lucide-react";
 import { podcastsService } from "@/lib/services/database-service";
 import { Podcast } from "@/lib/schemas/podcasts";
+import { Episode, PlayerEpisode, convertToPlayerEpisode } from "@/lib/schemas/episodes";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { episodesService } from "@/lib/services/database-service";
 import { topicsService } from "@/lib/services/database-service";
 import { usersService } from "@/lib/services/database-service";
 
+///////////////////////////////////////////////////////////////////////////////
+// PodcastList component
+///////////////////////////////////////////////////////////////////////////////
 interface PodcastListProps {
   topicId?: string;
   searchQuery?: string;
-  onSelectPodcast: (podcast: any) => void;
+  onSelectPodcast: (episodeData: PlayerEpisode) => void;
+  onAddPodcast?: (podcast: Podcast) => void;
 }
 
-export function PodcastList({ topicId, searchQuery, onSelectPodcast }: PodcastListProps) {
+export function PodcastList({ topicId, searchQuery, onSelectPodcast, onAddPodcast }: PodcastListProps) {
   const [podcasts, setPodcasts] = useState<Podcast[]>([]);
   const [loading, setLoading] = useState(true);
   const [likedPodcasts, setLikedPodcasts] = useState<Record<string, boolean>>({});
@@ -28,7 +33,9 @@ export function PodcastList({ topicId, searchQuery, onSelectPodcast }: PodcastLi
   const { user, userProfile } = useAuth();
   const { toast } = useToast();
 
+  ///////////////////////////////////////////////////////////////////////////////
   // Function to fetch default podcasts
+  ///////////////////////////////////////////////////////////////////////////////
   const fetchDefaultPodcasts = async () => {
     try {
       setLoading(true);
@@ -43,12 +50,16 @@ export function PodcastList({ topicId, searchQuery, onSelectPodcast }: PodcastLi
     }
   };
 
+  ///////////////////////////////////////////////////////////////////////////////
+  // Add fetch podcasts by topicId effect
+  ///////////////////////////////////////////////////////////////////////////////
   useEffect(() => {
     const fetchPodcasts = async () => {
       try {
         setLoading(true);
         let podcastData;
         
+        // when is topicId set? Should it be topicName?
         if (topicId) {
           podcastData = await podcastsService.getPodcastsByTopic(topicId);
         } else {
@@ -68,7 +79,9 @@ export function PodcastList({ topicId, searchQuery, onSelectPodcast }: PodcastLi
     fetchPodcasts();
   }, [topicId]);
 
+  ///////////////////////////////////////////////////////////////////////////////
   // Add search effect
+  ///////////////////////////////////////////////////////////////////////////////
   useEffect(() => {
     const searchPodcasts = async () => {
       if (!searchQuery) {
@@ -154,8 +167,11 @@ export function PodcastList({ topicId, searchQuery, onSelectPodcast }: PodcastLi
     }, 300);
 
     return () => clearTimeout(timeoutId);
-  }, [searchQuery]);
+  }, [searchQuery, toast]);
 
+  ///////////////////////////////////////////////////////////////////////////////
+  // Add handlePlayPodcast 
+  ///////////////////////////////////////////////////////////////////////////////
   const handlePlayPodcast = async (podcast: Podcast) => {
     // Check if premium content is accessible
     if (podcast.subscription_type === 'premium' && (!user || userProfile?.subscription_type !== 'premium')) {
@@ -169,6 +185,7 @@ export function PodcastList({ topicId, searchQuery, onSelectPodcast }: PodcastLi
     
     try {
       // Get the first episode for this podcast
+      // QUESTION: what if there are no episodes?
       const episodes = await episodesService.getAllEpisodes(podcast.podcast_id);
       if (!episodes || episodes.length === 0) {
         toast({
@@ -179,16 +196,12 @@ export function PodcastList({ topicId, searchQuery, onSelectPodcast }: PodcastLi
         return;
       }
 
-      const firstEpisode = episodes[0];
-      const episodeData = {
-        id: firstEpisode.episode_id,
-        title: firstEpisode.episode_title,
-        image: firstEpisode.content_image || podcast.podcast_image,
-        audioUrl: firstEpisode.content_url,
-        duration: firstEpisode.content_duration
-      };
+      // Convert the first episode to a PlayerEpisode
+      const firstEpisode = episodes[0] as Episode;
+      const episodeData = convertToPlayerEpisode(podcast, firstEpisode);
       
-      onSelectPodcast(episodeData);
+      // Call the onSelectPodcast callback with the episode data
+      onSelectPodcast(episodeData);  // defined in Page.tsx as handleSelectPodcast() function
     } catch (error) {
       console.error("Error fetching episode:", error);
       toast({
@@ -199,6 +212,9 @@ export function PodcastList({ topicId, searchQuery, onSelectPodcast }: PodcastLi
     }
   };
 
+  ///////////////////////////////////////////////////////////////////////////////
+  // Add handleAddToTopics 
+  ///////////////////////////////////////////////////////////////////////////////
   const handleAddToTopics = async (podcast: Podcast) => {
     if (!user) {
       toast({
@@ -279,8 +295,8 @@ export function PodcastList({ topicId, searchQuery, onSelectPodcast }: PodcastLi
 
       // Update the user's profile in the database
       await usersService.updateUser(user.uid, {
-        following_topics: updatedFollowingTopics,
-        updated_at: new Date()
+        following_topics: updatedFollowingTopics
+        // updated_at: new Date() // no need for this field
       });
 
       toast({
@@ -297,6 +313,9 @@ export function PodcastList({ topicId, searchQuery, onSelectPodcast }: PodcastLi
     }
   };
 
+  ///////////////////////////////////////////////////////////////////////////////
+  // Add handleLike
+  ///////////////////////////////////////////////////////////////////////////////
   const handleLike = (podcast: Podcast, event: React.MouseEvent) => {
     event.stopPropagation();
     
@@ -336,6 +355,9 @@ export function PodcastList({ topicId, searchQuery, onSelectPodcast }: PodcastLi
     // This is a placeholder for the actual implementation
   };
 
+  ///////////////////////////////////////////////////////////////////////////////
+  // Add handleDislike
+  ///////////////////////////////////////////////////////////////////////////////
   const handleDislike = (podcast: Podcast, event: React.MouseEvent) => {
     event.stopPropagation();
     
@@ -398,7 +420,7 @@ export function PodcastList({ topicId, searchQuery, onSelectPodcast }: PodcastLi
       <div className="flex flex-col items-center justify-center p-8 text-center">
         <div className="text-lg font-semibold mb-2">No podcasts found</div>
         <p className="text-muted-foreground mb-4">
-          We couldn't find any podcasts matching your search.
+          We could not find any podcasts matching your search.
           <br />
           Showing you our recommended podcasts in a moment...
         </p>
@@ -409,77 +431,108 @@ export function PodcastList({ topicId, searchQuery, onSelectPodcast }: PodcastLi
   // If no podcasts from database, use mock data
   const displayPodcasts = podcasts && podcasts.length > 0 ? podcasts : mockPodcasts;
   
+  ///////////////////////////////////////////////////////////////////////////////
+  // Render the podcast list
+  ///////////////////////////////////////////////////////////////////////////////
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
       {displayPodcasts.map((podcast) => (
         <Card 
           key={`podcast-${podcast.podcast_id || `fallback-${Math.random()}`}`}
           className="cursor-pointer hover:shadow-lg transition-shadow group"
-          onClick={() => onSelectPodcast(podcast)}
+          onClick={() => handlePlayPodcast(podcast)}
         >
           <CardContent className="p-0">
             <div className="relative aspect-video group">
               <Image
-                src={podcast.podcast_image}
+                src={podcast.podcast_image || '/placeholder-podcast.jpg'}
                 alt={podcast.podcast_title}
                 fill
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
                 className="object-cover transition-all"
-                //priority={podcast.podcast_id === "mock-1"}
               />
               <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                 <Button 
                   size="icon" 
                   variant="secondary" 
-                  className="rounded-full h-12 w-12 mr-2"
+                  className="rounded-full h-8 w-8 mr-2"
                   onClick={(e) => {
                     e.stopPropagation();
                     handlePlayPodcast(podcast);
                   }}
                 >
-                  <Play className="h-6 w-6" />
+                  <Play className="h-4 w-4" />
                 </Button>
                 <Button 
                   size="icon" 
                   variant="secondary" 
-                  className="rounded-full h-12 w-12"
+                  className="rounded-full h-8 w-8"
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleAddToTopics(podcast);
+                    if (onAddPodcast && user) {
+                      /*
+                      // Convert to expected Podcast type
+                      const podcastToAdd: Podcast = {
+                        id: podcast.id,
+                        podcast_id: podcast.podcast_id,
+                        podcast_title: podcast.podcast_title,
+                        podcast_image: podcast.podcast_image,
+                        podcast_desc: podcast.podcast_desc,
+                        podcast_hosts: podcast.podcast_hosts || [],
+                        podcast_type: podcast.podcast_type || 'audio_podcast',
+                        podcast_format: podcast.podcast_format || 'mp3',
+                        topic_tags: podcast.topic_tags || [],
+                        subscription_type: podcast.subscription_type || 'free',
+                        followed_by_users: podcast.followed_by_users || [],
+                        is_active: podcast.is_active || true,
+                        is_deleted: podcast.is_deleted || false,
+                        created_at: podcast.created_at || new Date(),
+                        updated_at: podcast.updated_at || new Date()
+                        */
+                        onAddPodcast(podcast);
+                      // };
+                      // onAddPodcast(podcastToAdd);
+                    } else if (!user) {
+                      toast({
+                        title: "Sign in required",
+                        description: "Please sign in to add podcasts to your list.",
+                        variant: "default"
+                      });
+                    }
                   }}
                 >
-                  <Plus className="h-6 w-6" />
+                  <Plus className="h-4 w-4" />
                 </Button>
               </div>
               {podcast.subscription_type === 'premium' && (
-                <div className="absolute top-2 right-2 bg-primary text-primary-foreground text-xs px-2 py-1 rounded">
+                <div className="absolute top-1 right-1 bg-primary text-primary-foreground text-xs px-1.5 py-0.5 rounded">
                   Premium
                 </div>
               )}
             </div>
-            <div className="p-4">
+            <div className="p-2">
               <div className="flex justify-between items-center">
-                <h3 className="font-semibold truncate">{podcast.podcast_title}</h3>
-                <div className="flex space-x-1">
+                <h3 className="font-semibold text-sm truncate">{podcast.podcast_title}</h3>
+                <div className="flex space-x-0.5">
                   <Button 
                     variant="ghost" 
                     size="icon" 
-                    className={`h-8 w-8 ${likedPodcasts[podcast.podcast_id] ? 'text-green-500' : ''}`}
+                    className={`h-6 w-6 ${likedPodcasts[podcast.podcast_id] ? 'text-green-500' : ''}`}
                     onClick={(e) => handleLike(podcast, e)}
                   >
-                    <ThumbsUp className="h-4 w-4" />
+                    <ThumbsUp className="h-3 w-3" />
                   </Button>
                   <Button 
                     variant="ghost" 
                     size="icon" 
-                    className={`h-8 w-8 ${dislikedPodcasts[podcast.podcast_id] ? 'text-red-500' : ''}`}
+                    className={`h-6 w-6 ${dislikedPodcasts[podcast.podcast_id] ? 'text-red-500' : ''}`}
                     onClick={(e) => handleDislike(podcast, e)}
                   >
-                    <ThumbsDown className="h-4 w-4" />
+                    <ThumbsDown className="h-3 w-3" />
                   </Button>
                 </div>
               </div>
-              <p className="text-sm text-muted-foreground truncate">
+              <p className="text-xs text-muted-foreground truncate">
                 {Array.isArray(podcast.podcast_hosts) 
                   ? podcast.podcast_hosts.join(', ') 
                   : 'Various Hosts'}
@@ -495,6 +548,7 @@ export function PodcastList({ topicId, searchQuery, onSelectPodcast }: PodcastLi
 // Mock data for fallback
 const mockPodcasts: Podcast[] = [
   {
+    id: "mock-1",
     podcast_id: "mock-1",
     podcast_title: "Newton Community Voices",
     podcast_hosts: ["Jane Smith", "John Doe"],
@@ -510,6 +564,7 @@ const mockPodcasts: Podcast[] = [
     updated_at: new Date()
   },
   {
+    id: "mock-2",
     podcast_id: "mock-2",
     podcast_title: "Massachusetts Education Matters",
     podcast_hosts: ["Dr. Emily Johnson", "Prof. Michael Brown"],
@@ -525,6 +580,7 @@ const mockPodcasts: Podcast[] = [
     updated_at: new Date()
   },
   {
+    id: "mock-3",
     podcast_id: "mock-3",
     podcast_title: "Policy Insights with Senator Warren",
     podcast_hosts: ["Sarah Williams", "Senator Elizabeth Warren"],
@@ -540,6 +596,7 @@ const mockPodcasts: Podcast[] = [
     updated_at: new Date()
   },
   {
+    id: "mock-4",
     podcast_id: "mock-4",
     podcast_title: "Newton High School Sports Report",
     podcast_hosts: ["David Green", "Lisa Park"],

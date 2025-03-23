@@ -7,6 +7,9 @@ README.md
   - .devcontainer: Linux (WSL2), Next.js 13.5.1, Node.js 22.12 & Typescript, Python 3.11.2, Linux: Debian GNU 12 (bookworm)
   - Firebase: fourfreedoms-db1
 
+- Client is Next.js on port 3000: out/index.html
+- Server is Node.js on port 3001: server/index.js
+
 - To build: 
   > npm run dev:all    # for development   
   > npm run build      # for production
@@ -33,5 +36,10 @@ README.md
   > git commit -m "Describe code change"
   > git push origin master
 
-- Deployed to Netlify: fourfreedoms.netlify.app
-   
+- Automatically deployed to Netlify: fourfreedoms.netlify.app
+- Check Netlify for build and deploy status: 
+
+#### Install
+3/19/25: npm install @google/generative-ai
+3/19/25: npm install firebase-admin
+3/22/25: npm install react-markdown

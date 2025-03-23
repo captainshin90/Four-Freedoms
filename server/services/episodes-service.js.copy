@@ -1,0 +1,63 @@
+const { initializeApp, getApps } = require('firebase-admin/app');
+const { getFirestore } = require('firebase-admin/firestore');
+const config = require('../config');
+
+// Initialize Firebase Admin if not already initialized
+let app;
+if (!getApps().length) {
+  app = initializeApp({
+    credential: require('firebase-admin').credential.applicationDefault(),
+    projectId: config.firebase.projectId,
+  });
+} else {
+  app = getApps()[0];
+}
+
+const db = getFirestore(app);
+
+class EpisodesService {
+  async getEpisode(podcastId, episodeId) {
+    try {
+      const episodeRef = db.collection('episodes').doc(episodeId);
+      const episodeDoc = await episodeRef.get();
+      
+      if (!episodeDoc.exists) {
+        return null;
+      }
+      
+      const episodeData = episodeDoc.data();
+      // Verify the episode belongs to the requested podcast
+      if (episodeData.podcast_id !== podcastId) {
+        return null;
+      }
+      
+      return {
+        episode_id: episodeDoc.id,
+        ...episodeData
+      };
+    } catch (error) {
+      console.error('Error fetching episode:', error);
+      throw error;
+    }
+  }
+
+  async getAllEpisodes(podcastId) {
+    try {
+      const episodesRef = db.collection('episodes');
+      const snapshot = await episodesRef
+        .where('podcast_id', '==', podcastId)
+        .orderBy('published_at', 'desc')
+        .get();
+      
+      return snapshot.docs.map(doc => ({
+        episode_id: doc.id,
+        ...doc.data()
+      }));
+    } catch (error) {
+      console.error('Error fetching episodes:', error);
+      throw error;
+    }
+  }
+}
+
+module.exports = new EpisodesService(); 

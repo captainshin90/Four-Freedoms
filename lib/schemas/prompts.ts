@@ -1,22 +1,24 @@
 export interface Prompt {
-  prompt_id: string;
-  prompt_name: string;
-  prompt_desc: string;
-  created_by: string;
-  modified_datetime?: Date;
-  delete_datetime?: Date;
-  is_active: boolean;
-  is_deleted: boolean;
-  target_persona: string;
-  prompt_text: string;
-  prompt_audio?: string;
-  created_at: Date;
-  updated_at: Date;
+  id: string; // Firestore Document ID
+  prompt_id: string; // Prompt ID
+  prompt_name: string; // Prompt Name
+  prompt_desc: string; // Prompt Description
+  created_by: string; // Created By
+  modified_datetime?: Date; // Modified Date and Time
+  delete_datetime?: Date; // Delete Date and Time
+  is_active: boolean; // Is Active
+  is_deleted: boolean; // Is Deleted
+  target_persona: string; // Target Persona
+  prompt_text: string; // Prompt Text
+  prompt_audio?: string; // Prompt Audio
+  created_at: Date; // Created Date and Time
+  updated_at: Date; // Updated Date and Time
 }
 
 // Helper function to convert Firestore data to Prompt type
 export function convertToPrompt(data: any): Prompt {
   return {
+    id: data.id,
     prompt_id: data.prompt_id = crypto.randomUUID(),
     prompt_name: data.prompt_name,
     prompt_desc: data.prompt_desc,

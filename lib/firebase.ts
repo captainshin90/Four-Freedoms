@@ -32,10 +32,10 @@ for (const envVar of requiredEnvVars) {
   }
 }
 
-console.log('Firebase Config:', {
-  ...firebaseConfig,
-  apiKey: firebaseConfig.apiKey ? '***' : undefined, // Hide API key in logs
-});
+// console.log('Firebase Config:', {
+//   ...firebaseConfig,
+//   apiKey: firebaseConfig.apiKey ? '***' : undefined, // Hide API key in logs
+// });
 
 const firestoreConfig = {
   databaseId: process.env.NEXT_PUBLIC_FIRESTORE_DATABASE_ID

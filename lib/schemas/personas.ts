@@ -1,20 +1,22 @@
 export type PersonaType = 'resident' | 'student' | 'official' | 'lobbyst' | 'politician';
 
 export interface Persona {
-  persona_id: string;
-  persona_name: string;
-  persona_type: PersonaType;
-  persona_description?: string;
-  persona_image?: string;
-  created_at: Date;
-  updated_at: Date;
-  is_active: boolean;
-  is_deleted: boolean;
+  id: string; // Firestore Document ID
+  persona_id: string; // Persona ID
+  persona_name: string; // Persona Name
+  persona_type: PersonaType; // Persona Type
+  persona_description?: string; // Persona Description
+  persona_image?: string; // Persona Image
+  created_at: Date; // Created Date and Time
+  updated_at: Date; // Updated Date and Time
+  is_active: boolean; // Is Active
+  is_deleted: boolean; // Is Deleted
 }
 
 // Helper function to convert Firestore data to Persona type
 export function convertToPersona(data: any): Persona {
   return {
+    id: data.id,
     persona_id: data.persona_id = crypto.randomUUID(),
     persona_name: data.persona_name,
     persona_type: data.persona_type,

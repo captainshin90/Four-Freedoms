@@ -1,19 +1,21 @@
 export interface Question {
-  question_id: string;
-  podcast_id: string;
-  question_text: string;
-  question_audio?: string;
-  clicks: number;
-  user_id: string;
-  created_at: Date;
-  updated_at: Date;
-  is_active: boolean;
-  is_deleted: boolean;
+  id: string; // Firestore Document ID
+  question_id: string; // Question ID
+  podcast_id: string; // Podcast ID
+  question_text: string; // Question Text
+  question_audio?: string; // Question Audio
+  clicks: number; // Clicks
+  user_id: string; // User ID
+  created_at: Date; // Created Date and Time
+  updated_at: Date; // Updated Date and Time
+  is_active: boolean; // Is Active
+  is_deleted: boolean; // Is Deleted
 }
 
 // Helper function to convert Firestore data to Question type
 export function convertToQuestion(data: any): Question {
   return {
+    id: data.id,
     question_id: data.question_id = crypto.randomUUID(),
     podcast_id: data.podcast_id,
     question_text: data.question_text,

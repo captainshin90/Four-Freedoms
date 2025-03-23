@@ -20,6 +20,9 @@ import { formatTime } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 
+///////////////////////////////////////////////////////////////////////////////
+// PodcastPlayer component props
+///////////////////////////////////////////////////////////////////////////////
 interface PodcastPlayerProps {
   podcast: {
     id: string;
@@ -33,6 +36,9 @@ interface PodcastPlayerProps {
   audioRef: React.RefObject<HTMLAudioElement>;
 }
 
+///////////////////////////////////////////////////////////////////////////////
+// PodcastPlayer component
+///////////////////////////////////////////////////////////////////////////////
 export function PodcastPlayer({ podcast, isMinimized = false, onToggleMinimize, audioRef }: PodcastPlayerProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -116,6 +122,9 @@ export function PodcastPlayer({ podcast, isMinimized = false, onToggleMinimize, 
     };
   }, [podcast.id, podcast.audioUrl, audioRef, isAudioReady]);
   
+  ///////////////////////////////////////////////////////////////////////////////
+  // Set the time display
+  ///////////////////////////////////////////////////////////////////////////////
   useEffect(() => {
     setTimeDisplay(new Date().toLocaleTimeString('en-US', { 
       hour: '2-digit', 
@@ -123,6 +132,9 @@ export function PodcastPlayer({ podcast, isMinimized = false, onToggleMinimize, 
     }));
   }, []);
 
+  ///////////////////////////////////////////////////////////////////////////////
+  // Toggle play
+  ///////////////////////////////////////////////////////////////////////////////
   const togglePlay = () => {
     if (!audioRef?.current || !isAudioReady) {
       console.warn('Audio element not ready');
@@ -140,13 +152,19 @@ export function PodcastPlayer({ podcast, isMinimized = false, onToggleMinimize, 
     }
     setIsPlaying(!isPlaying);
   };
-  
+
+  ///////////////////////////////////////////////////////////////////////////////
+  // Toggle mute
+  ///////////////////////////////////////////////////////////////////////////////
   const toggleMute = () => {
     if (!audioRef?.current || !isAudioReady) return;
     setIsMuted(!isMuted);
     audioRef.current.muted = !isMuted;
   };
-  
+
+  ///////////////////////////////////////////////////////////////////////////////
+  // Handle volume change
+  ///////////////////////////////////////////////////////////////////////////////
   const handleVolumeChange = (value: number[]) => {
     if (!audioRef?.current || !isAudioReady) return;
     const newVolume = value[0];
@@ -154,22 +172,34 @@ export function PodcastPlayer({ podcast, isMinimized = false, onToggleMinimize, 
     audioRef.current.volume = newVolume / 100;
     setIsMuted(newVolume === 0);
   };
-  
+
+  ///////////////////////////////////////////////////////////////////////////////
+  // Handle seek
+  ///////////////////////////////////////////////////////////////////////////////
   const handleSeek = (value: number[]) => {
     if (!audioRef?.current || !isAudioReady) return;
     audioRef.current.currentTime = value[0];
   };
-  
+
+  ///////////////////////////////////////////////////////////////////////////////
+  // Handle skip back
+  ///////////////////////////////////////////////////////////////////////////////
   const handleSkipBack = () => {
     if (!audioRef?.current || !isAudioReady) return;
     audioRef.current.currentTime = Math.max(0, currentTime - 10);
   };
-  
+
+  ///////////////////////////////////////////////////////////////////////////////
+  // Handle skip forward
+  ///////////////////////////////////////////////////////////////////////////////
   const handleSkipForward = () => {
     if (!audioRef?.current || !isAudioReady) return;
     audioRef.current.currentTime = Math.min(duration, currentTime + 10);
   };
 
+  ///////////////////////////////////////////////////////////////////////////////
+  // Handle like
+  ///////////////////////////////////////////////////////////////////////////////
   const handleLike = async () => {
     if (!user) {
       toast({
@@ -185,6 +215,9 @@ export function PodcastPlayer({ podcast, isMinimized = false, onToggleMinimize, 
     // TODO: Implement like functionality
   };
 
+  ///////////////////////////////////////////////////////////////////////////////
+  // Handle dislike
+  ///////////////////////////////////////////////////////////////////////////////       
   const handleDislike = async () => {
     if (!user) {
       toast({
@@ -200,6 +233,9 @@ export function PodcastPlayer({ podcast, isMinimized = false, onToggleMinimize, 
     // TODO: Implement dislike functionality
   };
 
+  ///////////////////////////////////////////////////////////////////////////////
+  // Render the PodcastPlayer component
+  ///////////////////////////////////////////////////////////////////////////////
   if (isMinimized) {
     return (
       <div className="flex items-center justify-between p-2 bg-card rounded-lg border">
@@ -219,23 +255,21 @@ export function PodcastPlayer({ podcast, isMinimized = false, onToggleMinimize, 
           </div>
         </div>
         <div className="flex items-center space-x-2">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className={`h-8 w-8 ${isLiked ? 'text-green-500' : ''}`}
-            onClick={handleLike}
-          >
-            <ThumbsUp className="h-4 w-4" />
-          </Button>
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className={`h-8 w-8 ${isDisliked ? 'text-red-500' : ''}`}
-            onClick={handleDislike}
-          >
-            <ThumbsDown className="h-4 w-4" />
-          </Button>
           <div className="flex items-center space-x-2">
+            <Button variant="ghost" size="icon" onClick={handleSkipBack}>
+              <SkipBack className="h-4 w-4" />
+            </Button>
+            <Button 
+              onClick={togglePlay} 
+              variant="outline" 
+              size="icon" 
+              className="h-8 w-8 rounded-full"
+            >
+              {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+            </Button>
+            <Button variant="ghost" size="icon" onClick={handleSkipForward}>
+              <SkipForward className="h-4 w-4" />
+            </Button>
             <Button variant="ghost" size="icon" onClick={toggleMute}>
               {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
             </Button>
@@ -247,35 +281,7 @@ export function PodcastPlayer({ podcast, isMinimized = false, onToggleMinimize, 
               className="w-24"
             />
           </div>
-          {onToggleMinimize && (
-            <Button variant="ghost" size="icon" onClick={onToggleMinimize}>
-              <Maximize2 className="h-5 w-5" />
-            </Button>
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="bg-card rounded-lg overflow-hidden border">
-      <div className="p-4 space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="relative w-[100px] h-[100px] rounded-md overflow-hidden">
-              <Image
-                src={podcast.image}
-                alt={podcast.title}
-                fill
-                sizes="100px"
-                className="object-cover"
-              />
-            </div>
-            <div>
-              <h3 className="font-medium">{podcast.title}</h3>
-            </div>
-          </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2 border-l pl-2">
             <Button 
               variant="ghost" 
               size="icon" 
@@ -292,16 +298,55 @@ export function PodcastPlayer({ podcast, isMinimized = false, onToggleMinimize, 
             >
               <ThumbsDown className="h-4 w-4" />
             </Button>
+          </div>
+          {onToggleMinimize && (
+            <Button variant="ghost" size="icon" onClick={onToggleMinimize}>
+              <Maximize2 className="h-5 w-5" />
+            </Button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  ///////////////////////////////////////////////////////////////////////////////
+  // Render the PodcastPlayer component
+  ///////////////////////////////////////////////////////////////////////////////
+  return (
+    <div className="bg-card rounded-lg overflow-hidden border">
+      <audio ref={audioRef} src={podcast.audioUrl} />
+      <div className="p-2 space-y-2">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="font-medium text-sm">{podcast.title}</h3>
+          </div>
+          <div className="flex items-center space-x-1">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className={`h-6 w-6 ${isLiked ? 'text-green-500' : ''}`}
+              onClick={handleLike}
+            >
+              <ThumbsUp className="h-3 w-3" />
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className={`h-6 w-6 ${isDisliked ? 'text-red-500' : ''}`}
+              onClick={handleDislike}
+            >
+              <ThumbsDown className="h-3 w-3" />
+            </Button>
             {onToggleMinimize && (
               <Button variant="ghost" size="icon" onClick={onToggleMinimize}>
-                <Minimize2 className="h-5 w-5" />
+                <Minimize2 className="h-4 w-4" />
               </Button>
             )}
           </div>
         </div>
         
         <div>
-          <div className="space-y-2">
+          <div className="space-y-1">
             <div className="flex justify-between text-xs text-muted-foreground">
               <span>{timeDisplay}</span>
               <span>{formatTime(duration)}</span>
@@ -314,38 +359,38 @@ export function PodcastPlayer({ podcast, isMinimized = false, onToggleMinimize, 
             />
           </div>
           
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
+          <div className="flex items-center justify-between mt-2">
+            <div className="flex items-center space-x-1">
               <Button variant="ghost" size="icon" onClick={toggleMute}>
-                {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
+                {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
               </Button>
               <Slider
                 value={[isMuted ? 0 : volume]}
                 max={100}
                 step={1}
                 onValueChange={handleVolumeChange}
-                className="w-24"
+                className="w-16"
               />
             </div>
             
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2">
               <Button variant="ghost" size="icon" onClick={handleSkipBack}>
-                <SkipBack className="h-5 w-5" />
+                <SkipBack className="h-4 w-4" />
               </Button>
               <Button 
                 onClick={togglePlay} 
                 variant="outline" 
                 size="icon" 
-                className="h-12 w-12 rounded-full"
+                className="h-8 w-8 rounded-full"
               >
-                {isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6" />}
+                {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
               </Button>
               <Button variant="ghost" size="icon" onClick={handleSkipForward}>
-                <SkipForward className="h-5 w-5" />
+                <SkipForward className="h-4 w-4" />
               </Button>
             </div>
             
-            <div className="w-[88px]"></div> {/* Spacer to balance the layout */}
+            <div className="w-[64px]"></div> {/* Spacer to balance the layout */}
           </div>
         </div>
       </div>

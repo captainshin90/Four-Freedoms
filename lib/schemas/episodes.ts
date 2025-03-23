@@ -1,28 +1,46 @@
+import { Podcast } from "@/lib/schemas/podcasts";
+
 export interface Episode {
-  episode_id: string;
-  podcast_id: string;
-  episode_title: string;
-  episode_desc: string;
-  topic_tags: string[];
-  views: number;
-  likes: number;
-  dislikes: number;
-  publish_datetime: Date;
-  expire_datetime?: Date;
+  id: string; // Firestore Document ID
+  episode_id: string; // Episode ID
+  podcast_id: string; // Podcast ID
+  transcript_id: string; // Transcript ID
+  episode_title: string; // Episode Title
+  episode_desc: string; // Episode Description
+  topic_tags: string[]; // Topic Tags
+  views: number; // Views
+  likes: number; // Likes
+  dislikes: number; // Dislikes
+  publish_datetime: Date; // Publish Date and Time
+  expire_datetime?: Date; // Expire Date and Time
   content_duration: number; // in seconds
-  content_url: string;
-  content_image: string;
-  created_at: Date;
-  updated_at: Date;
-  is_active: boolean;
-  is_deleted: boolean;
+  content_url: string; // Content URL
+  content_image: string; // Content Image
+  created_at: Date; // Created Date and Time
+  updated_at: Date; // Updated Date and Time
+  is_active: boolean; // Is Active
+  is_deleted: boolean; // Is Deleted
+}
+
+export interface PlayerEpisode {
+  id: string;
+  title: string;
+  image: string;
+  audioUrl: string;
+  duration: number;
+  podcastId: string;
+  transcriptId: string;
+  description: string;
+  topicTags: string[];
 }
 
 // Helper function to convert Firestore data to Episode type
 export function convertToEpisode(data: any): Episode {
   return {
+    id: data.id,
     episode_id: data.episode_id = crypto.randomUUID(),
     podcast_id: data.podcast_id,
+    transcript_id: data.transcript_id,
     episode_title: data.episode_title,
     episode_desc: data.episode_desc,
     topic_tags: data.topic_tags,
@@ -38,5 +56,20 @@ export function convertToEpisode(data: any): Episode {
     updated_at: data.updated_at?.toDate(),
     is_active: data.is_active = true,
     is_deleted: data.is_deleted = false
+  };
+}
+
+// Helper function to convert Episode to PlayerEpisode
+export function convertToPlayerEpisode(podcast: Podcast, episode: Episode): PlayerEpisode {
+  return {
+    id: episode.episode_id,
+    title: episode.episode_title,
+    image: episode.content_image || podcast.podcast_image,
+    audioUrl: episode.content_url,
+    duration: episode.content_duration,
+    podcastId: episode.podcast_id,
+    transcriptId: episode.transcript_id,
+    description: episode.episode_desc,
+    topicTags: episode.topic_tags
   };
 }
