@@ -1,7 +1,7 @@
 export type PersonaType = 'resident' | 'student' | 'official' | 'lobbyst' | 'politician';
 
 export interface Persona {
-  id: string; // Firestore Document ID
+  id: string; // Firestore Document ID (needed for Firestore)
   persona_id: string; // Persona ID
   persona_name: string; // Persona Name
   persona_type: PersonaType; // Persona Type

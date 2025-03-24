@@ -3,7 +3,9 @@ import { episodesService, transcriptsService } from './database-service';
 
 // Create axios instance with base configuration
 const apiClient = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api',  // removed /api from base URL
+  baseURL: process.env.NODE_ENV === 'production' 
+    ? 'https://fourfreedoms.fly.dev:3001'  // Production API URL
+    : process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001',  // Development API URL
   headers: {
     'Content-Type': 'application/json',
   },
@@ -77,7 +79,7 @@ export const chatAPIService = {
               transcript_type: transcript?.transcript_type,
               transcript_text: transcript?.transcript_text,   // should be full source transcript document
               // documents:[transcript?.documents]       // TODO: can have multiple documents
-              // topic_tags: episode.topic_tags         
+              // topic_tags: episode.topic_tags          // TODO: can have multiple topic tags
               topic_tags: ['townhall', 'politics', 'election']  // hard code for now
             };
           }

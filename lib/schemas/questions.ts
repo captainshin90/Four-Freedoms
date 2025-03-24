@@ -1,5 +1,5 @@
 export interface Question {
-  id: string; // Firestore Document ID
+  id: string; // Firestore Document ID (needed for Firestore)
   question_id: string; // Question ID
   podcast_id: string; // Podcast ID
   question_text: string; // Question Text

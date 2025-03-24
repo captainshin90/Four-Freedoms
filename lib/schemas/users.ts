@@ -1,5 +1,5 @@
 export interface User {
-  id: string; // Firestore Document ID  
+  id: string; // Firestore Document ID (needed for Firestore)
   user_id: string; // User ID
   login_id: string; // Login ID
   password?: string; // Not stored in Firestore, only used for registration

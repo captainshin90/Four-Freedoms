@@ -1,3 +1,4 @@
+// keep as CommonJS for now. Changing to ES modules breaks the server
 const { OpenAI } = require('openai');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const axios = require('axios');

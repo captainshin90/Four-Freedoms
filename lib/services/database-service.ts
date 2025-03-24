@@ -26,7 +26,7 @@ import {
 //  CACHE_SIZE_UNLIMITED
 } from "firebase/firestore";
 // import { Auth, getAuth, User } from "firebase/auth";
-import { initFirestore, initAuth } from "@/lib/firebase";
+import { initFirestore } from "@/lib/firebase";
 // import { useDebugValue } from "react";
 
 

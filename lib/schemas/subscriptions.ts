@@ -1,5 +1,5 @@
 export interface Subscription {
-  id: string; // Firestore Document ID  
+  id: string; // Firestore Document ID (needed for Firestore)
   subscription_id: string; // Subscription ID
   subscription_type: string; // Subscription Type
   subscription_name: string; // Subscription Name

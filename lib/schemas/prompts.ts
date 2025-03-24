@@ -1,5 +1,5 @@
 export interface Prompt {
-  id: string; // Firestore Document ID
+  id: string; // Firestore Document ID (needed for Firestore)
   prompt_id: string; // Prompt ID
   prompt_name: string; // Prompt Name
   prompt_desc: string; // Prompt Description

@@ -4,11 +4,11 @@ export interface Chat {
   user_id: string; // User ID
   sender: string; // Sender
   chat_text: string; // Chat Text
+  conversation_id: string; // Conversation ID for LLM
   // created_at: Date | null;  // updated by the database service
   // updated_at: Date;         // no need for this field as chat is not updated
   // deleted_at: Date | null;  // updated by the database service
   // is_deleted: boolean | false; // Is Deleted
-  conversation_id: string; // Conversation ID
 }
 
 // Helper function to convert Firestore data to Chat type
@@ -19,10 +19,10 @@ export function convertToChat(data: any): Chat {
     user_id: data.uid,
     sender: data.sender,
     chat_text: data.content,
+    conversation_id: data.conversation_id || null
     // deleted_at: data.deleted_at?.toDate() || null, // updated by the database service
     // created_at: data.timestamp?.toDate() || null,  // updated by the database service
     // updated_at: data.timestamp?.toDate() || null,  // updated by the database service
     // is_deleted: data.is_deleted || false,
-    conversation_id: data.conversation_id || null
   };
 }

@@ -1,7 +1,7 @@
 export type TranscriptType = 'interview' | 'meeting' | 'article' | 'petition';
 
 export interface Transcript {
-  id: string; // Firestore Document ID
+  id: string; // Firestore Document ID (needed for Firestore)
   transcript_id: string; // Transcript ID
   transcript_type: TranscriptType; // Transcript Type
   topic_tags: string[]; // Topic Tags should be IDs?

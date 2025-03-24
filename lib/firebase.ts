@@ -2,12 +2,15 @@
 import { initializeApp, getApps, FirebaseApp } from "firebase/app";
 import { Auth, getAuth, GoogleAuthProvider, FacebookAuthProvider, OAuthProvider } from "firebase/auth";
 import { initializeFirestore, getFirestore, Firestore, persistentLocalCache, persistentMultipleTabManager } from "firebase/firestore";
+import config from "../server/config";
 
 // Load environment variables not needed here, done in server/index.js
 // const dotenv = require('dotenv');
 // dotenv.config();
 
 // Your web app's Firebase configuration
+// Try to use config.firebase from server/config.js?
+/*
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -18,6 +21,11 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
+const firestoreConfig = {
+  databaseId: process.env.NEXT_PUBLIC_FIRESTORE_DATABASE_ID
+};
+*/
+
 // Validate required configuration
 const requiredEnvVars = [
   'NEXT_PUBLIC_FIREBASE_API_KEY',
@@ -26,9 +34,6 @@ const requiredEnvVars = [
   'NEXT_PUBLIC_FIREBASE_APP_ID'
 ];
 
-const firestoreConfig = {
-  databaseId: process.env.NEXT_PUBLIC_FIRESTORE_DATABASE_ID
-};
 
 let app: FirebaseApp;
 let db: Firestore;
@@ -54,11 +59,14 @@ export async function initAuth() : Promise<Auth> {
   if (!getApps().length) {
     try {
       // Validate config before initialization
-      if (!firebaseConfig.apiKey || !firebaseConfig.authDomain) {
-        throw new Error('Missing required Firebase configuration. Check your environment variables.');
+      if (!config.firebase.apiKey || !config.firebase.authDomain) {
+      //  if (!firebaseConfig.apiKey || !firebaseConfig.authDomain) {
+          throw new Error('Missing required Firebase configuration. Check your environment variables.');
       }
-      
-      app = initializeApp(firebaseConfig); 
+
+      // Use config.firebase from server/config.js
+      //      app = initializeApp(firebaseConfig); 
+      app = initializeApp(config.firebase); 
       console.log("Firebase app initialized successfully");
     } catch (error) {
       console.error("Firebase app initialization error:", error);
@@ -82,9 +90,12 @@ export async function initFirestore(databaseId: string = "") : Promise<Firestore
 
   if (!getApps().length) {
     try {
-      console.log('Firebase databaseId=' + process.env.NEXT_PUBLIC_FIRESTORE_DATABASE_ID);
-      app = initializeApp(firebaseConfig);      
-      console.log("Firebase app initialized successfully");
+      // Use config.firebase from server/config.js
+      // console.log('Firebase databaseId=' + process.env.NEXT_PUBLIC_FIRESTORE_DATABASE_ID);
+      // app = initializeApp(firebaseConfig);      
+      app = initializeApp(config.firebase); 
+      // console.log("Firebase app initialized successfully");
+      console.log("Firebase config=" + JSON.stringify(config.firebase));
     } catch (error) {
       console.error("Firebase app initialization error:", error);
     }
@@ -93,8 +104,8 @@ export async function initFirestore(databaseId: string = "") : Promise<Firestore
     console.log("Firebase app already initialized");
   }
 
-  if (firestoreConfig.databaseId != undefined) 
-    dbstr = firestoreConfig.databaseId;  // database from .env
+  if (config.firestore.databaseId != undefined) 
+    dbstr = config.firestore.databaseId;  // database from .env
   else
     dbstr = databaseId;   // database passed as argument
 
@@ -127,8 +138,8 @@ export {
   app, 
   auth, 
   db, 
-  firebaseConfig, 
-  firestoreConfig, 
+//  firebaseConfig, 
+//  firestoreConfig, 
   googleProvider, 
   facebookProvider, 
   microsoftProvider 

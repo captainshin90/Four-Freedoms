@@ -3,7 +3,7 @@
 
 // ts-node -r tsconfig-paths/register scripts/seed.ts
 
-import { seedDatabase } from '@/lib/seed-data';
+import { seedDatabase } from '../scripts/seed-data';
 
 async function main() {
   try {

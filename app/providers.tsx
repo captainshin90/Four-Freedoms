@@ -3,6 +3,9 @@
 import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider } from "@/hooks/use-auth";
 
+///////////////////////////////////////////////////////////////////////////////
+// Providers component
+///////////////////////////////////////////////////////////////////////////////
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <AuthProvider>

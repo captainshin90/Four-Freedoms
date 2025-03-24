@@ -2,20 +2,20 @@ export type PodcastType = 'summary' | 'audio_podcast' | 'video_podcast';
 export type PodcastFormat = 'html' | 'mp3' | 'mp4';
 
 export interface Podcast {
-  id: string; // Firestore Document ID
+  id: string; // Firestore Document ID (needed for Firestore)
   podcast_id: string; // Podcast ID
   podcast_title: string; // Podcast Title
   podcast_hosts: string[]; // Podcast Hosts
   podcast_image: string; // Podcast Image
   podcast_desc: string; // Podcast Description
-  podcast_type: 'audio_podcast'; // Podcast Type
-  podcast_format: 'mp3'; // Podcast Format
+  podcast_type: PodcastType; // Podcast Type
+  podcast_format: PodcastFormat; // Podcast Format
   followed_by_users?: string[]; // Followed By Users
   topic_tags: string[]; // Topic Tags (names not IDs)
   subscription_type: 'free' | 'premium'; // Subscription Type
   is_active: boolean; // Is Active
-//  created_at: Date; // Created Date and Time - updated by the database service
-//  updated_at: Date; // Updated Date and Time - updated by the database service
+// created_at: Date; // Created Date and Time - updated by the database service
+// updated_at: Date; // Updated Date and Time - updated by the database service
 // is_deleted: boolean; // Is Deleted - updated by the database service
 }
 

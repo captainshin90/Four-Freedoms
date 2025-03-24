@@ -1,8 +1,9 @@
 
 // export type TopicType = 'place' | 'company' | 'school' | 'club' | 'person' | 'sport' | 'issue';
+// or categories: 'place', 'company', 'school', 'club', 'person', 'sport', 'issue'?
 
 export interface Topic {
-  id: string; // Firestore Document ID
+  id: string; // Firestore Document ID (needed for Firestore)
   topic_id: string; // Topic ID
   topic_name: string; // Topic Name
   topic_image?: string; // Topic Image

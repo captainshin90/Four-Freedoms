@@ -1,5 +1,4 @@
 // server-side configuration
-
 const dotenv = require('dotenv');
 dotenv.config();
 

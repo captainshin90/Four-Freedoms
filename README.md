@@ -20,9 +20,8 @@ Open browser: http://localhost:3000  # (it may take 30 sec. to load)
 
   > git add .
   > git commit -m "fix file upload"
-  > git push -u origin master
-
-  > git tag -a "v0.1.xx-alpha" -m "version v0.1.xx-alpha"
+  > git tag -a v0.1.xx-alpha -m "test version v0.1.xx-alpha"
+  > git push -u origin master --tags
 
   > fly auth login     # once per session
   > fly deploy         # to push new code to fly site    

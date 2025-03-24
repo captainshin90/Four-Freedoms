@@ -1,10 +1,12 @@
 export type DocumentSourceFormat = 'txt' | 'pdf' | 'docx' | 'mp3';
+export type DocumentType = 'article' | 'podcast' | 'transcript' | 'question' | 'answer' | 'summary' | 'chat' | 'document';
 
 export interface Document {
-  id: string; // Firestore Document ID
-  doc_id: string; // Document ID
+  id: string; // Firestore Document ID (needed for Firestore)
+  doc_id: string; // Document id
   doc_name: string; // Document Name
   doc_desc: string; // Document Description
+  document_type: DocumentType; // Document Type
   topic_tags: string[]; // Topic Tags
   doc_source_url: string; // Document Source URL
   doc_extracted_text: string; // Document Extracted Text
@@ -24,6 +26,7 @@ export function convertToDocument(data: any): Document {
     doc_id: data.doc_id = crypto.randomUUID(), 
     doc_name: data.doc_name,
     doc_desc: data.doc_desc,
+    document_type: data.document_type,
     topic_tags: data.topic_tags,
     doc_source_url: data.doc_source_url,
     doc_extracted_text: data.doc_extracted_text,

@@ -1,7 +1,7 @@
 # syntax = docker/dockerfile:1
 
 # Adjust NODE_VERSION as desired
-ARG NODE_VERSION=22.14.0
+ARG NODE_VERSION=18.14.0
 FROM node:${NODE_VERSION}-slim AS base
 
 LABEL fly_launch_runtime="Next.js"
@@ -37,9 +37,20 @@ RUN npm prune --omit=dev
 # Final stage for app image
 FROM base
 
+# Install serve for static file serving
+RUN npm install -g serve
+
 # Copy built application
 COPY --from=build /app /app
 
-# Start the server by default, this can be overwritten at runtime
-EXPOSE 3000
-CMD [ "npm", "run", "start" ]
+# Expose ports for both static frontend and API server
+EXPOSE 8080 3001
+
+# Start both servers using concurrently
+RUN npm install -g concurrently
+
+# Create a script to start both servers
+RUN echo '#!/bin/sh\nconcurrently "serve -s out -l 8080" "node server/index.js"' > /app/start.sh && \
+    chmod +x /app/start.sh
+
+CMD ["/app/start.sh"]

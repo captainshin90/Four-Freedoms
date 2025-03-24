@@ -480,7 +480,7 @@ export function TopicPanel({ onSelectTopic, onSelectPodcast, onInitAddPodcast }:
                         </div>
                         <Button variant="ghost" size="sm" onClick={() => handleAddPodcast(podcast)}>
                           <PlusCircle className="h-4 w-4" />
-                        </Button>
+          </Button>
                       </div>
                     ))
                 )}
@@ -506,13 +506,13 @@ export function TopicPanel({ onSelectTopic, onSelectPodcast, onInitAddPodcast }:
           <TabsTrigger value="podcasts">Podcasts</TabsTrigger>
         </TabsList>
         <TabsContent value="topics" className="flex-1">
-          <ScrollArea className="flex-1">
-            <div className="p-2 space-y-2">
+      <ScrollArea className="flex-1">
+        <div className="p-2 space-y-2">
               {displayedTopics.map((topic) => (
                 <div key={topic.topic_id} className="relative" onClick={() => handleTopicClick(topic)}>
-                  {isExpanded && selectedTopic?.topic_id === topic.topic_id ? (
-                    <Card className="cursor-pointer hover:bg-accent transition-colors">
-                      <CardContent className="p-3">
+              {isExpanded && selectedTopic?.topic_id === topic.topic_id ? (
+                <Card className="cursor-pointer hover:bg-accent transition-colors">
+                  <CardContent className="p-3">
                         <div className="absolute top-2 right-2">
                           <Button
                             variant="ghost"
@@ -526,42 +526,42 @@ export function TopicPanel({ onSelectTopic, onSelectPodcast, onInitAddPodcast }:
                             <X className="h-4 w-4" />
                           </Button>
                         </div>
-                        <div className="space-y-3">
-                          <Image
+                    <div className="space-y-3">
+                        <Image
                             src={topic.topic_image || '/placeholder-topic.jpg'}
                             width={200}
                             height={120}
-                            alt={topic.topic_name}
-                            sizes="100vw"
-                            style={{
+                          alt={topic.topic_name}
+                          sizes="100vw"
+                          style={{
                               objectFit: "cover",
                               width: "100%",
                               height: "auto"
                             }}
                           />
-                        </div>
-                        <div>
+                      </div>
+                      <div>
                           <h3 className="font-semibold">{topic.topic_name}</h3>
                           <p className="text-xs text-muted-foreground">
-                            {topic.topic_type.charAt(0).toUpperCase() + topic.topic_type.slice(1)}
-                          </p>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ) : (
-                    <div 
-                      className={`flex items-center p-2 rounded-md cursor-pointer hover:bg-accent transition-colors ${
-                        selectedTopic?.topic_id === topic.topic_id ? "bg-accent" : ""
-                      }`}
-                    >
-                      <div className="h-8 w-8 rounded-md overflow-hidden mr-2">
-                        <Image
+                          {topic.topic_type.charAt(0).toUpperCase() + topic.topic_type.slice(1)}
+                        </p>
+                      </div>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div 
+                  className={`flex items-center p-2 rounded-md cursor-pointer hover:bg-accent transition-colors ${
+                    selectedTopic?.topic_id === topic.topic_id ? "bg-accent" : ""
+                  }`}
+                >
+                  <div className="h-8 w-8 rounded-md overflow-hidden mr-2">
+                    <Image
                           src={topic.topic_image || '/placeholder-topic.jpg'}
                           width={32}
                           height={32}
-                          alt={topic.topic_name}
+                      alt={topic.topic_name}
                           className="object-cover"
-                          style={{
+                      style={{
                             width: "100%",
                             height: "100%"
                           }}
@@ -581,7 +581,7 @@ export function TopicPanel({ onSelectTopic, onSelectPodcast, onInitAddPodcast }:
                           <X className="h-4 w-4" />
                         </Button>
                       )}
-                    </div>
+                  </div>
                   )}
                 </div>
               ))}
@@ -702,10 +702,10 @@ export function TopicPanel({ onSelectTopic, onSelectPodcast, onInitAddPodcast }:
                           <X className="h-4 w-4" />
                         </Button>
                       )}
-                    </div>
-                  )}
                 </div>
-              ))}
+              )}
+            </div>
+          ))}
               {podcasts.length > 10 && !showAllPodcasts && (
                 <Button
                   variant="ghost"
@@ -716,12 +716,12 @@ export function TopicPanel({ onSelectTopic, onSelectPodcast, onInitAddPodcast }:
                   More...
                 </Button>
               )}
-            </div>
-          </ScrollArea>
+        </div>
+      </ScrollArea>
         </TabsContent>
       </Tabs>
     </div>
-  ); 
+  );
 } // end of TopicPanel component
 
 

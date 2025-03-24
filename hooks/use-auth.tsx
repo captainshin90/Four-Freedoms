@@ -2,26 +2,32 @@
 
 import { useState, useEffect, createContext, useContext } from 'react';
 import { User } from 'firebase/auth';
-import { AuthService } from '@/lib/services/auth-service';
+import { AuthService, AuthProviderType } from '@/lib/services/auth-service';
 import { usersService } from '@/lib/services/database-service';
 import { User as UserType } from '@/lib/schemas/users';
 import { useToast } from '@/hooks/use-toast';
 
-// retrieve singleton object
+// retrieve singleton object from auth-service.ts
 let authService = AuthService.getInstance();
 
+///////////////////////////////////////////////////////////////////////////////
+// AuthContextType interface
+///////////////////////////////////////////////////////////////////////////////
 interface AuthContextType {
   user: User | null;
-  userProfile: UserType | null;
+  userProfile: UserType | null; // UserProfile same as User type
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, userData: any) => Promise<void>;
-  signInWithProvider: (provider: 'google' | 'facebook' | 'microsoft') => Promise<void>;
+  signInWithProvider: (provider: AuthProviderType) => Promise<void>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   updateUserProfile: (data: Partial<UserType>) => Promise<void>;
 }
 
+///////////////////////////////////////////////////////////////////////////////
+// AuthProvider component
+///////////////////////////////////////////////////////////////////////////////
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -44,6 +50,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  ///////////////////////////////////////////////////////////////////////////////
+  // useEffect to subscribe to auth state changes
+  ///////////////////////////////////////////////////////////////////////////////
   useEffect(() => {
     // Subscribe to auth state changes
     const unsubscribe = authService.onAuthStateChanged((user) => {
@@ -63,6 +72,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return unsubscribe;
   }, []);
 
+  ///////////////////////////////////////////////////////////////////////////////
+  // signIn function
+  ///////////////////////////////////////////////////////////////////////////////
   const signIn = async (email: string, password: string): Promise<void> => {
       try {
         const result = await authService.signInWithEmail(email, password);
@@ -82,8 +94,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         
         throw new Error(errorMessage);
       }
-    };
+  };
 
+  ///////////////////////////////////////////////////////////////////////////////
+  // signUp function
+  ///////////////////////////////////////////////////////////////////////////////
   const signUp = async (email: string, password: string, userData: any) => {
     try {
       const result = await authService.signUpWithEmail(email, password, userData);
@@ -108,6 +123,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  ///////////////////////////////////////////////////////////////////////////////
+  // signInWithProvider function
+  ///////////////////////////////////////////////////////////////////////////////
   const signInWithProvider = async (provider: 'google' | 'facebook' | 'microsoft'): Promise<void> => {
     try {
       console.log(`Attempting to sign in with ${provider}`);
@@ -146,6 +164,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  ///////////////////////////////////////////////////////////////////////////////
+  // signOutUser function
+  ///////////////////////////////////////////////////////////////////////////////
   const signOutUser = async () => {
     try {
       await authService.signOut();
@@ -156,6 +177,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  ///////////////////////////////////////////////////////////////////////////////
+  // resetPassword function
+  ///////////////////////////////////////////////////////////////////////////////
   const resetPassword = async (email: string) => {
     try {
       await authService.resetPassword(email);
@@ -177,6 +201,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  ///////////////////////////////////////////////////////////////////////////////
+  // updateUserProfile function
+  ///////////////////////////////////////////////////////////////////////////////
   const updateUserProfile = async (data: Partial<UserType>) => {
     try {
       if (user && userProfile) {
@@ -193,6 +220,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  ///////////////////////////////////////////////////////////////////////////////
+  // contextValue object
+  /////////////////////////////////////////////////////////////////////////////// 
   const contextValue: AuthContextType = {
     user,
     userProfile,
@@ -205,6 +235,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     updateUserProfile
   };
 
+  ///////////////////////////////////////////////////////////////////////////////
+  // return AuthProvider component
+  ///////////////////////////////////////////////////////////////////////////////
   return (
     <AuthContext.Provider value={contextValue}>
       {children}
@@ -212,6 +245,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
+///////////////////////////////////////////////////////////////////////////////
+// useAuth hook
+///////////////////////////////////////////////////////////////////////////////
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {

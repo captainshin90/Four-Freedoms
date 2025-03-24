@@ -13,14 +13,16 @@ import {
   onAuthStateChanged
 } from "firebase/auth";
 import { Firestore } from "firebase/firestore";
-import { app, initFirestore, initAuth, googleProvider, facebookProvider, microsoftProvider } from "@/lib/firebase";
+import { initFirestore, initAuth, googleProvider, facebookProvider, microsoftProvider } from "@/lib/firebase";
 import { usersService } from "./database-service";
 import { GoogleAuthProvider, FacebookAuthProvider, OAuthProvider } from "firebase/auth";
 
-export type AuthProvider = 'google' | 'facebook' | 'microsoft';
+export type AuthProviderType = 'google' | 'facebook' | 'microsoft';
 export type AuthMethod = 'popup' | 'redirect';
 
-
+///////////////////////////////////////////////////////////////////////////////
+// AuthService class
+///////////////////////////////////////////////////////////////////////////////
 export class AuthService {
   private static instance: AuthService;
   public db: Firestore | undefined;
@@ -52,7 +54,9 @@ export class AuthService {
     }
   }
 
+  ///////////////////////////////////////////////////////////////////////////////
   // singleton class to hold global state
+  ///////////////////////////////////////////////////////////////////////////////
   public static getInstance(): AuthService {
     if (!AuthService.instance) {
       AuthService.instance = new AuthService();
@@ -60,12 +64,16 @@ export class AuthService {
     return AuthService.instance;
   }
 
+  ///////////////////////////////////////////////////////////////////////////////
   // Get the current user
+  ///////////////////////////////////////////////////////////////////////////////
   getCurrentUser(): User | null {
     return this.currentUser;
   }
 
+  ///////////////////////////////////////////////////////////////////////////////
   // Sign up with email and password
+  ///////////////////////////////////////////////////////////////////////////////
   async signUpWithEmail(email: string, password: string, userData: any): Promise<UserCredential> {
 
     console.log("Attempting to create user with email:", email);
@@ -97,7 +105,9 @@ export class AuthService {
     }
   }
 
+  ///////////////////////////////////////////////////////////////////////////////
   // Sign in with email and password
+  ///////////////////////////////////////////////////////////////////////////////
   async signInWithEmail(email: string, password: string): Promise<UserCredential> {
     try {
       if (!this.auth) { 
@@ -114,8 +124,10 @@ export class AuthService {
     }
   }
 
+  ///////////////////////////////////////////////////////////////////////////////
   // Sign in with a social provider
-  async signInWithProvider(providerName: AuthProvider, method: AuthMethod = 'popup'): Promise<UserCredential | void> {
+  ///////////////////////////////////////////////////////////////////////////////
+  async signInWithProvider(providerName: AuthProviderType, method: AuthMethod = 'popup'): Promise<UserCredential | void> {
     // Ensure initialization
     await this.init();
     
@@ -189,7 +201,9 @@ export class AuthService {
     }
   }
 
+  ///////////////////////////////////////////////////////////////////////////////
   // Get the result of a redirect sign-in
+  ///////////////////////////////////////////////////////////////////////////////
   async getRedirectResult(): Promise<UserCredential | null> {
     try {
       console.log("Getting redirect result...");
@@ -232,7 +246,9 @@ export class AuthService {
     }
   }
 
+  ///////////////////////////////////////////////////////////////////////////////
   // Sign out
+  ///////////////////////////////////////////////////////////////////////////////
   async signOut(): Promise<void> {
     try {
       if (!this.auth) { 
@@ -248,7 +264,9 @@ export class AuthService {
     }
   }
 
+  ///////////////////////////////////////////////////////////////////////////////
   // Reset password
+  ///////////////////////////////////////////////////////////////////////////////
   async resetPassword(email: string): Promise<void> {
     try {
       if (!this.auth) { 
@@ -264,7 +282,9 @@ export class AuthService {
     }
   }
 
+  ///////////////////////////////////////////////////////////////////////////////
   // Subscribe to auth state changes
+  ///////////////////////////////////////////////////////////////////////////////
   onAuthStateChanged(callback: (user: User | null) => void): () => void {
     
     if (!this.auth || this.auth === undefined) {
@@ -275,5 +295,7 @@ export class AuthService {
   }
 }
 
+///////////////////////////////////////////////////////////////////////////////
 // create singleton object
+///////////////////////////////////////////////////////////////////////////////
 export let authService = AuthService.getInstance();
