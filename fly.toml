@@ -3,7 +3,7 @@
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = "fourfreedoms"
+app = "fourfreedoms-polished-butterfly-4117"
 primary_region = "bos"
 
 [build]
@@ -41,6 +41,9 @@ primary_region = "bos"
 [[services]]
   protocol = "tcp"
   internal_port = 3001
+  auto_stop_machines = true
+  auto_start_machines = true
+  force_https = true
   processes = ["app"]
 
   [[services.ports]]

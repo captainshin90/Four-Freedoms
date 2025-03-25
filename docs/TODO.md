@@ -35,6 +35,10 @@ x - run npm audit fix --force
 x - upgrade to Next.js 15.2.3 
 x - move database_seed to a server script
 x - created Firebase composite indexes for questions and chats
+x - deploy to Fly.io
+x - added fourfreedoms-polished-butterfly-4117.fly.dev/ domain to Firebase project settings:
+https://console.firebase.google.com/u/0/project/four-freedoms-451318/authentication/settings
+
 
 ### Bug Fixes
 x - Play/add to favorites overlay on podcast not working
@@ -65,6 +69,19 @@ x - Add and remove topics. Click on Add topic does nothing (see topic-panel.tsx 
 x - Topic list icons are cut off
 x - podcast-list: handleAddToTopics - needs rework. should be handleAddtoPodcasts. 
 x - Topic tags should be just unique names (#soccer), not Ids?
+x - seed-data.ts updated
+x - index.js: should user auth happen before database init (so it doesn't try to fetch topics, podcasts multiple times)? - it breaks the server
+x - deploy to fly.io not working yet: see fly.io log	
+x - run npm audit to check warnings and notices on packages and npm fix
+x - App: topics, podcasts not displaying at first launch, needs to reload
+x - click podcast play from PodcastList now not working
+x - only allow one podcst to be played
+x - suggested questions should wrap around in the button
+x - bottom player controls are not working
+x - bug when playing podcasts from different panels (podcast list, topic panel)
+x - autoplay podcast
+x - graceful error handling if the audio file doesn't exist (or typo)
+
 
 ### To Do
 - see Google Keep notes

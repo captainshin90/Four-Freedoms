@@ -97,6 +97,9 @@ Windows:
 # 3. Create a new app:
 (done) fly launch
 
+# Fly will generate a fly.toml
+# see https://fly.io/docs/reference/configuration/
+
 # 4. Set up environment variables:
 # Generate a secure API token (from .devcontainer Linux)
 (done) openssl rand -hex 32
@@ -116,9 +119,10 @@ Windows:
 ```
 
 
-### Deployment to Netlify
+### Deployment to Netlify (only static site)
 - Automatically deployed to Netlify: fourfreedoms.netlify.app
 - Check Netlify for build and deploy status: 
+- 3/24/25: currently site is disabled
 
 ### Installs and Audits
 - 3/19/25: npm install @google/generative-ai
@@ -132,11 +136,16 @@ Windows:
 
 ### Repo Versions 
 - 3/23/25: git tag -a "v0.1.0-alpha" -m "version v0.1.0-beta"
+- 3/23/25: git tag -a "v0.1.1-alpha" -m "version v0.1.1-alpha" - Next.js upgrade
+- 3/24/25: git tag -a "v0.1.3-alpha" -m "version v0.1.3-alpha" - updated fly.toml, dockerfile 
+- 3/25/25: git tag -a "v0.1.4-alpha" -m "version v0.1.4-alpha" - sort of works 
 
 ### Deploys
 - 3/18/25: Netlify
 - 3/23/25: Netlify
 - 3/23/25: Fly.io
+- 3/24/25: Fly.io - success https://fourfreedoms-polished-butterfly-4117.fly.dev/
+- 3/25/25: Fly deploy 
 ```bash
 Created app 'fourfreedoms-polished-butterfly-4117' in organization 'personal'
 Admin URL: https://fly.io/apps/fourfreedoms-polished-butterfly-4117

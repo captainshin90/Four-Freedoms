@@ -19,6 +19,7 @@ import { Slider } from "@/components/ui/slider";
 import { formatTime } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
+import { audioService } from "@/lib/services/audio-service";
 
 ///////////////////////////////////////////////////////////////////////////////
 // PodcastPlayer component props
@@ -64,63 +65,119 @@ export function PodcastPlayer({ podcast, isMinimized = false, onToggleMinimize, 
       setCurrentTime(audio.currentTime);
     };
 
+    // Handle duration change
     const handleDurationChange = () => {
       setDuration(audio.duration);
     };
 
-    const handleError = (e: ErrorEvent) => {
-      console.error('Audio error:', e);
+    // Handle error
+    const handleError = (e: Event) => {
+      const target = e.currentTarget as HTMLAudioElement;
+      const mediaError = target.error;
+      
+      let errorMessage = "Unknown audio error";
+      if (mediaError) {
+        switch (mediaError.code) {
+          case MediaError.MEDIA_ERR_ABORTED:
+            errorMessage = "Audio playback was aborted";
+            break;
+          case MediaError.MEDIA_ERR_NETWORK:
+            errorMessage = "Network error occurred while loading audio";
+            break;
+          case MediaError.MEDIA_ERR_DECODE:
+            errorMessage = "Audio decoding failed";
+            break;
+          case MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED:
+            errorMessage = "Audio format not supported";
+            break;
+        }
+      }
+      
+      console.error('Audio error:', {
+        code: mediaError?.code,
+        message: errorMessage
+      });
+      
       toast({
         title: "Error playing audio",
-        description: "There was an error playing the podcast. Please try again.",
-        variant: "destructive",
+        description: errorMessage,
+        variant: "default"                
       });
+      
+      setIsAudioReady(false);
+      setIsPlaying(false);
     };
 
+    // Handle can play
     const handleCanPlay = () => {
       setIsAudioReady(true);
     };
 
+    // Handle play
+    const handlePlay = () => {
+      setIsPlaying(true);
+    };
+
+    // Handle pause
+    const handlePause = () => {
+      setIsPlaying(false);
+    };
+
+    // Handle load start
+    const handleLoadStart = () => {
+      setIsAudioReady(false);
+      setCurrentTime(0);
+    };
+
+    const handleLoadedData = () => {
+      setIsAudioReady(true);
+    };
+
+    // Add event listeners
     audio.addEventListener('timeupdate', handleTimeUpdate);
     audio.addEventListener('durationchange', handleDurationChange);
     audio.addEventListener('error', handleError);
     audio.addEventListener('canplay', handleCanPlay);
+    audio.addEventListener('play', handlePlay);
+    audio.addEventListener('pause', handlePause);
+    audio.addEventListener('loadstart', handleLoadStart);
+    audio.addEventListener('loadeddata', handleLoadedData);
 
+    // Set initial states
+    setIsPlaying(!audio.paused);
+    setIsAudioReady(audio.readyState >= 2);
+    setCurrentTime(audio.currentTime);
+
+    // Clean up event listeners
     return () => {
       audio.removeEventListener('timeupdate', handleTimeUpdate);
       audio.removeEventListener('durationchange', handleDurationChange);
       audio.removeEventListener('error', handleError);
       audio.removeEventListener('canplay', handleCanPlay);
+      audio.removeEventListener('play', handlePlay);
+      audio.removeEventListener('pause', handlePause);
+      audio.removeEventListener('loadstart', handleLoadStart);
+      audio.removeEventListener('loadeddata', handleLoadedData);
     };
   }, [audioRef, toast]);
 
+  ///////////////////////////////////////////////////////////////////////////////
   // Handle podcast changes
+  ///////////////////////////////////////////////////////////////////////////////
   useEffect(() => {
-    if (!audioRef?.current || !isAudioReady) return;
-
-    const audio = audioRef.current;
-    const playAudio = async () => {
-      try {
-        audio.src = podcast.audioUrl;
-        await audio.play();
-        setIsPlaying(true);
-      } catch (error) {
-        if (error instanceof Error && error.name !== 'AbortError') {
-          console.error("Auto-play failed:", error);
-          setIsPlaying(false);
-        }
-      }
-    };
-    
-    playAudio();
-    
-    return () => {
-      if (audio) {
-        audio.pause();
-        setIsPlaying(false);
-      }
-    };
-  }, [podcast.id, podcast.audioUrl, audioRef, isAudioReady]);
+    try {
+      audioService.loadPodcast(podcast.id, podcast.audioUrl);
+    } catch (error) {
+      console.error('Error loading podcast in player:', error);
+      toast({
+        title: "Error loading podcast",
+        description: "There was an error loading the podcast. Please try again.",
+        variant: "destructive",
+      });
+      setIsAudioReady(false);
+      setIsPlaying(false);
+    }
+  }, [podcast.id, podcast.audioUrl, toast]);
   
   ///////////////////////////////////////////////////////////////////////////////
   // Set the time display
@@ -136,21 +193,24 @@ export function PodcastPlayer({ podcast, isMinimized = false, onToggleMinimize, 
   // Toggle play
   ///////////////////////////////////////////////////////////////////////////////
   const togglePlay = () => {
-    if (!audioRef?.current || !isAudioReady) {
-      console.warn('Audio element not ready');
+    if (!audioRef?.current) {
+      console.warn('Audio element not available');
       return;
     }
 
-    const audio = audioRef.current;
-    if (isPlaying) {
-      audio.pause();
-    } else {
-      audio.play().catch(error => {
+    if (audioRef.current.paused) {
+      audioService.play().catch(error => {
         console.error('Error playing audio:', error);
+        toast({
+          title: "Error playing audio",
+          description: "There was an error playing the podcast. Please try again.",
+          variant: "destructive",
+        });
         setIsPlaying(false);
       });
+    } else {
+      audioService.pause();
     }
-    setIsPlaying(!isPlaying);
   };
 
   ///////////////////////////////////////////////////////////////////////////////
@@ -314,7 +374,6 @@ export function PodcastPlayer({ podcast, isMinimized = false, onToggleMinimize, 
   ///////////////////////////////////////////////////////////////////////////////
   return (
     <div className="bg-card rounded-lg overflow-hidden border">
-      <audio ref={audioRef} src={podcast.audioUrl} />
       <div className="p-2 space-y-2">
         <div className="flex items-center justify-between">
           <div>

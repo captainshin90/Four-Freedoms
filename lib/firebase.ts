@@ -1,30 +1,13 @@
+/////////////////////////////////////////////////////////////////////////////
+// This is the client side initialization of Firebase Auth and Firestore
+/////////////////////////////////////////////////////////////////////////////
+
 // Import the functions you need from the SDKs you need
 import { initializeApp, getApps, FirebaseApp } from "firebase/app";
 import { Auth, getAuth, GoogleAuthProvider, FacebookAuthProvider, OAuthProvider } from "firebase/auth";
 import { initializeFirestore, getFirestore, Firestore, persistentLocalCache, persistentMultipleTabManager } from "firebase/firestore";
 import config from "../server/config";
 
-// Load environment variables not needed here, done in server/index.js
-// const dotenv = require('dotenv');
-// dotenv.config();
-
-// Your web app's Firebase configuration
-// Try to use config.firebase from server/config.js?
-/*
-const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
-};
-
-const firestoreConfig = {
-  databaseId: process.env.NEXT_PUBLIC_FIRESTORE_DATABASE_ID
-};
-*/
 
 // Validate required configuration
 const requiredEnvVars = [
@@ -34,7 +17,7 @@ const requiredEnvVars = [
   'NEXT_PUBLIC_FIREBASE_APP_ID'
 ];
 
-
+// Initialize Firebase objects
 let app: FirebaseApp;
 let db: Firestore;
 let auth: Auth;
@@ -94,8 +77,8 @@ export async function initFirestore(databaseId: string = "") : Promise<Firestore
       // console.log('Firebase databaseId=' + process.env.NEXT_PUBLIC_FIRESTORE_DATABASE_ID);
       // app = initializeApp(firebaseConfig);      
       app = initializeApp(config.firebase); 
-      // console.log("Firebase app initialized successfully");
-      console.log("Firebase config=" + JSON.stringify(config.firebase));
+      console.log("Firebase app initialized successfully");
+      // console.log("Firebase config=" + JSON.stringify(config.firebase));
     } catch (error) {
       console.error("Firebase app initialization error:", error);
     }
@@ -131,9 +114,10 @@ export async function initFirestore(databaseId: string = "") : Promise<Firestore
   return db;
 }
 
-// module.export is the legacy CommmonJS syntax that uses require() to import
-// module.exports = { app, auth, db, firebaseConfig, firestoreConfig, googleProvider, facebookProvider, microsoftProvider };
 
+/////////////////////////////////////////////////////////////////////////////
+// Export the Firebase objects
+/////////////////////////////////////////////////////////////////////////////
 export { 
   app, 
   auth, 

@@ -8,6 +8,7 @@ import { BottomBar } from "@/components/bottom-bar";
 import { PlayerEpisode, convertToPlayerEpisode } from "@/lib/schemas/episodes";
 import { Podcast } from "@/lib/schemas/podcasts";
 import { episodesService } from "@/lib/services/database-service";
+import { audioService } from "@/lib/services/audio-service";
 
 ///////////////////////////////////////////////////////////////////////////////
 // Home component
@@ -17,7 +18,7 @@ export default function Home() {
   const [activePodcast, setActivePodcast] = useState<PlayerEpisode | null>(null);
   const [showFullPlayer, setShowFullPlayer] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const audioRef = useRef<HTMLAudioElement>(null);
+  const audioRef = audioService.getAudioRef();
   const [handleAddPodcastCallback, setHandleAddPodcastCallback] = useState<((podcast: Podcast) => void) | null>(null);
 
   ///////////////////////////////////////////////////////////////////////////////
@@ -62,11 +63,6 @@ export default function Home() {
   ///////////////////////////////////////////////////////////////////////////////
   return (
     <div className="flex flex-col h-screen bg-background">
-      <audio 
-        ref={audioRef} 
-        style={{ position: 'absolute', visibility: 'hidden' }} 
-        preload="auto"
-      />
       <Header onSearch={handleSearch} />
       
       <div className="flex flex-1 overflow-hidden">

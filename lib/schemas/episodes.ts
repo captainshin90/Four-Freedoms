@@ -22,6 +22,10 @@ export interface Episode {
   // is_deleted: boolean; // Is Deleted - updated by the database service
 }
 
+// why need a separate PlayerEpisode type for the podcast player?
+// because the podcast player needs to know about the podcast id and the transcript id
+// the episode type is used for the podcast list and the topic panel
+// the player episode type is used for the podcast player
 export interface PlayerEpisode {
   id: string;
   title: string;

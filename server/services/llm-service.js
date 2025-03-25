@@ -12,8 +12,8 @@ const config = require('../config');
 let openai;
 try {
   openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY || config.openai.apiKey,
-    model: process.env.OPENAI_LLM_MODEL || config.openai.llmModel,
+    apiKey: config.openai.apiKey,
+    model: config.openai.llmModel,
   });
   console.log('OpenAI client initialized successfully');
 } catch (error) {
@@ -23,7 +23,7 @@ try {
 // Initialize Gemini client
 let gemini;
 try {
-  const apiKey = process.env.GEMINI_API_KEY || config.gemini.apiKey;
+  const apiKey = config.gemini.apiKey;
   console.log('Gemini API Key available:', !!apiKey); // Log if key exists without exposing it
   if (!apiKey) {
     console.error('Gemini API key is missing. Please check your environment variables.');
@@ -46,14 +46,14 @@ try {
 // Initialize DeepSeek client
 let deepseek;
 try {
-  const apiKey = process.env.DEEPSEEK_API_KEY || config.deepseek.apiKey;
+  const apiKey = config.deepseek.apiKey;
   console.log('DeepSeek API Key available:', !!apiKey);
   if (!apiKey) {
     console.error('DeepSeek API key is missing. Please check your environment variables.');
   }
   deepseek = {
     apiKey,
-    baseUrl: process.env.DEEPSEEK_API_URL || config.deepseek.apiUrl || 'https://api.deepseek.com/v1',
+    baseUrl: config.deepseek.apiUrl || 'https://api.deepseek.com/v1',
   };
   console.log('DeepSeek client initialized successfully');
 } catch (error) {
@@ -75,23 +75,6 @@ try {
 ///////////////////////////////////////////////////////////////////////////////
 
 class LLMService {
-  // Add conversation history storage
-  conversationHistory = new Map();
-
-  // Generate a new conversation ID
-  generateConversationId() {
-    return `conv-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
-  }
-
-  // TODO: should reset conversationId when user clicks on a new episode?
-  // Initialize a new conversation and return its ID
-  initializeConversation() {
-    const conversationId = this.generateConversationId();
-    // Blank message must be passed to the conversation history
-    this.conversationHistory.set(conversationId, []);  
-    return conversationId;                             
-  }
-
   // Format podcast context for LLMs
   formatPodcastContext(episode) {
     if (!episode) return ''; 
@@ -109,22 +92,22 @@ Please use this context to provide relevant and informed responses about the pod
 `;
   }
 
-  // Get conversation history
-  getConversationHistory(conversationId) {
-    return this.conversationHistory.get(conversationId) || [];
-  }
+  // Format conversation history for system prompt
+  formatConversationHistory(context) {
+    if (!context || context.length === 0) return '';
+    
+    return `
+This is part of an ongoing conversation. Here is the relevant history:
+${context.map(msg => `${msg.sender}: ${msg.content}`).join('\n')}
 
-  // Update conversation history
-  updateConversationHistory(conversationId, message) {
-    const history = this.getConversationHistory(conversationId);
-    history.push(message);
-    this.conversationHistory.set(conversationId, history);
+Please maintain context from these previous messages in your response.
+`;
   }
 
   ///////////////////////////////////////////////////////////////////////////////
   // Process a message with OpenAI
   ///////////////////////////////////////////////////////////////////////////////
-  async processWithOpenAI(message, conversationId = null, context = [], episode = null) {
+  async processWithOpenAI(message, context = [], episode = null) {
     try {
       if (!openai) {
         console.warn('OpenAI client is not initialized');
@@ -134,22 +117,15 @@ Please use this context to provide relevant and informed responses about the pod
         };
       }
 
-      // Generate new conversation ID if none exists
-      if (!conversationId) {
-        conversationId = this.initializeConversation();
-      }
-
-      // Get conversation history
-      const history = this.getConversationHistory(conversationId);
-
       // Format the messages for OpenAI
       const messages = [
         { 
           role: 'system', 
-          content: `You are a helpful podcast assistant. ${episode ? this.formatPodcastContext(episode) : ''} 
-                   ${conversationId ? `This is part of conversation ${conversationId}. Please maintain context from previous messages.` : ''}` 
+          content: `You are a helpful podcast assistant. 
+                   ${episode ? this.formatPodcastContext(episode) : ''}
+                   ${this.formatConversationHistory(context)}` 
         },
-        ...history.map(msg => ({
+        ...context.map(msg => ({
           role: msg.sender === 'user' ? 'user' : 'assistant',
           content: msg.content,
         })),
@@ -159,22 +135,15 @@ Please use this context to provide relevant and informed responses about the pod
       // Call OpenAI API
       const completion = await openai.chat.completions.create({
         messages,
-        model: process.env.OPENAI_LLM_MODEL || config.openai.llmModel,
-        temperature: process.env.OPENAI_TEMPERATURE || config.openai.temperature,
-        max_tokens: process.env.OPENAI_MAX_TOKENS || config.openai.maxTokens,
+        model: config.openai.llmModel,
+        temperature: config.openai.temperature,
+        max_tokens: config.openai.maxTokens,
       });
 
-      const response = {
+      return {
         content: completion.choices[0].message.content,
-        provider: 'openai',
-        conversation_id: conversationId
+        provider: 'openai'
       };
-
-      // Update conversation history
-      this.updateConversationHistory(conversationId, { sender: 'user', content: message });
-      this.updateConversationHistory(conversationId, { sender: 'assistant', content: response.content });
-
-      return response;
     } catch (error) {
       console.error('Error calling OpenAI:', error);
       return {
@@ -187,7 +156,7 @@ Please use this context to provide relevant and informed responses about the pod
   ///////////////////////////////////////////////////////////////////////////////
   // Process a message with Google Gemini
   ///////////////////////////////////////////////////////////////////////////////
-  async processWithGemini(message, conversationId = null, context = [], episode = null) {
+  async processWithGemini(message, context = [], episode = null) {
     try {
       if (!gemini) {
         console.warn('Gemini client is not initialized');
@@ -197,18 +166,10 @@ Please use this context to provide relevant and informed responses about the pod
         };
       }
 
-      // Generate new conversation ID if none exists
-      if (!conversationId) {
-        conversationId = this.initializeConversation();
-      }
-
-      const model = gemini.getGenerativeModel({ model: process.env.GEMINI_LLM_MODEL || config.gemini.llmModel });
-
-      // Get conversation history if conversationId exists, otherwise use context
-      const history = this.getConversationHistory(conversationId);
+      const model = gemini.getGenerativeModel({ model: config.gemini.llmModel });
 
       // Format the conversation history
-      const formattedHistory = history.map(msg => ({
+      const formattedHistory = context.map(msg => ({
         role: msg.sender === 'user' ? 'user' : 'model',
         parts: [{ text: msg.content }],
       }));
@@ -217,29 +178,39 @@ Please use this context to provide relevant and informed responses about the pod
       const chat = model.startChat({
         history: formattedHistory,
         generationConfig: {
-          temperature: process.env.GEMINI_TEMPERATURE || config.gemini.temperature,
-          maxOutputTokens: process.env.GEMINI_MAX_TOKENS || config.gemini.maxTokens,
+          temperature: config.gemini.temperature,
+          maxOutputTokens: config.gemini.maxTokens,
         },
       });
 
-      // Send message with podcast context if available
-      const result = await chat.sendMessage(message + " " + this.formatPodcastContext(episode));
+      // Prepare the message with context
+      let fullMessage = message;
+      
+      // Add podcast context if available
+      if (episode) {
+        const podcastContext = this.formatPodcastContext(episode);
+        if (podcastContext) {
+          fullMessage = `Context about the current podcast: ${podcastContext}\n\nUser question: ${message}`;
+        }
+      }
 
-      const response = result.response;
+      // Send message
+      const result = await chat.sendMessage(fullMessage);
 
-      const responseObj = {
-        content: response.text(),
-        provider: 'gemini',
-        conversation_id: conversationId  // Return the conversation ID in the response
+      return {
+        content: result.response.text(),
+        provider: 'gemini'
       };
-
-      // Update conversation history
-      this.updateConversationHistory(conversationId, { sender: 'user', content: message });
-      this.updateConversationHistory(conversationId, { sender: 'assistant', content: responseObj.content });
-
-      return responseObj;
     } catch (error) {
-      console.error('Error calling Gemini:', error);
+      console.error('Error calling Gemini:', {
+        message: error.message,
+        stack: error.stack,
+        context: {
+          messageLength: message?.length,
+          contextLength: context?.length,
+          hasEpisode: !!episode
+        }
+      });
       return {
         content: "I'm sorry, I couldn't process your request with Gemini. Please try again later.",
         provider: 'fallback',
@@ -250,7 +221,7 @@ Please use this context to provide relevant and informed responses about the pod
   ///////////////////////////////////////////////////////////////////////////////
   // Process a message with DeepSeek
   ///////////////////////////////////////////////////////////////////////////////
-  async processWithDeepSeek(message, conversationId = null, context = [], episode = null) {
+  async processWithDeepSeek(message, context = [], episode = null) {
     try {
       if (!deepseek) {
         console.warn('DeepSeek client is not initialized');
@@ -260,23 +231,15 @@ Please use this context to provide relevant and informed responses about the pod
         };
       }
 
-      // TODO: should reset conversationId when user clicks on a new episode?
-      // Generate new conversation ID if none exists
-      if (!conversationId) {
-        conversationId = this.initializeConversation();
-      }
-
-      // Get conversation history
-      const history = this.getConversationHistory(conversationId);
-
       // Format the messages for DeepSeek
       const prompt = [
         { 
           role: 'system', 
-          content: `You are a helpful podcast assistant. ${episode ? this.formatPodcastContext(episode) : ''}
-                   ${conversationId ? `This is part of conversation ${conversationId}. Please maintain context from previous messages.` : ''}` 
+          content: `You are a helpful podcast assistant. 
+                   ${episode ? this.formatPodcastContext(episode) : ''}
+                   ${this.formatConversationHistory(context)}` 
         },
-        ...history.map(msg => ({
+        ...context.map(msg => ({
           role: msg.sender === 'user' ? 'user' : 'assistant',
           content: msg.content,
         })),
@@ -288,9 +251,9 @@ Please use this context to provide relevant and informed responses about the pod
         `${deepseek.baseUrl}/chat/completions`,
         {
           prompt,
-          model: process.env.DEEPSEEK_LLM_MODEL || config.deepseek.llmModel,
-          temperature: process.env.DEEPSEEK_TEMPERATURE || config.deepseek.temperature,
-          max_tokens: process.env.DEEPSEEK_MAX_TOKENS || config.deepseek.maxTokens,
+          model: config.deepseek.llmModel,
+          temperature: config.deepseek.temperature,
+          max_tokens: config.deepseek.maxTokens,
         },
         {
           headers: {
@@ -300,17 +263,10 @@ Please use this context to provide relevant and informed responses about the pod
         }
       );
 
-      const responseObj = {
+      return {
         content: response.data.choices[0].message.content,
-        provider: 'deepseek',
-        conversation_id: conversationId
+        provider: 'deepseek'
       };
-
-      // Update conversation history
-      this.updateConversationHistory(conversationId, { sender: 'user', content: message });
-      this.updateConversationHistory(conversationId, { sender: 'assistant', content: responseObj.content });
-
-      return responseObj;
     } catch (error) {
       console.error('Error calling DeepSeek:', error);
       return {
@@ -321,24 +277,24 @@ Please use this context to provide relevant and informed responses about the pod
   }
 
   // Process a message with the best available provider
-  async processMessage(message, conversationId = null, context = [], episode = null, preferredProvider = config.defaultLlmProvider) {
+  async processMessage(message, context = [], episode = null, preferredProvider = config.defaultLlmProvider) {
     try {
       // Use the preferred provider if available
       if (preferredProvider === 'openai' && openai) {
-        return await this.processWithOpenAI(message, conversationId, context, episode);
+        return await this.processWithOpenAI(message, context, episode);
       } else if (preferredProvider === 'gemini' && gemini) {
-        return await this.processWithGemini(message, conversationId, context, episode);
+        return await this.processWithGemini(message, context, episode);
       } else if (preferredProvider === 'deepseek' && deepseek) {
-        return await this.processWithDeepSeek(message, conversationId, context, episode);
+        return await this.processWithDeepSeek(message, context, episode);
       }
 
       // Fallback to any available provider
       if (openai) {
-        return await this.processWithOpenAI(message, conversationId, context, episode);
+        return await this.processWithOpenAI(message, context, episode);
       } else if (gemini) {
-        return await this.processWithGemini(message, conversationId, context, episode);
+        return await this.processWithGemini(message, context, episode);
       } else if (deepseek) {
-        return await this.processWithDeepSeek(message, conversationId, context, episode);
+        return await this.processWithDeepSeek(message, context, episode);
       }
 
       // No providers available

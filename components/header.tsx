@@ -71,18 +71,24 @@ export function Header({ onSearch }: HeaderProps) {
             <span className="font-bold hidden md:inline-block whitespace-nowrap">Four Freedoms</span>
           </Link>
           
-          <form onSubmit={handleSearch} className="relative w-full max-w-md">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="What are you looking for?"
-              className="pl-8 w-full"
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                onSearch(e.target.value);
-              }}
-            />
+          <form onSubmit={handleSearch} className="relative w-full max-w-xl flex gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="What are you looking for?"
+                className="pl-8 w-full"
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  onSearch(e.target.value);
+                }}
+              />
+            </div>
+            <Button type="submit" size="default" variant="secondary">
+              <Search className="h-4 w-4 mr-2" />
+              Search
+            </Button>
           </form>
         </div>
         

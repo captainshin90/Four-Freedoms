@@ -1,47 +1,86 @@
+///////////////////////////////////////////////////////////////////////////////
+// client-side apiService API service for API calls to server-side API points
+///////////////////////////////////////////////////////////////////////////////
+
 import axios from 'axios';
 import { episodesService, transcriptsService } from './database-service';
-
+import config from '@/server/config';
 // Create axios instance with base configuration
 const apiClient = axios.create({
-  baseURL: process.env.NODE_ENV === 'production' 
-    ? 'https://fourfreedoms.fly.dev:3001'  // Production API URL
-    : process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001',  // Development API URL
+  baseURL: config.apiBaseUrl || 'http://localhost:3001/api',  // Development API URL
+  //baseURL: process.env.NODE_ENV === 'production' 
+  //  ? 'https://fourfreedoms-polished-butterfly-4117.fly.dev:3001/api'  // Production API URL
+  //   : process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api',  // Development API URL
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 10000, // Add timeout
+  timeout: 30000, // Increase timeout to 30 seconds
 });
 
-// Add request interceptor to include auth token
+// Add request interceptor for logging
 apiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('authToken');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
+    console.log('Making API request:', {
+      url: config.url,
+      method: config.method,
+      data: config.data,
+      headers: config.headers
+    });
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => {
+    console.error('Request interceptor error:', error);
+    return Promise.reject(error);
+  }
 );
 
 // Add response interceptor for better error handling
 apiClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log('API Response received:', {
+      status: response.status,
+      data: response.data
+    });
+    return response;
+  },
   (error) => {
     if (error.response) {
       // The request was made and the server responded with a status code
       // that falls out of the range of 2xx
       console.error('API Error Response:', {
         status: error.response.status,
+        statusText: error.response.statusText,
         data: error.response.data,
-        headers: error.response.headers,
+        message: error.message,
+        config: {
+          url: error.config?.url,
+          method: error.config?.method,
+          baseURL: error.config?.baseURL,
+          data: error.config?.data
+        }
       });
     } else if (error.request) {
       // The request was made but no response was received
-      console.error('API No Response:', error.request);
+      console.error('API No Response:', {
+        message: error.message,
+        request: error.request,
+        config: {
+          url: error.config?.url,
+          method: error.config?.method,
+          baseURL: error.config?.baseURL
+        }
+      });
     } else {
       // Something happened in setting up the request that triggered an Error
-      console.error('API Request Error:', error.message);
+      console.error('API Request Error:', {
+        message: error.message,
+        stack: error.stack,
+        config: {
+          url: error.config?.url,
+          method: error.config?.method,
+          baseURL: error.config?.baseURL
+        }
+      });
     }
     return Promise.reject(error);
   }
@@ -51,14 +90,18 @@ apiClient.interceptors.response.use(
 // chatAPIService API service for chat/LLM
 ///////////////////////////////////////////////////////////////////////////////
 export const chatAPIService = {
+  // Generate a new conversation ID
+  generateConversationId: () => {
+    return `conv-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+  },
 
   // Send message to LLM
-  // Parameters: message, conversationId, podcastContext
+  // Parameters: message, conversationHistory, podcastContext
   sendMessage: async (
     message: string, 
-    conversationId?: string,
+    conversationHistory: Array<{ sender: 'user' | 'assistant', content: string }>,
     podcastContext?: {
-    episodeId: string;
+      episodeId: string;
     }
   ) => {
     try {
@@ -90,21 +133,19 @@ export const chatAPIService = {
       }
       
       // Context array for additional context (not needed with conversationId)
-      const context: any[] = [];
+      // const context: any[] = [];
       // TODO: should reset conversationId when user clicks on a new episode?      
       // send message to LLM service server-side (must match the route in server/routes/api.js)
-      // Parameters: message, conversationId, context, episodeContext (must match the route in server/routes/api.js)
+      // Parameters: message, context, episodeContext (must match the route in server/routes/api.js)
       const response = await apiClient.post('/chat', { 
         message, 
-        conversationId,                  // conversationId needed for LLM service
-        context,                         // context not needed with conversationId
+        context: conversationHistory,    // Pass the conversation history as context
         episodeContext                   // episodeContext needed for LLM service
       });
 
       // response must match the format in server/routes/api.js
       // response: response.content,
-      // provider: response.provider,
-      // conversationId: response.conversation_id
+      // provider: response.provider
       if (!response.data) {
         throw new Error('No data received from API');
       }

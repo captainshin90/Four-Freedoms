@@ -31,21 +31,21 @@ app.use((err, req, res, next) => {
   });
 });
 
-const PORT = process.env.PORT || 3001;
+const API_PORT = process.env.API_PORT || 3001;
 // const dbid = config.firestore.databaseId;
 // const geminikey = config.gemini.apiKey;
-// console.log(`Index.js: Port: ${PORT}`);
+console.log(`Index.js: Port: ${API_PORT}`);
 // console.log(`Index.js: Database id: ${process.env.NEXT_PUBLIC_FIRESTORE_DATABASE_ID}`);
 // console.log(`Index.js: Database id: ${dbid}`);
 // console.log(`Index.js: Gemini key: ${geminikey}`);
 
 
 // Start server with error handling
-const server = app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+const server = app.listen(API_PORT, "0.0.0.0", () => {
+  console.log(`Server running on port ${API_PORT}`);
 }).on('error', (err) => {
   if (err.code === 'EADDRINUSE') {
-    console.error(`Port ${PORT} is already in use. Please try a different port or kill the existing process.`);
+    console.error(`Port ${API_PORT} is already in use. Please try a different port or kill the existing process.`);
     process.exit(1);
   } else {
     console.error('Server error:', err);

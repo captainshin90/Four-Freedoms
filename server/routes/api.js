@@ -23,17 +23,16 @@ router.post('/chat', async (req, res) => {
   try {
     const { 
       message, 
-      conversationId,
-      context,                 // context not needed with conversationId
+      context,                 // context array for conversation history
       episodeContext
     } = req.body;
   
     const preferredProvider = config.defaultLlmProvider || 'gemini';
 
+    // Process the message with the LLM
     const response = await llmService.processMessage(
       message,
-      conversationId,
-      context,                 // context not needed with conversationId
+      context,                 // context array for conversation history
       episodeContext,
       preferredProvider
     );
@@ -41,8 +40,7 @@ router.post('/chat', async (req, res) => {
     // response must match the format in lib/services/api-service.ts
     res.status(200).json({
       response: response.content,
-      provider: response.provider,
-      conversationId: response.conversation_id
+      provider: response.provider
     });
   } catch (error) {
     console.error('Error in chat endpoint:', error);
@@ -79,6 +77,7 @@ router.post('/tts', async (req, res) => {
       });
     }
     
+    // response must match the format in lib/services/api-service.ts
     res.status(200).json({
       audioData: response.audioData,
       provider: response.provider,
