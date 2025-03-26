@@ -20,11 +20,14 @@ Open browser: http://localhost:3000  # (it may take 30 sec. to load)
 
   > git add .
   > git commit -m "fix file upload"
-  > git tag -a v0.1.xx-alpha -m "test version v0.1.xx-alpha"
+  > git tag -a v0.1.xx-alpha -m "test version v0.1.xx-alpha"   # also update package.json
   > git push -u origin master --tags
 
   > fly auth login     # once per session
-  > fly deploy         # to push new code to fly site    
+  > fly deploy         # to push new code to fly site
+  > fly logs           # view console logs    
+
+
 ```
 
 ### Development Setup
@@ -38,9 +41,18 @@ This project is running in .devcontainer Node.js & Typescript:
 - Server is Node.js on port 3001: server/index.js
 
 Repo: https://github.com/captainshin90/Four-Freedoms
+
+### Production:
+
+  https://fourfreedoms-polished-butterfly-4117.fly.dev/
+  https://fourfreedoms-polished-butterfly-4117.fly.dev:3001/api/health
+
 x Deploy: https://fourfreedoms.netlify.app/ - server doesn't run
-Deploy: https://fourfreedoms.fly.dev/
+x Deploy: https://fourfreedoms.fly.dev/
+
 Admin URL: https://fly.io/apps/
+
+### Development
 
 - To build: 
 ```bash
@@ -107,7 +119,8 @@ Windows:
 # Set it in Fly.io
 (done) fly secrets set API_TOKEN=019b93b18f8bd685cd86748c7df009997e112c459c417320ab8e4ffb386e228e 
 
-(done) run: fly secrets set for all KEYS in .env or from Fly console (easier)
+# (done) run: fly secrets set for all sensitive KEYS in .env or from Fly console (easier)
+# non-sensitive keys (e.g. PORT, API_PORT) defined in fly.toml
 (done) fly secrets set <API_KEY>=
 
 # 5. Create a volume for genereal files:
@@ -116,6 +129,10 @@ Windows:
 # 6. Deploy the application:
 # Deploy to Fly.io (this will automatically build both frontend and backend)
 (done) fly deploy
+
+# 7. View console logs:
+fly logs
+
 ```
 
 
@@ -139,13 +156,15 @@ Windows:
 - 3/23/25: git tag -a "v0.1.1-alpha" -m "version v0.1.1-alpha" - Next.js upgrade
 - 3/24/25: git tag -a "v0.1.3-alpha" -m "version v0.1.3-alpha" - updated fly.toml, dockerfile 
 - 3/25/25: git tag -a "v0.1.4-alpha" -m "version v0.1.4-alpha" - sort of works 
+- 3/26/25: git tag -a "v0.1.5-alpha" -m "version v0.1.5-alpha" - sort of works 
 
 ### Deploys
 - 3/18/25: Netlify
 - 3/23/25: Netlify
 - 3/23/25: Fly.io
 - 3/24/25: Fly.io - success https://fourfreedoms-polished-butterfly-4117.fly.dev/
-- 3/25/25: Fly deploy 
+- 3/25/25: Fly deploy
+ 
 ```bash
 Created app 'fourfreedoms-polished-butterfly-4117' in organization 'personal'
 Admin URL: https://fly.io/apps/fourfreedoms-polished-butterfly-4117

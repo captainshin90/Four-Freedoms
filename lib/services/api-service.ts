@@ -5,16 +5,16 @@
 import axios from 'axios';
 import { episodesService, transcriptsService } from './database-service';
 import config from '@/server/config';
-// Create axios instance with base configuration
+
+// Create axios instance with base configuration.
+// Axios is a promise-based HTTP client that can be used in Next.js applications 
+// to make requests to external APIs or your own server. 
 const apiClient = axios.create({
-  baseURL: config.apiBaseUrl || 'http://localhost:3001/api',  // Development API URL
-  //baseURL: process.env.NODE_ENV === 'production' 
-  //  ? 'https://fourfreedoms-polished-butterfly-4117.fly.dev:3001/api'  // Production API URL
-  //   : process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api',  // Development API URL
+  baseURL: config.apiBaseUrl,
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 30000, // Increase timeout to 30 seconds
+  timeout: 10000, // timeout set to 10 seconds
 });
 
 // Add request interceptor for logging
@@ -133,7 +133,6 @@ export const chatAPIService = {
       }
       
       // Context array for additional context (not needed with conversationId)
-      // const context: any[] = [];
       // TODO: should reset conversationId when user clicks on a new episode?      
       // send message to LLM service server-side (must match the route in server/routes/api.js)
       // Parameters: message, context, episodeContext (must match the route in server/routes/api.js)

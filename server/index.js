@@ -1,26 +1,25 @@
 // Leave this file alone.
 // keep as CommonJS for now. Changing to ES modules breaks the server
 const config = require('./config');
-const express = require('express');
-const cors = require('cors');
+const express = require('express');  // middleware
+const cors = require('cors');        // middleware
 const apiRoutes = require('./routes/api');
 
-// Verify environment variables are loaded
+// Verify environment variables are loaded  
 console.log('Environment variables loaded:', {
    hasGeminiKey: !!process.env.GEMINI_API_KEY,
    hasOpenAIKey: !!process.env.OPENAI_API_KEY,
-   nodeEnv: process.env.NODE_ENV
+   nodeEnv: process.env.NODE_ENV,
+   port: process.env.PORT,
+   apiPort: process.env.API_PORT,
+   apiBaseUrl: process.env.NEXT_PUBLIC_API_BASE_URL
 });
 
-// Initialize Express app
+// Initialize Express middleware
 const app = express();
-
-// Middleware
-app.use(cors());
-app.use(express.json());
-
-// Routes - must be after middleware
-app.use('/api', apiRoutes);
+app.use(cors());              // Enable CORS for all origins
+app.use(express.json());      // Parse JSON bodies
+app.use('/api', apiRoutes);   // API routes after middleware
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -31,21 +30,17 @@ app.use((err, req, res, next) => {
   });
 });
 
-const API_PORT = process.env.API_PORT || 3001;
-// const dbid = config.firestore.databaseId;
-// const geminikey = config.gemini.apiKey;
-console.log(`Index.js: Port: ${API_PORT}`);
-// console.log(`Index.js: Database id: ${process.env.NEXT_PUBLIC_FIRESTORE_DATABASE_ID}`);
-// console.log(`Index.js: Database id: ${dbid}`);
-// console.log(`Index.js: Gemini key: ${geminikey}`);
-
+// console.log(`Index.js: Port: ${config.apiPort}`);
+// console.log(`Index.js: Database id: ${config.firestore.databaseId}`);
+// console.log(`Index.js: Gemini key: ${config.gemini.apiKey}`);
 
 // Start server with error handling
-const server = app.listen(API_PORT, "0.0.0.0", () => {
-  console.log(`Server running on port ${API_PORT}`);
+const api_port = process.env.API_PORT || 3001;
+const server = app.listen(api_port, "0.0.0.0", () => {
+  console.log(`Server running on port ${api_port}`);
 }).on('error', (err) => {
   if (err.code === 'EADDRINUSE') {
-    console.error(`Port ${API_PORT} is already in use. Please try a different port or kill the existing process.`);
+    console.error(`Port ${api_port} is already in use. Please try a different port or kill the existing process.`);
     process.exit(1);
   } else {
     console.error('Server error:', err);

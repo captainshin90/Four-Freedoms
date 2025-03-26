@@ -56,8 +56,7 @@ const config = {
     apiKey: process.env.PLAYAI_API_KEY || '',
   },
   
-  // Firebase configuration (for server-side operations)
-  // why is this needed? There's firebaseConfig in firebase.ts
+  // Firebase configuration 
   firebase: {
     apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || '',
     authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || '',
@@ -68,7 +67,7 @@ const config = {
     measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID || '',
   },
 
-// Firestore configuration (server-side)
+// Firestore configuration
   firestore: {
     databaseId: process.env.NEXT_PUBLIC_FIRESTORE_DATABASE_ID || '',
   },
