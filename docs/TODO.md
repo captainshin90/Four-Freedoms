@@ -81,7 +81,16 @@ x - bottom player controls are not working
 x - bug when playing podcasts from different panels (podcast list, topic panel)
 x - autoplay podcast
 x - graceful error handling if the audio file doesn't exist (or typo)
-
+x - it's sending the entire chat history
+x - bug when selecting another podcast. Infinite loop?
+x - conversation_id is not being set with a value in chats collection 
+x - Fly.dev site not working on port 3001 (fixed itself next day)
+x - understand conversation ID, is it similar to session ID? when do you start a new conversation ID?
+x - user profile settings page: add home and cancel buttons
+x - signed-in avatar is not visible
+x - Gemini always requires the first context item to be "user" role.
+x - Does Gemini accept "assistant" as well as "model"?  OpenAI and Deepseek use assistant, system.  Gemini doesn't seem to recognize "assistant".
+x - podcast episode play events are not saved to chat history: mark as "podcast" or "content", convert to episode info to markdown text (with a link to play it again)? 
 
 ### To Do
 - see Google Keep notes
@@ -91,7 +100,7 @@ https://ai.google.dev/gemini-api/docs/models#gemini-2.0-flash-lite
 
 
 Later (rearchitect, cleanup):
-- Need to configure NEXT_PUBLIC_API_URL in production?
+x - Need to configure NEXT_PUBLIC_API_URL in production?
 - remove created_datetime from all documents in the database
 - move database access from client-side to server-side
 - move user messages to a config

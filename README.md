@@ -47,8 +47,8 @@ Repo: https://github.com/captainshin90/Four-Freedoms
   https://fourfreedoms-polished-butterfly-4117.fly.dev/
   https://fourfreedoms-polished-butterfly-4117.fly.dev:3001/api/health
 
-x Deploy: https://fourfreedoms.netlify.app/ - server doesn't run
-x Deploy: https://fourfreedoms.fly.dev/
+xxx Deploy: https://fourfreedoms.netlify.app/ - server doesn't run
+xxx Deploy: https://fourfreedoms.fly.dev/ 
 
 Admin URL: https://fly.io/apps/
 
@@ -157,13 +157,17 @@ fly logs
 - 3/24/25: git tag -a "v0.1.3-alpha" -m "version v0.1.3-alpha" - updated fly.toml, dockerfile 
 - 3/25/25: git tag -a "v0.1.4-alpha" -m "version v0.1.4-alpha" - sort of works 
 - 3/26/25: git tag -a "v0.1.5-alpha" -m "version v0.1.5-alpha" - sort of works 
+- 3/26/25: git tag -a "v0.2.0-alpha" -m "version v0.2.0-alpha" - works on fly.dev 
+
 
 ### Deploys
 - 3/18/25: Netlify
 - 3/23/25: Netlify
 - 3/23/25: Fly.io
 - 3/24/25: Fly.io - success https://fourfreedoms-polished-butterfly-4117.fly.dev/
-- 3/25/25: Fly deploy
+- 3/25/25: Fly deploy 
+- 3/26/25: Fly deploy
+- 3/26/25: fly ips allocate-v4 --shared 
  
 ```bash
 Created app 'fourfreedoms-polished-butterfly-4117' in organization 'personal'

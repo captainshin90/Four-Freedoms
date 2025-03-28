@@ -12,6 +12,11 @@ export interface Question {
   // is_deleted: boolean; // Is Deleted - updated by the database service
 }
 
+export type SuggestedQuestion = {
+  id: string;
+  text: string;
+};
+
 // Helper function to convert Firestore data to Question type
 export function convertToQuestion(data: any): Question {
   return {

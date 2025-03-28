@@ -125,7 +125,9 @@ Please maintain context from these previous messages in your response.
                    ${episode ? this.formatPodcastContext(episode) : ''}
                    ${this.formatConversationHistory(context)}` 
         },
-        ...context.map(msg => ({
+        // for OpenAI, valid roles are user, assistant, tool, and system
+        // filter out messages that are not user or assistant 
+        ...context.filter(msg => msg.sender === 'user' || msg.sender === 'assistant').map(msg => ({
           role: msg.sender === 'user' ? 'user' : 'assistant',
           content: msg.content,
         })),
@@ -169,8 +171,12 @@ Please maintain context from these previous messages in your response.
       const model = gemini.getGenerativeModel({ model: config.gemini.llmModel });
 
       // Format the conversation history
-      const formattedHistory = context.map(msg => ({
-        role: msg.sender === 'user' ? 'user' : 'model',
+      // filter out messages that are not user or model
+      // for Gemini, valid roles are user, model, function, and system
+      // so, replace all context sender from "assistant" to "model"
+      const formattedHistory = context.filter(msg => msg.sender === 'user' || 
+        msg.sender === 'assistant').map(msg => ({
+        role: msg.sender === 'user' ? 'user' : 'model',  // replace "assistant" with "model"
         parts: [{ text: msg.content }],
       }));
 
@@ -239,7 +245,8 @@ Please maintain context from these previous messages in your response.
                    ${episode ? this.formatPodcastContext(episode) : ''}
                    ${this.formatConversationHistory(context)}` 
         },
-        ...context.map(msg => ({
+        // filter out messages that are not user or assistant
+        ...context.filter(msg => msg.sender === 'user' || msg.sender === 'assistant').map(msg => ({
           role: msg.sender === 'user' ? 'user' : 'assistant',
           content: msg.content,
         })),

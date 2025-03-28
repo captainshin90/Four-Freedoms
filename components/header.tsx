@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { chatsService } from "@/lib/services/database-service";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,11 +32,17 @@ export function Header({ onSearch }: HeaderProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const { user, userProfile, signOut } = useAuth();
 
+  ///////////////////////////////////////////////////////////////////////////////
+  // Handle search
+  ///////////////////////////////////////////////////////////////////////////////
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     onSearch(searchQuery);
   };
 
+  ///////////////////////////////////////////////////////////////////////////////
+  // Handle sign out
+  ///////////////////////////////////////////////////////////////////////////////
   const handleSignOut = async () => {
     try {
       await signOut();
@@ -44,6 +51,9 @@ export function Header({ onSearch }: HeaderProps) {
     }
   };
 
+  ///////////////////////////////////////////////////////////////////////////////
+  // Handle clear history
+  ///////////////////////////////////////////////////////////////////////////////
   const handleClearHistory = async () => {
     try {
       if (user?.uid) {
@@ -96,20 +106,16 @@ export function Header({ onSearch }: HeaderProps) {
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                  <div className="h-8 w-8 rounded-full overflow-hidden flex items-center justify-center bg-muted">
-                    {userProfile?.avatar || user?.photoURL ? (
-                      <Image
-                        src={userProfile?.avatar || user?.photoURL || "/default-avatar.png"}
-                        alt={userProfile?.first_name || user?.displayName || "User"}
-                        width={32}
-                        height={32}
-                        className="h-full w-full object-cover rounded-full"
-                      />
-                    ) : (
-                      <User className="h-4 w-4 text-foreground" />
-                    )}
-                  </div>
+                <Button variant="ghost" className="relative h-8 w-8 rounded-full p-0">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage 
+                      src={userProfile?.avatar || user?.photoURL || undefined}
+                      alt={`${userProfile?.first_name || user?.displayName || 'User'}'s avatar`}
+                    />
+                    <AvatarFallback>
+                      {userProfile?.first_name?.charAt(0)}{userProfile?.last_name?.charAt(0)}
+                    </AvatarFallback>
+                  </Avatar>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-56" align="end" forceMount>

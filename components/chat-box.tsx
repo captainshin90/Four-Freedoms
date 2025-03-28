@@ -18,33 +18,11 @@ import { Separator } from "@/components/ui/separator";
 import { FallbackMessage } from "@/components/ui/fallback-message";
 import Image from "next/image";
 import { convertToChat } from "@/lib/schemas/chats";
+import type { ChatMessage, ChatMessageResponse } from "@/lib/schemas/chats";
+import { SuggestedQuestion } from "@/lib/schemas/questions";
 import ReactMarkdown from 'react-markdown';
 import { audioService } from "@/lib/services/audio-service";
 
-
-type SuggestedQuestion = {
-  id: string;
-  text: string;
-};
-
-type Message = { // Message type for chat history
-  id?: string;
-  uid?: string;
-  conversation_id?: string;
-  content: string;
-  sender: "user" | "assistant" | "podcast";
-  timestamp: Date | Timestamp;
-  PlayerEpisode?: PlayerEpisode;
-};
-
-type ChatMessageResponse = {
-  id: string;
-  uid?: string;
-  conversation_id?: string;
-  content: string;
-  sender: string;
-  timestamp: Timestamp;
-};
 
 ///////////////////////////////////////////////////////////////////////////////
 // ChatBox component props
@@ -59,11 +37,11 @@ interface ChatBoxProps {
 // ChatBox component
 ///////////////////////////////////////////////////////////////////////////////
 export function ChatBox({ height = 40, onHeightChange, activeEpisode }: ChatBoxProps) {
-  const [messages, setMessages] = useState<Message[]>([
+  const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: `welcome-${Date.now()}`,
       content: "Hello! I'm your podcast assistant. Ask me anything about the episodes you're listening to or any other questions you might have.",
-      sender: "assistant",
+      sender: "system",  // this is a system message that is not sent to the LLM
       timestamp: new Date(),
     },
   ]);
@@ -89,36 +67,44 @@ export function ChatBox({ height = 40, onHeightChange, activeEpisode }: ChatBoxP
   ////////////////////////////////////////////////////////////////////////////////
   // Load chat history from Firestore if user is logged in
   ////////////////////////////////////////////////////////////////////////////////
-  useEffect(() => {
-    const loadChatHistory = async () => {
-      if (user) {
-        try {
-          setError(null);
+  const loadChatHistory = useCallback(async () => {
+    if (user) {
+      try {
+        setError(null);
+        const chatHistory = await chatsService.getActiveChatHistory(user.uid);
 
-          const chatHistory = await chatsService.getActiveChatHistory(user.uid);
+        if (chatHistory && chatHistory.length > 0) {
+          const formattedMessages: ChatMessage[] = chatHistory.map(chat => ({
+            id: chat.chat_id,
+            uid: chat.user_id,
+            conversation_id: chat.conversation_id,
+            content: chat.chat_text,
+            sender: chat.sender,
+            timestamp: chat.created_at,
+            player_episode: chat.podcast_data
+          }));
 
-          if (chatHistory && chatHistory.length > 0) {
-            const formattedMessages: Message[] = chatHistory.map(chat => ({
-              id: chat.chat_id,
-              uid: chat.user_id,
-              conversation_id: chat.conversation_id,
-              content: chat.chat_text,
-              sender: chat.sender,
-              timestamp: chat.created_at
-            }));
-
-            setMessages(formattedMessages);
-          }
-        } catch (error) {
-          console.error("Error loading chat history:", error);
-          setError("Failed to load chat history. Please try again later.");
+          setMessages(formattedMessages);
         }
+      } catch (error) {
+        console.error("Error loading chat history:", error);
+        setError("Failed to load chat history. Please try again later.");
       }
-    };
-    
-    loadChatHistory();
-  }, [user]); // loadChatHistory
+    }
+  }, [user]);
 
+  ////////////////////////////////////////////////////////////////////////////////
+  // Load chat history on component mount
+  ////////////////////////////////////////////////////////////////////////////////
+  useEffect(() => {
+    loadChatHistory();
+  }, [loadChatHistory]);
+
+  ////////////////////////////////////////////////////////////////////////////////
+  // Retry loading chat history
+  ////////////////////////////////////////////////////////////////////////////////
+  const retryLoadingHistory = loadChatHistory;
+  
   ////////////////////////////////////////////////////////////////////////////////
   // Get fallback questions
   ////////////////////////////////////////////////////////////////////////////////
@@ -163,25 +149,41 @@ export function ChatBox({ height = 40, onHeightChange, activeEpisode }: ChatBoxP
   // Add active podcast to chat when it changes
   ////////////////////////////////////////////////////////////////////////////////
   useEffect(() => {
-    if (activeEpisode && activeEpisode.id) {
-      const podcastMessage: Message = {
-        id: `podcast-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
-        uid: user?.uid,
-        conversation_id: conversationId || undefined,
-        content: `Now playing: ${activeEpisode.title}`,
-        sender: "podcast",
-        timestamp: new Date(),
-        PlayerEpisode: activeEpisode
-      };
-      
-      setMessages(prev => [...prev, podcastMessage]);
-      
-      const podcastId = activeEpisode.podcastId.toString();
-      loadSuggestedQuestions(podcastId);
-    }
-  }, [activeEpisode, loadSuggestedQuestions, conversationId, user?.uid]);
+    const handlePodcastChange = async () => {
+      if (activeEpisode && activeEpisode.id) {
+        const podcastMessage: ChatMessage = {
+          id: `podcast-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
+          uid: user?.uid,
+          conversation_id: conversationId || undefined,
+          content: `Playing: ${activeEpisode.title}`,
+          sender: "podcast",
+          timestamp: new Date(),
+          player_episode: activeEpisode
+        };
+        
+        setMessages(prev => [...prev, podcastMessage]);
+        
+        // Save podcast message to Firestore if logged in
+        if (user) {
+          try {
+            const chatMessage = convertToChat(podcastMessage);
+            await chatsService.createChatMessage(chatMessage);
+          } catch (error) {
+            console.error("Error saving podcast message to Firestore:", error);
+          }
+        }
+        
+        const podcastId = activeEpisode.podcastId.toString();
+        loadSuggestedQuestions(podcastId);
+      }
+    };
 
+    handlePodcastChange();
+  }, [activeEpisode, loadSuggestedQuestions, conversationId, user]);
+
+  ////////////////////////////////////////////////////////////////////////////////
   // Scroll to bottom when messages change
+  ////////////////////////////////////////////////////////////////////////////////
   useEffect(() => {
     if (scrollAreaRef.current) {
       try {
@@ -249,7 +251,7 @@ export function ChatBox({ height = 40, onHeightChange, activeEpisode }: ChatBoxP
     }
     
     // create user message
-    const userMessage: Message = {
+    const userMessage: ChatMessage = {
       id: `user-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
       uid: user?.uid,
       conversation_id: currentConversationId || undefined,
@@ -269,15 +271,7 @@ export function ChatBox({ height = 40, onHeightChange, activeEpisode }: ChatBoxP
         try {
           const chatMessage = convertToChat(userMessage);
           // const chatMessageResult = 
-          await chatsService.createChatMessage(chatMessage);
-          
-          // if (chatMessageResult && typeof chatMessageResult === 'object') {
-          //  const chatMessage = chatMessageResult as ChatMessageResponse;
-            // Set conversation ID if not already set
-            // if (!currentConversationId && chatMessage?.conversation_id) {
-            //  setConversationId(chatMessage.conversation_id);
-            // }
-          // }
+          await chatsService.createChatMessage(chatMessage);          
         } catch (error) {
           console.error("Error saving user message to Firestore:", error);
           // Continue with API call even if Firestore save fails
@@ -310,7 +304,7 @@ export function ChatBox({ height = 40, onHeightChange, activeEpisode }: ChatBoxP
       );
 
       // create assistant message
-      const assistantMessage: Message = {
+      const assistantMessage: ChatMessage = {
         id: `assistant-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
         uid: user?.uid,
         conversation_id: currentConversationId,
@@ -335,7 +329,7 @@ export function ChatBox({ height = 40, onHeightChange, activeEpisode }: ChatBoxP
       console.error("Error processing message:", error);
       
       // Add error message
-      const errorMessage: Message = {
+      const errorMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
         content: "I'm sorry, there was an error processing your request. Please try again later.",
         sender: "assistant",
@@ -366,33 +360,7 @@ export function ChatBox({ height = 40, onHeightChange, activeEpisode }: ChatBoxP
     }
   };
 
-  ////////////////////////////////////////////////////////////////////////////////
-  // Retry loading chat history
-  ////////////////////////////////////////////////////////////////////////////////
-  const retryLoadingHistory = async () => {
-    if (user) {
-      try {
-        setError(null);
-        const chatHistory = await chatsService.getActiveChatHistory(user.uid);
-        
-        if (chatHistory && chatHistory.length > 0) {
-          const formattedMessages: Message[] = chatHistory.map(chat => ({
-            id: chat.chat_id,
-            uid: chat.user_id,
-            conversation_id: chat.conversation_id,
-            content: chat.chat_text,
-            sender: chat.sender,
-            timestamp: chat.created_at
-          }));
-
-          setMessages(formattedMessages);
-        }
-      } catch (error) {
-        console.error("Error retrying chat history load:", error);
-        setError("Failed to load chat history. Please try again later.");
-      }
-    }
-  }; // retryLoadingHistory
+  
    
   ////////////////////////////////////////////////////////////////////////////////
   // Render the chat box
@@ -431,28 +399,28 @@ export function ChatBox({ height = 40, onHeightChange, activeEpisode }: ChatBoxP
                 message.sender === "podcast" ? "justify-left" : ""
               )}
             >
-              {message.sender === "podcast" && message.PlayerEpisode ? (
+              {message.sender === "podcast" && message.player_episode ? (
                 <div className="w-full max-w-[90%]">
-                  <div className="flex items-start gap-6">
-                    <div className="flex-[2] min-w-0">
-                      <div className="flex items-stretch gap-4">
+                  <div className="flex flex-col lg:flex-row items-start gap-6">
+                    <div className="flex-[2] min-w-0 w-full">
+                      <div className="flex flex-col lg:flex-row items-stretch gap-4">
                         <div className="relative h-[120px] aspect-[3/2] rounded-md overflow-hidden flex-shrink-0">
                           <Image
-                            src={message.PlayerEpisode.image}
-                            alt={message.PlayerEpisode.title}
+                            src={message.player_episode.image}
+                            alt={message.player_episode.title}
                             fill
                             sizes="180px"
                             className="object-cover"
                           />
                         </div>
                         <div className="flex-[2] min-w-[400px]">
-                          <PodcastPlayer podcast={message.PlayerEpisode} audioRef={audioRef} />
+                          <PodcastPlayer podcast={message.player_episode} audioRef={audioRef} />
                         </div>
                       </div>
                     </div>
                     
                     {suggestedQuestions.length > 0 && (
-                      <div className="flex-1 min-w-0">
+                      <div className="flex-1 min-w-0 w-full lg:w-auto">
                         <p className="text-lg font-semibold mb-2">Suggested questions:</p>
                         <div className="space-y-2">
                           {suggestedQuestions.map((question) => (

@@ -11,6 +11,9 @@ import { User } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 
+///////////////////////////////////////////////////////////////////////////////
+// Signup page
+///////////////////////////////////////////////////////////////////////////////
 export default function SignupPage() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -22,6 +25,9 @@ export default function SignupPage() {
   const { toast } = useToast();
   const router = useRouter();
 
+  ///////////////////////////////////////////////////////////////////////////////
+  // Handle signup
+  ///////////////////////////////////////////////////////////////////////////////
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -59,6 +65,9 @@ export default function SignupPage() {
     }
   };
 
+  ///////////////////////////////////////////////////////////////////////////////
+  // Render signup page
+  ///////////////////////////////////////////////////////////////////////////////
   return (
     <div className="container flex h-screen w-screen flex-col items-center justify-center">
       <Link

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,7 +11,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
+import { Home } from "lucide-react";
 
+///////////////////////////////////////////////////////////////////////////////
+// Profile page
+///////////////////////////////////////////////////////////////////////////////
 export default function ProfilePage() {
   const { user, userProfile, updateUserProfile, loading } = useAuth();
   const { toast } = useToast();
@@ -52,6 +57,9 @@ export default function ProfilePage() {
     }
   }, [loading, user, userProfile, router]);
 
+  ///////////////////////////////////////////////////////////////////////////////
+  // Handle profile update
+  ///////////////////////////////////////////////////////////////////////////////
   const handleProfileUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsUpdating(true);
@@ -78,6 +86,9 @@ export default function ProfilePage() {
     }
   };
 
+  ///////////////////////////////////////////////////////////////////////////////
+  // Handle payment update
+  ///////////////////////////////////////////////////////////////////////////////
   const handlePaymentUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsUpdating(true);
@@ -106,6 +117,9 @@ export default function ProfilePage() {
     }
   };
 
+  ///////////////////////////////////////////////////////////////////////////////
+  // Render profile page
+  /////////////////////////////////////////////////////////////////////////////// 
   if (loading) {
     return <div className="container py-10">Loading...</div>;
   }
@@ -113,18 +127,31 @@ export default function ProfilePage() {
   return (
     <div className="container py-10">
       <div className="max-w-4xl mx-auto">
-        <div className="flex items-center gap-4 mb-8">
-          <Avatar className="h-20 w-20">
-            <AvatarImage src={user?.photoURL || undefined} />
-            <AvatarFallback>{userProfile?.first_name?.charAt(0)}{userProfile?.last_name?.charAt(0)}</AvatarFallback>
-          </Avatar>
-          <div>
-            <h1 className="text-2xl font-bold">{userProfile?.first_name} {userProfile?.last_name}</h1>
-            <p className="text-muted-foreground">{userProfile?.email1}</p>
-            <p className="text-sm text-muted-foreground">
-              Subscription: {userProfile?.subscription_type || "Free"}
-            </p>
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-4">
+            <Avatar className="h-20 w-20">
+              <AvatarImage 
+                src={userProfile?.avatar || user?.photoURL || undefined} 
+                alt={`${userProfile?.first_name || user?.displayName || 'User'}'s avatar`}
+              />
+              <AvatarFallback>
+                {userProfile?.first_name?.charAt(0)}{userProfile?.last_name?.charAt(0)}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <h1 className="text-2xl font-bold">{userProfile?.first_name} {userProfile?.last_name}</h1>
+              <p className="text-muted-foreground">{userProfile?.email1}</p>
+              <p className="text-sm text-muted-foreground">
+                Subscription: {userProfile?.subscription_type || "Free"}
+              </p>
+            </div>
           </div>
+          <Button variant="outline" asChild>
+            <Link href="/">
+              <Home className="h-4 w-4 mr-2" />
+              Back to Home
+            </Link>
+          </Button>
         </div>
         
         <Tabs defaultValue="profile" className="w-full">
@@ -184,9 +211,12 @@ export default function ProfilePage() {
                     />
                   </div>
                 </CardContent>
-                <CardFooter>
+                <CardFooter className="flex gap-2">
                   <Button type="submit" disabled={isUpdating}>
                     {isUpdating ? "Updating..." : "Update Profile"}
+                  </Button>
+                  <Button type="button" variant="outline" onClick={() => router.push('/')}>
+                    Cancel
                   </Button>
                 </CardFooter>
               </form>
@@ -329,9 +359,12 @@ export default function ProfilePage() {
                     </div>
                   </div>
                 </CardContent>
-                <CardFooter>
+                <CardFooter className="flex gap-2">
                   <Button type="submit" disabled={isUpdating}>
                     {isUpdating ? "Updating..." : "Update Payment Information"}
+                  </Button>
+                  <Button type="button" variant="outline" onClick={() => router.push('/')}>
+                    Cancel
                   </Button>
                 </CardFooter>
               </form>
