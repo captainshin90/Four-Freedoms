@@ -162,7 +162,7 @@ export function TopicPanel({ onSelectTopic, onSelectPodcast, onInitAddPodcast }:
         let userPodcasts: Podcast[] = [];
         
         // Fetch all available public podcasts
-        const publicPodcasts = await podcastsService.getAllPodcasts();
+        const publicPodcasts = await podcastsService.getActivePodcasts();
         
         if (user && userProfile?.following_podcasts && userProfile.following_podcasts.length > 0) {
           // If user is logged in, fetch their followed podcasts
@@ -205,7 +205,7 @@ export function TopicPanel({ onSelectTopic, onSelectPodcast, onInitAddPodcast }:
   const handleTopicClick = (topic: Topic) => {
     setSelectedTopic(topic);
     if (onSelectTopic) {
-      onSelectTopic(topic.topic_id);
+      onSelectTopic(topic.id);
     }
     
     if (!isExpanded) {
@@ -219,15 +219,15 @@ export function TopicPanel({ onSelectTopic, onSelectPodcast, onInitAddPodcast }:
   const handlePodcastClick = async (podcast: Podcast) => {
     try {
       // Get the first episode for this podcast
-      const episodes = await episodesService.getAllEpisodes(podcast.podcast_id);
+      const episodes = await episodesService.getActiveEpisodes(podcast.id);
       if (!episodes || episodes.length === 0) {
-        console.error("No episodes found for podcast:", podcast.podcast_id);
+        console.error("No episodes found for podcast:", podcast.id);
         return;
       }
 
       // Convert the first episode to a PlayerEpisode
       const firstEpisode = episodes[0] as Episode;
-      const playerEpisode = convertToPlayerEpisode(podcast, firstEpisode);
+      const playerEpisode = convertToPlayerEpisode(firstEpisode);
       
       // Call the onSelectPodcast callback with the episode data
       if (onSelectPodcast) {
@@ -246,7 +246,7 @@ export function TopicPanel({ onSelectTopic, onSelectPodcast, onInitAddPodcast }:
     
     try {
       // Check if topic is already being followed
-      const isAlreadyFollowing = userProfile.following_topics?.includes(topic.topic_id);
+      const isAlreadyFollowing = userProfile.following_topics?.includes(topic.id);
       if (isAlreadyFollowing) {
         console.log("Topic already being followed");
         return;
@@ -254,7 +254,7 @@ export function TopicPanel({ onSelectTopic, onSelectPodcast, onInitAddPodcast }:
 
       // update Topic's followed_by_users with document id
       // Use Set to ensure unique user IDs
-      const uniqueFollowers = new Set([...(topic.followed_by_users || []), userProfile.user_id]);
+      const uniqueFollowers = new Set([...(topic.followed_by_users || []), userProfile.id]);
       topic.followed_by_users = Array.from(uniqueFollowers);
 
       await topicsService.updateTopic(topic.id, {
@@ -263,7 +263,7 @@ export function TopicPanel({ onSelectTopic, onSelectPodcast, onInitAddPodcast }:
 
       // update user's following_topics with document id
       // Use Set to ensure unique topic IDs
-      const uniqueTopics = new Set([...(userProfile.following_topics || []), topic.topic_id]);
+      const uniqueTopics = new Set([...(userProfile.following_topics || []), topic.id]);
       userProfile.following_topics = Array.from(uniqueTopics);
 
       await usersService.updateUser(userProfile.id, {
@@ -273,7 +273,7 @@ export function TopicPanel({ onSelectTopic, onSelectPodcast, onInitAddPodcast }:
       // Update local state
       setTopics(prev => {
         // Check if topic already exists in local state
-        const topicExists = prev.some(t => t.topic_id === topic.topic_id);
+        const topicExists = prev.some(t => t.id === topic.id);
         if (topicExists) return prev;
         return [...prev, topic];
       });
@@ -292,14 +292,14 @@ export function TopicPanel({ onSelectTopic, onSelectPodcast, onInitAddPodcast }:
       // const topic = await topicsService.getTopicById(topicId);
       if (topic) {
         const updatedFollowingTopics = (userProfile.following_topics || []).filter(
-          (id: string) => id !== topic.topic_id);
+          (id: string) => id !== topic.id);
         await usersService.updateUser(userProfile.id, {
           following_topics: updatedFollowingTopics
         });
         userProfile.following_topics = updatedFollowingTopics;
       
         const updatedFollowingUsers = (topic.followed_by_users || []).filter(
-          (id: string) => id !== userProfile.user_id); 
+          (id: string) => id !== userProfile.id); 
         await topicsService.updateTopic(topic.id, {
           followed_by_users: updatedFollowingUsers
         })
@@ -307,7 +307,7 @@ export function TopicPanel({ onSelectTopic, onSelectPodcast, onInitAddPodcast }:
       };
 
       // Update local state
-      setTopics(prev => prev.filter(t => t.topic_id !== topic.topic_id));
+      setTopics(prev => prev.filter(t => t.id !== topic.id));
     } catch (error) {
       console.error("Error deleting topic:", error);
     }
@@ -327,14 +327,14 @@ export function TopicPanel({ onSelectTopic, onSelectPodcast, onInitAddPodcast }:
     
     try {
       // Check if podcast is already being followed
-      const isAlreadyFollowing = userProfile.following_podcasts?.includes(podcast.podcast_id);
+      const isAlreadyFollowing = userProfile.following_podcasts?.includes(podcast.id);
       if (isAlreadyFollowing) {
         console.log("Podcast already being followed");
         return;
       }
 
       // Update podcast's followed_by_users
-      const uniqueFollowers = new Set([...(podcast.followed_by_users || []), userProfile.user_id]);
+      const uniqueFollowers = new Set([...(podcast.followed_by_users || []), userProfile.id]);
       podcast.followed_by_users = Array.from(uniqueFollowers);
 
       await podcastsService.updatePodcast(podcast.id, {
@@ -342,7 +342,7 @@ export function TopicPanel({ onSelectTopic, onSelectPodcast, onInitAddPodcast }:
       });
 
       // Update user's following_podcasts
-      const uniquePodcasts = new Set([...(userProfile.following_podcasts || []), podcast.podcast_id]);
+      const uniquePodcasts = new Set([...(userProfile.following_podcasts || []), podcast.id]);
       userProfile.following_podcasts = Array.from(uniquePodcasts);
 
       await usersService.updateUser(userProfile.id, {
@@ -351,7 +351,7 @@ export function TopicPanel({ onSelectTopic, onSelectPodcast, onInitAddPodcast }:
       
       // Update local state
       setPodcasts(prev => {
-        const podcastExists = prev.some(p => p.podcast_id === podcast.podcast_id);
+        const podcastExists = prev.some(p => p.id === podcast.id);
         if (podcastExists) return prev;
         return [...prev, podcast];
       });
@@ -369,14 +369,14 @@ export function TopicPanel({ onSelectTopic, onSelectPodcast, onInitAddPodcast }:
     try {
       if (podcast) {
         const updatedFollowingPodcasts = (userProfile.following_podcasts || []).filter(
-          (id: string) => id !== podcast.podcast_id);
+          (id: string) => id !== podcast.id);
         await usersService.updateUser(userProfile.id, {
           following_podcasts: updatedFollowingPodcasts
         });
         userProfile.following_podcasts = updatedFollowingPodcasts;
       
         const updatedFollowingUsers = (podcast.followed_by_users || []).filter(
-          (id: string) => id !== userProfile.user_id); 
+          (id: string) => id !== userProfile.id);  
         await podcastsService.updatePodcast(podcast.id, {
           followed_by_users: updatedFollowingUsers
         });
@@ -384,7 +384,7 @@ export function TopicPanel({ onSelectTopic, onSelectPodcast, onInitAddPodcast }:
       }
 
       // Update local state
-      setPodcasts(prev => prev.filter(p => p.podcast_id !== podcast.podcast_id));
+      setPodcasts(prev => prev.filter(p => p.id !== podcast.id));
     } catch (error) {
       console.error("Error deleting podcast:", error);
     }
@@ -509,8 +509,8 @@ export function TopicPanel({ onSelectTopic, onSelectPodcast, onInitAddPodcast }:
       <ScrollArea className="flex-1">
         <div className="p-2 space-y-2">
               {displayedTopics.map((topic) => (
-                <div key={topic.topic_id} className="relative" onClick={() => handleTopicClick(topic)}>
-              {isExpanded && selectedTopic?.topic_id === topic.topic_id ? (
+                <div key={topic.id} className="relative" onClick={() => handleTopicClick(topic)}>
+              {isExpanded && selectedTopic?.id === topic.id ? (
                 <Card className="cursor-pointer hover:bg-accent transition-colors">
                   <CardContent className="p-3">
                         <div className="absolute top-2 right-2">
@@ -551,7 +551,7 @@ export function TopicPanel({ onSelectTopic, onSelectPodcast, onInitAddPodcast }:
               ) : (
                 <div 
                   className={`flex items-center p-2 rounded-md cursor-pointer hover:bg-accent transition-colors ${
-                    selectedTopic?.topic_id === topic.topic_id ? "bg-accent" : ""
+                    selectedTopic?.id === topic.id ? "bg-accent" : ""
                   }`}
                 >
                   <div className="h-8 w-8 rounded-md overflow-hidden mr-2">
@@ -602,8 +602,8 @@ export function TopicPanel({ onSelectTopic, onSelectPodcast, onInitAddPodcast }:
           <ScrollArea className="flex-1">
             <div className="p-2 space-y-2">
               {displayedPodcasts.map((podcast) => (
-                <div key={podcast.podcast_id} className="relative" onClick={() => setSelectedPodcast(podcast)}>
-                  {isExpanded && selectedPodcast?.podcast_id === podcast.podcast_id ? (
+                <div key={podcast.id} className="relative" onClick={() => setSelectedPodcast(podcast)}>
+                  {isExpanded && selectedPodcast?.id === podcast.id ? (
                     <Card className="cursor-pointer hover:bg-accent transition-colors">
                       <CardContent className="p-3">
                         <div className="absolute top-2 right-2">
@@ -659,7 +659,7 @@ export function TopicPanel({ onSelectTopic, onSelectPodcast, onInitAddPodcast }:
                   ) : (
                     <div 
                       className={`flex items-center p-2 rounded-md cursor-pointer hover:bg-accent transition-colors ${
-                        selectedPodcast?.podcast_id === podcast.podcast_id ? "bg-accent" : ""
+                        selectedPodcast?.id === podcast.id ? "bg-accent" : ""
                       }`}
                     >
                       <div className="h-8 w-8 rounded-md overflow-hidden mr-2 relative group">
@@ -729,12 +729,10 @@ export function TopicPanel({ onSelectTopic, onSelectPodcast, onInitAddPodcast }:
 const mockTopics = [
   {
     id: "1",
-    topic_id: "1",
     topic_name: "Newton, MA",
     topic_image: "https://images.unsplash.com/photo-1519501025264-65ba15a82390?w=300&h=200&fit=crop",
     topic_type: "place",
     related_topic_tags: ["Massachusetts", "Boston suburbs", "education"],
-    datetime: new Date(),
     is_private: false,
     is_active: true,
     is_deleted: false,
@@ -743,12 +741,10 @@ const mockTopics = [
   },
   {
     id: "2",
-    topic_id: "2",
     topic_name: "Massachusetts",
     topic_image: "https://images.unsplash.com/photo-1519501025264-65ba15a82390?w=300&h=200&fit=crop",
     topic_type: "place",
     related_topic_tags: ["New England", "Boston", "education", "politics"],
-    datetime: new Date(),
     is_private: false,
     is_active: true,
     is_deleted: false,
@@ -757,12 +753,10 @@ const mockTopics = [
   },
   {
     id: "3",
-    topic_id: "3",
     topic_name: "Education Reform",
     topic_image: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=300&h=200&fit=crop",
     topic_type: "issue",
     related_topic_tags: ["education", "schools", "policy"],
-    datetime: new Date(),
     is_private: false,
     is_active: true,
     is_deleted: false,

@@ -8,7 +8,7 @@ import { Auth, getAuth, GoogleAuthProvider, FacebookAuthProvider, OAuthProvider 
 import { initializeFirestore, getFirestore, Firestore, persistentLocalCache, persistentMultipleTabManager } from "firebase/firestore";
 import config from "../server/config";
 
-
+/*
 // Validate required configuration
 const requiredEnvVars = [
   'NEXT_PUBLIC_FIREBASE_API_KEY',
@@ -16,6 +16,7 @@ const requiredEnvVars = [
   'NEXT_PUBLIC_FIREBASE_PROJECT_ID',
   'NEXT_PUBLIC_FIREBASE_APP_ID'
 ];
+*/
 
 // Initialize Firebase objects
 let app: FirebaseApp;

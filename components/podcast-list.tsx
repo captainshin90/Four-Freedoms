@@ -39,8 +39,8 @@ export function PodcastList({ topicId, searchQuery, onSelectPodcast, onAddPodcas
   const fetchDefaultPodcasts = async () => {
     try {
       setLoading(true);
-      const podcastData = await podcastsService.getAllPodcasts();
-      const validPodcasts = (podcastData as Podcast[]).filter(podcast => podcast.podcast_id);
+      const podcastData = await podcastsService.getActivePodcasts();
+      const validPodcasts = (podcastData as Podcast[]).filter(podcast => podcast.id);
       setPodcasts(validPodcasts);
     } catch (error) {
       console.error("Error fetching default podcasts:", error);
@@ -63,10 +63,10 @@ export function PodcastList({ topicId, searchQuery, onSelectPodcast, onAddPodcas
         if (topicId) {
           podcastData = await podcastsService.getPodcastsByTopic(topicId);
         } else {
-          podcastData = await podcastsService.getAllPodcasts();
+          podcastData = await podcastsService.getActivePodcasts();
         }
         
-        const validPodcasts = (podcastData as Podcast[]).filter(podcast => podcast.podcast_id);
+        const validPodcasts = (podcastData as Podcast[]).filter(podcast => podcast.id);
         setPodcasts(validPodcasts);
       } catch (error) {
         console.error("Error fetching podcasts:", error);
@@ -96,9 +96,9 @@ export function PodcastList({ topicId, searchQuery, onSelectPodcast, onAddPodcas
         
         // Get all podcasts and their episodes
         const [podcastData, allEpisodes] = await Promise.all([
-          podcastsService.getAllPodcasts(),
-          Promise.all((await podcastsService.getAllPodcasts() || []).map(
-            podcast => episodesService.getAllEpisodes(podcast.podcast_id)
+          podcastsService.getActivePodcasts(),
+          Promise.all((await podcastsService.getActivePodcasts() || []).map(
+            podcast => episodesService.getActiveEpisodes(podcast.id)
           ))
         ]);
 
@@ -129,7 +129,7 @@ export function PodcastList({ topicId, searchQuery, onSelectPodcast, onAddPodcas
             );
 
           const matchInEpisodes = episodes
-            .filter(episode => episode && episode.podcast_id === podcast.podcast_id)
+            .filter(episode => episode && episode.podcast_id === podcast.id)
             .some(episode => episode && (
               episode.episode_title.toLowerCase().includes(searchQuery.toLowerCase()) ||
               episode.episode_desc.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -186,7 +186,7 @@ export function PodcastList({ topicId, searchQuery, onSelectPodcast, onAddPodcas
     try {
       // Get the first episode for this podcast
       // QUESTION: what if there are no episodes?
-      const episodes = await episodesService.getAllEpisodes(podcast.podcast_id);
+      const episodes = await episodesService.getActiveEpisodes(podcast.id);
       if (!episodes || episodes.length === 0) {
         toast({
           title: "Error",
@@ -198,7 +198,7 @@ export function PodcastList({ topicId, searchQuery, onSelectPodcast, onAddPodcas
 
       // Convert the first episode to a PlayerEpisode
       const firstEpisode = episodes[0] as Episode;
-      const episodeData = convertToPlayerEpisode(podcast, firstEpisode);
+      const episodeData = convertToPlayerEpisode(firstEpisode);
       
       // Call the onSelectPodcast callback with the episode data
       onSelectPodcast(episodeData);  // defined in Page.tsx as handleSelectPodcast() function
@@ -249,7 +249,7 @@ export function PodcastList({ topicId, searchQuery, onSelectPodcast, onAddPodcas
       }
 
       // Get all topics
-      const allTopics = await topicsService.getAllTopics();
+      const allTopics = await topicsService.getActiveTopics();
       if (!allTopics) {
         toast({
           title: "Error",
@@ -328,7 +328,7 @@ export function PodcastList({ topicId, searchQuery, onSelectPodcast, onAddPodcas
       return;
     }
     
-    const podcastId = podcast.podcast_id;
+    const podcastId = podcast.id;
     
     // Toggle like status
     setLikedPodcasts(prev => {
@@ -370,7 +370,7 @@ export function PodcastList({ topicId, searchQuery, onSelectPodcast, onAddPodcas
       return;
     }
     
-    const podcastId = podcast.podcast_id;
+    const podcastId = podcast.id; 
     
     // Toggle dislike status
     setDislikedPodcasts(prev => {
@@ -438,7 +438,7 @@ export function PodcastList({ topicId, searchQuery, onSelectPodcast, onAddPodcas
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
       {displayPodcasts.map((podcast) => (
         <Card 
-          key={`podcast-${podcast.podcast_id || `fallback-${Math.random()}`}`}
+          key={`podcast-${podcast.id || `fallback-${Math.random()}`}`}
           className="cursor-pointer hover:shadow-lg transition-shadow group"
           onClick={() => handlePlayPodcast(podcast)}
         >
@@ -496,7 +496,7 @@ export function PodcastList({ topicId, searchQuery, onSelectPodcast, onAddPodcas
                   <Button 
                     variant="ghost" 
                     size="icon" 
-                    className={`h-6 w-6 ${likedPodcasts[podcast.podcast_id] ? 'text-green-500' : ''}`}
+                    className={`h-6 w-6 ${likedPodcasts[podcast.id] ? 'text-green-500' : ''}`}
                     onClick={(e) => handleLike(podcast, e)}
                   >
                     <ThumbsUp className="h-3 w-3" />
@@ -504,7 +504,7 @@ export function PodcastList({ topicId, searchQuery, onSelectPodcast, onAddPodcas
                   <Button 
                     variant="ghost" 
                     size="icon" 
-                    className={`h-6 w-6 ${dislikedPodcasts[podcast.podcast_id] ? 'text-red-500' : ''}`}
+                    className={`h-6 w-6 ${dislikedPodcasts[podcast.id] ? 'text-red-500' : ''}`}
                     onClick={(e) => handleDislike(podcast, e)}
                   >
                     <ThumbsDown className="h-3 w-3" />
@@ -528,8 +528,10 @@ export function PodcastList({ topicId, searchQuery, onSelectPodcast, onAddPodcas
 const mockPodcasts: Podcast[] = [
   {
     id: "mock-1",
-    podcast_id: "mock-1",
     podcast_title: "Newton Community Voices",
+    podcast_slug: "newton-community-voices",
+    podcast_tagline: "A podcast featuring voices from the Newton community discussing local issues",
+    podcast_language: "en",
     podcast_hosts: ["Jane Smith", "John Doe"],
     podcast_image: "https://images.unsplash.com/photo-1478737270239-2f02b77fc618?w=500&h=500&fit=crop",
     podcast_desc: "A podcast featuring voices from the Newton community discussing local issues",
@@ -538,14 +540,16 @@ const mockPodcasts: Podcast[] = [
     topic_tags: [],
     subscription_type: "free" as const,
     is_active: true,
-    // is_deleted: false,
-    // created_at: new Date(),
-    // updated_at: new Date()
+    is_deleted: false,
+    created_at: new Date(),
+    updated_at: new Date(),
   },
   {
     id: "mock-2",
-    podcast_id: "mock-2",
     podcast_title: "Massachusetts Education Matters",
+    podcast_slug: "massachusetts-education-matters",
+    podcast_tagline: "Discussions about education policy and reform in Massachusetts",
+    podcast_language: "en",
     podcast_hosts: ["Dr. Emily Johnson", "Prof. Michael Brown"],
     podcast_image: "https://images.unsplash.com/photo-1526628953301-3e589a6a8b74?w=500&h=500&fit=crop",
     podcast_desc: "Debug: Discussions about education policy and reform in Massachusetts",
@@ -554,14 +558,16 @@ const mockPodcasts: Podcast[] = [
     topic_tags: [],
     subscription_type: "premium" as const,
     is_active: true,
-    // is_deleted: false,
-    // created_at: new Date(),
-    // updated_at: new Date()
+    is_deleted: false,
+    created_at: new Date(),
+    updated_at: new Date(),
   },
   {
     id: "mock-3",
-    podcast_id: "mock-3",
     podcast_title: "Policy Insights with Senator Warren",
+    podcast_slug: "policy-insights-warren",
+    podcast_tagline: "Deep dives into policy issues with Senator Elizabeth Warren",
+    podcast_language: "en",
     podcast_hosts: ["Sarah Williams", "Senator Elizabeth Warren"],
     podcast_image: "https://images.unsplash.com/photo-1526628953301-3e589a6a8b74?w=500&h=500&fit=crop",
     podcast_desc: "Debug: Deep dives into policy issues with Senator Elizabeth Warren",
@@ -570,14 +576,16 @@ const mockPodcasts: Podcast[] = [
     topic_tags: [],
     subscription_type: "premium" as const,
     is_active: true,
-    // is_deleted: false,
-    // created_at: new Date(),
-    // updated_at: new Date()
+    is_deleted: false,
+    created_at: new Date(),
+    updated_at: new Date(),
   },
   {
     id: "mock-4",
-    podcast_id: "mock-4",
     podcast_title: "Newton High School Sports Report",
+    podcast_slug: "newton-high-sports",
+    podcast_tagline: "Coverage of Newton High School sports teams and events",
+    podcast_language: "en",
     podcast_hosts: ["David Green", "Lisa Park"],
     podcast_image: "https://images.unsplash.com/photo-1444653614773-995cb1ef9efa?w=500&h=500&fit=crop",
     podcast_desc: "Coverage of Newton High School sports teams and events",
@@ -586,8 +594,8 @@ const mockPodcasts: Podcast[] = [
     topic_tags: [],
     subscription_type: "free" as const,
     is_active: true,
-    // is_deleted: false,
-    // created_at: new Date(),
-    // updated_at: new Date()
+    is_deleted: false,
+    created_at: new Date(),
+    updated_at: new Date(),
   }
 ];

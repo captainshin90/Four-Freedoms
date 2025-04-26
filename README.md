@@ -140,6 +140,7 @@ fly logs
 - Automatically deployed to Netlify: fourfreedoms.netlify.app
 - Check Netlify for build and deploy status: 
 - 3/24/25: currently site is disabled
+- 3/25/25: deleted site
 
 ### Installs and Audits
 - 3/19/25: npm install @google/generative-ai
@@ -150,6 +151,7 @@ fly logs
 - 3/23/25: npm uninstall @tailwindcss/postcss
 - 3/23/25: npm audit fix --force
 - 3/23/25: npm install --save-dev ts-node tsconfig-paths
+- 3/28/25: npm uninstall netlify
 
 ### Repo Versions 
 - 3/23/25: git tag -a "v0.1.0-alpha" -m "version v0.1.0-beta"
@@ -158,6 +160,8 @@ fly logs
 - 3/25/25: git tag -a "v0.1.4-alpha" -m "version v0.1.4-alpha" - sort of works 
 - 3/26/25: git tag -a "v0.1.5-alpha" -m "version v0.1.5-alpha" - sort of works 
 - 3/26/25: git tag -a "v0.2.0-alpha" -m "version v0.2.0-alpha" - works on fly.dev 
+- 3/27/25: git tag -a "v0.2.1-alpha" -m "version v0.2.1-alpha" - various fixes
+- 4/25/25: git tag -a "v0.3.0-alpha" -m "version v0.3.0-alpha" - updates database field names to sync with PodStudio
 
 
 ### Deploys
@@ -167,7 +171,9 @@ fly logs
 - 3/24/25: Fly.io - success https://fourfreedoms-polished-butterfly-4117.fly.dev/
 - 3/25/25: Fly deploy 
 - 3/26/25: Fly deploy
-- 3/26/25: fly ips allocate-v4 --shared 
+- 3/26/25: fly ips allocate-v4 --shared
+- 3/27/25: Fly deploy
+- 4/25/25: fly deploy 
  
 ```bash
 Created app 'fourfreedoms-polished-butterfly-4117' in organization 'personal'

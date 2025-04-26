@@ -75,7 +75,7 @@ export function ChatBox({ height = 40, onHeightChange, activeEpisode }: ChatBoxP
 
         if (chatHistory && chatHistory.length > 0) {
           const formattedMessages: ChatMessage[] = chatHistory.map(chat => ({
-            id: chat.chat_id,
+            id: chat.id,
             uid: chat.user_id,
             conversation_id: chat.conversation_id,
             content: chat.chat_text,
@@ -167,7 +167,7 @@ export function ChatBox({ height = 40, onHeightChange, activeEpisode }: ChatBoxP
         if (user) {
           try {
             const chatMessage = convertToChat(podcastMessage);
-            await chatsService.createChatMessage(chatMessage);
+            await chatsService.createChatMessage(chatMessage.id, chatMessage);
           } catch (error) {
             console.error("Error saving podcast message to Firestore:", error);
           }
@@ -271,7 +271,7 @@ export function ChatBox({ height = 40, onHeightChange, activeEpisode }: ChatBoxP
         try {
           const chatMessage = convertToChat(userMessage);
           // const chatMessageResult = 
-          await chatsService.createChatMessage(chatMessage);          
+          await chatsService.createChatMessage(chatMessage.id, chatMessage);          
         } catch (error) {
           console.error("Error saving user message to Firestore:", error);
           // Continue with API call even if Firestore save fails
@@ -319,7 +319,7 @@ export function ChatBox({ height = 40, onHeightChange, activeEpisode }: ChatBoxP
       if (user) {
         try {
           const chatMessage = convertToChat(assistantMessage);
-          await chatsService.createChatMessage(chatMessage);
+          await chatsService.createChatMessage(chatMessage.id, chatMessage);
         } catch (error) {
           console.error("Error saving assistant message to Firestore:", error);
           // Continue even if Firestore save fails

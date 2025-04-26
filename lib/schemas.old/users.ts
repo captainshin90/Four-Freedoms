@@ -1,6 +1,7 @@
-// User schema version 0.3.0
+// User schema version 0.2.1
 export interface User {
-  id: string; // Unique ID, same as Firestore Document ID
+  id: string; // Firestore Document ID (needed for Firestore)
+  user_id: string; // User ID
   login_id: string; // Login ID
   password?: string; // Not stored in Firestore, only used for registration
   first_name: string; // First Name
@@ -28,9 +29,10 @@ export interface User {
   card_cvv?: string;             // Should not be stored in production
   card_city?: string;
   is_active: boolean;            // Is Active
-  created_at: Date;             // updated by the database service
-  updated_at: Date;             // updated by the database service
-  is_deleted: boolean;          // Is Deleted - updated by the database service
+  // below fields not needed for consumer app
+  // created_at: Date;             // updated by the database service
+  // updated_at: Date;             // updated by the database service
+  // is_deleted: boolean;          // Is Deleted - updated by the database service
 }
 
 export interface Address {
@@ -60,8 +62,8 @@ export interface UserPreferences {
 export function convertToUser(data: any): User {
   return {
     id: data.id,
+    user_id: data.user_id = crypto.randomUUID(),
     login_id: data.login_id,
-    password: data.password,
     first_name: data.first_name,
     last_name: data.last_name,
     email1: data.email1,
@@ -87,8 +89,8 @@ export function convertToUser(data: any): User {
     card_cvv: data.card_cvv,
     card_city: data.card_city,
     is_active: data.is_active = true,
-    is_deleted: data.is_deleted = false, // updated by the database service
-    created_at: data.created_at?.toDate(),    // updated by the database service
-    updated_at: data.updated_at?.toDate(),    // updated by the database service
+    // created_at: data.created_at?.toDate(),    // updated by the database service
+    // updated_at: data.updated_at?.toDate(),    // updated by the database service
+    // is_deleted: data.is_deleted = false // updated by the database service
   };
 }
