@@ -2,6 +2,8 @@
 
 Four Freedoms is an AI-powered community podcast platform designed to foster deep engagement with audio content. By combining traditional podcasting with modern LLM capabilities, it allows listeners to "chat" with episodes, discover content through community-driven topics, and access exclusive insights.
 
+![Home](public/screenshots/home.png)
+
 ## 🚀 Key Features
 
 - **Context-Aware AI Chat**: Engage in deep dives with podcast episodes. Ask questions and get answers based on the specific context of the audio content, powered by Gemini and OpenAI.
