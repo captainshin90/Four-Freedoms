@@ -2,7 +2,8 @@
 
 Four Freedoms is an AI-powered community podcast platform designed to foster deep engagement with audio content. By combining traditional podcasting with modern LLM capabilities, it allows listeners to "chat" with episodes, discover content through community-driven topics, and access exclusive insights.
 
-![Home](public/screenshots/home.png)
+<img src="public/screenshots/home.png" alt="Home" width="600">
+
 
 ## 🚀 Key Features
 
@@ -11,7 +12,7 @@ Four Freedoms is an AI-powered community podcast platform designed to foster dee
 - **Integrated Audio Suite**: A high-performance, seamless audio player built for both casual listening and deep research.
 - **Community Engagement**: Like, dislike, and follow topics to personalize your feed and help the community discover quality content.
 
-## Live Demo
+## 🪟 Live Demo
 
   https://fourfreedoms-polished-butterfly-4117.fly.dev/
 
