@@ -1,14 +1,17 @@
 # Four Freedoms
 
-Four Freedoms is a premium, AI-powered community podcast platform designed to foster deep engagement with audio content. By combining traditional podcasting with modern LLM capabilities, it allows listeners to "chat" with episodes, discover content through community-driven topics, and access exclusive insights.
+Four Freedoms is an AI-powered community podcast platform designed to foster deep engagement with audio content. By combining traditional podcasting with modern LLM capabilities, it allows listeners to "chat" with episodes, discover content through community-driven topics, and access exclusive insights.
 
 ## 🚀 Key Features
 
 - **Context-Aware AI Chat**: Engage in deep dives with podcast episodes. Ask questions and get answers based on the specific context of the audio content, powered by Gemini and OpenAI.
 - **Topic-Driven Discovery**: Explore content organized by community interest. Navigate through curated topics to find the podcasts that matter most to your interests.
-- **Premium Subscription Tier**: Enhanced access management with exclusive content for premium members, integrated with Firebase Authentication.
 - **Integrated Audio Suite**: A high-performance, seamless audio player built for both casual listening and deep research.
 - **Community Engagement**: Like, dislike, and follow topics to personalize your feed and help the community discover quality content.
+
+## Live Demo
+
+  https://fourfreedoms-polished-butterfly-4117.fly.dev/
 
 ## 🛠️ Tech Stack
 
@@ -64,6 +67,16 @@ The project is configured for deployment on **Fly.io**.
 
 For detailed deployment steps, environment secret management, and volume configuration, please refer to [NOTES.md](file:///c:/SRC/FourFreedoms/NOTES.md).
 
-## 📄 Documentation
+## 📄 License
 
-- [NOTES.md](file:///c:/SRC/FourFreedoms/NOTES.md): Comprehensive guide on development setup, Fly.io configuration, and deployment history.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Contributing
+
+Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
+
+## Contact
+
+[admin@kapshin.com](mailto:admin@kapshin.com)
+
+
