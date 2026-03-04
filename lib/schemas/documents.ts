@@ -1,7 +1,7 @@
 export type DocumentSourceFormat = 'txt' | 'pdf' | 'docx' | 'mp3';
 export type DocumentType = 'article' | 'podcast' | 'transcript' | 'question' | 'answer' | 'summary' | 'chat' | 'document';
 
-// Document schema version 0.3.0
+// Document schema version 0.3.1
 export interface Document {
   id: string; // Unique ID, same as Firestore Document ID
   doc_name: string; // Document Name
@@ -12,6 +12,7 @@ export interface Document {
   event_organizer: string; // Event Organizer associated with the document
   topic_tags: string[]; // Topic Tags
   doc_source_urls: string[]; // Document Source URLs
+  doc_summary: string; // Document Summary
   doc_extracted_text: string; // Document Extracted Text
   extract_tool: string; // Extract Tool - don't need
   doc_source_format: DocumentSourceFormat; // Document Source Format
@@ -34,6 +35,7 @@ export function convertToDocument(data: any): Document {
     event_organizer: data.event_organizer,
     topic_tags: data.topic_tags,
     doc_source_urls: data.doc_source_urls,
+    doc_summary: data.doc_summary,
     doc_extracted_text: data.doc_extracted_text,
     extract_tool: data.extract_tool,
     doc_source_format: data.doc_source_format,

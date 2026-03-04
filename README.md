@@ -1,201 +1,69 @@
-README.md
+# Four Freedoms
 
-## Four Freedoms
+Four Freedoms is a premium, AI-powered community podcast platform designed to foster deep engagement with audio content. By combining traditional podcasting with modern LLM capabilities, it allows listeners to "chat" with episodes, discover content through community-driven topics, and access exclusive insights.
 
-#### Quick Start
+## 🚀 Key Features
 
-```bash
-  > npm run dev:all    # for development runs server and client  
-  > npm run build      # for production
+- **Context-Aware AI Chat**: Engage in deep dives with podcast episodes. Ask questions and get answers based on the specific context of the audio content, powered by Gemini and OpenAI.
+- **Topic-Driven Discovery**: Explore content organized by community interest. Navigate through curated topics to find the podcasts that matter most to your interests.
+- **Premium Subscription Tier**: Enhanced access management with exclusive content for premium members, integrated with Firebase Authentication.
+- **Integrated Audio Suite**: A high-performance, seamless audio player built for both casual listening and deep research.
+- **Community Engagement**: Like, dislike, and follow topics to personalize your feed and help the community discover quality content.
 
-# Debug client: 
-  > npm run dev + Launch Chrome localhost
-# Debug server: 
-  > Launch from UI: Script dev:all 
+## 🛠️ Tech Stack
 
-Open browser: http://localhost:3000  # (it may take 30 sec. to load)
+- **Frontend**: Next.js 15, React 18, Tailwind CSS, Lucide Icons, Radix UI.
+- **Backend**: Node.js, Express.
+- **Database & Auth**: Firebase (Firestore & Firebase Auth).
+- **AI/LLM**: Google Gemini API, OpenAI API.
+- **Infrastructure**: Fly.io (Production Deployments), Docker, .devcontainer.
 
-# To kill running processes: 
-  > lsof -i :3000 | grep LISTEN | awk '{print $2}' | xargs kill -9
+## 📥 Quick Start
 
-  > git add .
-  > git commit -m "fix file upload"
-  > git tag -a v0.1.xx-alpha -m "test version v0.1.xx-alpha"   # also update package.json
-  > git push -u origin master --tags
+To run the project locally in development mode:
 
-  > fly auth login     # once per session
-  > fly deploy         # to push new code to fly site
-  > fly logs           # view console logs    
+1.  **Clone the repository**:
+    ```bash
+    git clone https://github.com/captainshin90/Four-Freedoms.git
+    cd Four-Freedoms
+    ```
 
+2.  **Install dependencies**:
+    ```bash
+    npm install
+    ```
 
-```
+3.  **Set up environment variables**:
+    Create a `.env` file in the root directory (see `.env.example` or the list below).
 
-### Development Setup
+4.  **Run the application**:
+    ```bash
+    npm run dev:all
+    ```
+    This command starts both the Next.js client (port 3000) and the Node.js server (port 3001).
 
-This project is running in .devcontainer Node.js & Typescript:
-  - Docker container: FourFreedoms friendly-leakey 
-  - .devcontainer: Linux (WSL2), Next.js 15.2.3, Node.js 22.12 & Typescript, Python 3.11.2, Linux: Debian GNU 12 (bookworm)
-  - Firebase: fourfreedoms-db1
+5.  **Access the app**:
+    Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-- Client is Next.js on port 3000: out/index.html
-- Server is Node.js on port 3001: server/index.js
+## ⚙️ Environment Variables
 
-Repo: https://github.com/captainshin90/Four-Freedoms
+The following keys are required in your `.env` file:
 
-### Production:
+- `GEMINI_API_KEY`: For Google Gemini integration.
+- `OPENAI_API_KEY`: For OpenAI integration.
+- `FIREBASE_PROJECT_ID`: Your Firebase project ID.
+- `API_PORT`: Port for the backend server (default: 3001).
+- `NEXT_PUBLIC_API_BASE_URL`: Base URL for the client to contact the API.
 
-  https://fourfreedoms-polished-butterfly-4117.fly.dev/
-  https://fourfreedoms-polished-butterfly-4117.fly.dev:3001/api/health
+## 🚀 Deployment
 
-xxx Deploy: https://fourfreedoms.netlify.app/ - server doesn't run
-xxx Deploy: https://fourfreedoms.fly.dev/ 
+The project is configured for deployment on **Fly.io**.
 
-Admin URL: https://fly.io/apps/
+- To deploy: `fly deploy`
+- To view logs: `fly logs`
 
-### Development
+For detailed deployment steps, environment secret management, and volume configuration, please refer to [NOTES.md](file:///c:/SRC/FourFreedoms/NOTES.md).
 
-- To build: 
-```bash
-# wait to connect to .devcontainer
-node ➜ /workspaces/FourFreedoms (master) $ 
+## 📄 Documentation
 
-  > npm run dev:all    # for development   
-  > npm run build      # for production
-
-Open browser: http://localhost:3000  - (it may take 30 sec. to load)
-
-# To debug: select "Run & Debug" and script:
-# make sure there are no processes running on 3000 and 3001
-  > npm run dev
-# Launch Chrome localhost
-# Launch Script dev:all  # runs both npm run:server and npm run:dev
-
-# To kill running processes: 
-  > lsof -i :3000 | grep LISTEN | awk '{print $2}' | xargs kill -9
-
-# Github repo: https://github.com/captainshin90/Four-Freedoms
-  > git init
-  > git remote add origin https://github.com/captainshin90/Four-Freedoms.git
-  > git config --global --add safe.directory /workspaces/FourFreedoms
-
-# To commit changes:
-  > git add .
-  > git commit -m "Describe code change"
-  > git push origin master
-
-# To set new code version, example:
-  > git tag -a "v.1.0-alpha" -m "version v0.1.0-beta"
-
-```
-### Deployment to Fly.io
-
-https://fly.io/docs/getting-started/launch-demo
-
-https://fly.io/docs/flyctl/install/
-
-Windows: 
-```bash
-# 1. Install the Fly CLI:
-(done) curl -L https://fly.io/install.sh | sh
-
-# Manually add the directory to your $HOME/.bash_profile (or similar)
-#  export FLYCTL_INSTALL="/home/node/.fly"
-#  export PATH="$FLYCTL_INSTALL/bin:$PATH"
-# Run '/home/node/.fly/bin/flyctl --help' to get started
-
-# 2. Login to Fly:
-(done) fly auth login
-
-# 3. Create a new app:
-(done) fly launch
-
-# Fly will generate a fly.toml
-# see https://fly.io/docs/reference/configuration/
-
-# 4. Set up environment variables:
-# Generate a secure API token (from .devcontainer Linux)
-(done) openssl rand -hex 32
-
-# Set it in Fly.io
-(done) fly secrets set API_TOKEN=019b93b18f8bd685cd86748c7df009997e112c459c417320ab8e4ffb386e228e 
-
-# (done) run: fly secrets set for all sensitive KEYS in .env or from Fly console (easier)
-# non-sensitive keys (e.g. PORT, API_PORT) defined in fly.toml
-(done) fly secrets set <API_KEY>=
-
-# 5. Create a volume for genereal files:
-(done) fly volumes create general_data --size 1
-
-# 6. Deploy the application:
-# Deploy to Fly.io (this will automatically build both frontend and backend)
-(done) fly deploy
-
-# 7. View console logs:
-fly logs
-
-```
-
-
-### Deployment to Netlify (only static site)
-- Automatically deployed to Netlify: fourfreedoms.netlify.app
-- Check Netlify for build and deploy status: 
-- 3/24/25: currently site is disabled
-- 3/25/25: deleted site
-
-### Installs and Audits
-- 3/19/25: npm install @google/generative-ai
-- 3/19/25: npm install firebase-admin
-- 3/22/25: npm install react-markdown
-- 3/23/25: npm install -D tailwindcss postcss autoprefixer
-- 3/23/25: npm install -D @tailwindcss/postcss
-- 3/23/25: npm uninstall @tailwindcss/postcss
-- 3/23/25: npm audit fix --force
-- 3/23/25: npm install --save-dev ts-node tsconfig-paths
-- 3/28/25: npm uninstall netlify
-
-### Repo Versions 
-- 3/23/25: git tag -a "v0.1.0-alpha" -m "version v0.1.0-beta"
-- 3/23/25: git tag -a "v0.1.1-alpha" -m "version v0.1.1-alpha" - Next.js upgrade
-- 3/24/25: git tag -a "v0.1.3-alpha" -m "version v0.1.3-alpha" - updated fly.toml, dockerfile 
-- 3/25/25: git tag -a "v0.1.4-alpha" -m "version v0.1.4-alpha" - sort of works 
-- 3/26/25: git tag -a "v0.1.5-alpha" -m "version v0.1.5-alpha" - sort of works 
-- 3/26/25: git tag -a "v0.2.0-alpha" -m "version v0.2.0-alpha" - works on fly.dev 
-- 3/27/25: git tag -a "v0.2.1-alpha" -m "version v0.2.1-alpha" - various fixes
-- 4/25/25: git tag -a "v0.3.0-alpha" -m "version v0.3.0-alpha" - updates database field names to sync with PodStudio
-
-
-### Deploys
-- 3/18/25: Netlify
-- 3/23/25: Netlify
-- 3/23/25: Fly.io
-- 3/24/25: Fly.io - success https://fourfreedoms-polished-butterfly-4117.fly.dev/
-- 3/25/25: Fly deploy 
-- 3/26/25: Fly deploy
-- 3/26/25: fly ips allocate-v4 --shared
-- 3/27/25: Fly deploy
-- 4/25/25: fly deploy 
- 
-```bash
-Created app 'fourfreedoms-polished-butterfly-4117' in organization 'personal'
-Admin URL: https://fly.io/apps/fourfreedoms-polished-butterfly-4117
-Hostname: fourfreedoms-polished-butterfly-4117.fly.dev
-Run `fly tokens create deploy -x 999999h` to create a token and set it as the FLY_API_TOKEN secret in your GitHub repository settings
-See https://docs.github.com/en/actions/security-guides/using-secrets-in-github-actions
-installing: npm install @flydotio/dockerfile@latest --save-dev
-added 37 packages, and audited 974 packages in 11s
-243 packages are looking for funding
-  run `npm fund` for details
-15 vulnerabilities (13 moderate, 2 high)
-To address issues that do not require attention, run:
-  npm audit fix
-To address all issues (including breaking changes), run:
-  npm audit fix --force
-Run `npm audit` for details.
-     create  Dockerfile
-(node:1960) ExperimentalWarning: globSync is an experimental feature and might change at any time
-(Use `node --trace-warnings ...` to show where the warning was created)
-
-WARNING The app is not listening on the expected address and will not be reachable by fly-proxy.
-You can fix this by configuring your app to listen on the following addresses:
-  - 0.0.0.0:3000
-```
+- [NOTES.md](file:///c:/SRC/FourFreedoms/NOTES.md): Comprehensive guide on development setup, Fly.io configuration, and deployment history.

@@ -91,6 +91,10 @@ x - signed-in avatar is not visible
 x - Gemini always requires the first context item to be "user" role.
 x - Does Gemini accept "assistant" as well as "model"?  OpenAI and Deepseek use assistant, system.  Gemini doesn't seem to recognize "assistant".
 x - podcast episode play events are not saved to chat history: mark as "podcast" or "content", convert to episode info to markdown text (with a link to play it again)? 
+x - check all database field names and schemas as they changed: use only id as key
+x - changed getAllQuestions(), getAllEpisodes() to getActiveQuestions()
+x - Chats: "id" is being written to Firestore, and is same as chat_id, not Firestore document ID 
+
 
 ### To Do
 - see Google Keep notes

@@ -11,9 +11,8 @@ export interface Chat {
   conversation_id: string; // Conversation ID for LLM
   podcast_data?: PlayerEpisode; // Store podcast data for podcast messages
   is_deleted: boolean | false; // Is Deleted
-  created_at: Date | null;  // updated by the database service
-  updated_at: Date | null;  // updated by the database service
-  deleted_at: Date | null;  // updated by the database service
+  created_at: Date;  // updated by the database service
+  updated_at: Date;  // updated by the database service
 }
 
 export type ChatMessage = { // Message type for chat history
@@ -45,8 +44,7 @@ export function convertToChat(data: any): Chat {
     conversation_id: data.conversation_id || null,
     podcast_data: data.player_episode || null,
     is_deleted: data.is_deleted || false,
-    deleted_at: data.deleted_at?.toDate() || null, // updated by the database service
-    created_at: data.timestamp?.toDate() || null,  // updated by the database service
-    updated_at: data.timestamp?.toDate() || null,  // updated by the database service
-  };
+    created_at: data.created_at?.toDate() || null,  // updated by the database service
+    updated_at: data.updated_at?.toDate() || null,  // updated by the database service
+   };
 }
