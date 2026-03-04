@@ -12,6 +12,8 @@ Four Freedoms is an AI-powered community podcast platform designed to foster dee
 - **Integrated Audio Suite**: A high-performance, seamless audio player built for both casual listening and deep research.
 - **Community Engagement**: Like, dislike, and follow topics to personalize your feed and help the community discover quality content.
 
+- **Podcast Studio**: Use with our Podcast Studio webapp (https://github.com/captainshin90/PodStudio) to generate podcasts from documents and audio transcripts and publish your own podcasts with ease. 
+
 ## 🪟 Live Demo
 
   https://fourfreedoms-polished-butterfly-4117.fly.dev/
