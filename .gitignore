@@ -43,7 +43,8 @@ yarn-error.log*
 next-env.d.ts
 
 # other
-.devcontainer
 .bolt
+.devcontainer
+
 # Local Netlify folder
 .netlify
