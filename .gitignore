@@ -4,13 +4,14 @@
 NOTES_PRIVATE.md
 CHANGELOG.md
 
-# dotenv environment variable files
+# dotenv environment variable files, except .env.example
 .env*.local
 .env
 .env.development.local
 .env.test.local
 .env.production.local
 .env.local
+!.env.example
 
 # dependencies
 /node_modules
